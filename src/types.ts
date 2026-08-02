@@ -15,14 +15,22 @@ export interface Rectangle {
   height: number;
 }
 
+export interface AnimationOptions {
+  /** Animate the drawing on `show()`. Defaults to `true`. */
+  onShow?: boolean;
+  /** Retreat the strokes on `hide()`. Defaults to `false`. */
+  onHide?: boolean;
+}
+
+/** `true` animates the drawing only. The object form controls each direction. */
+export type AnimateOption = boolean | AnimationOptions;
+
 /** Options every annotation type reads. */
 export interface CommonAnnotationOptions {
-  /** Defaults to `true`. */
-  animate?: boolean;
+  /** Defaults to `true`, which animates the drawing but not the removal. */
+  animate?: AnimateOption;
   /** Milliseconds. Defaults to 800. */
   animationDuration?: number;
-  /** Play the drawing animation in reverse on `hide()`. Defaults to `false`. */
-  animateOnHide?: boolean;
   /** Defaults to `currentColor`. */
   color?: string;
   /** Defaults to 5px on every side. Ignored by types that fill the element box. */

@@ -2,9 +2,13 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
+  resolve: {
+    alias: [{ find: /^@\//, replacement: '/src/' }],
+  },
   test: {
     projects: [
       {
+        extends: true,
         test: {
           name: 'unit',
           environment: 'node',
@@ -12,6 +16,7 @@ export default defineConfig({
         },
       },
       {
+        extends: true,
         test: {
           name: 'browser',
           include: ['test/browser/**/*.test.ts'],

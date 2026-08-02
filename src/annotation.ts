@@ -7,7 +7,8 @@ import {
   SVG_NS,
 } from './constants.js';
 import { ensureKeyframes } from './keyframes.js';
-import { prefersReducedMotion, renderAnnotation } from './render.js';
+import { resolveAnimation } from './animation.js';
+import { renderAnnotation } from './render.js';
 import type {
   Rectangle,
   ResolvedAnnotationConfig,
@@ -129,14 +130,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#config.animationDuration = value;
   }
 
-  get animateOnHide() {
-    return this.#config.animateOnHide;
-  }
-
-  set animateOnHide(value) {
-    this.#config.animateOnHide = value;
-  }
-
   get iterations() {
     return this.#config.iterations;
   }
@@ -226,11 +219,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #shouldAnimateHide(): boolean {
-    return (
-      (this.#config.animateOnHide ?? false) &&
-      (this.#config.animate ?? true) &&
-      !prefersReducedMotion()
-    );
+    return resolveAnimation(this.#config.animate).onHide;
   }
 
   /**

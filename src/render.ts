@@ -8,9 +8,9 @@ import {
   DEFAULT_STROKE_WIDTH,
   HIGHLIGHT_HEIGHT_RATIO,
   KEYFRAME_NAME,
-  REDUCED_MOTION_QUERY,
   SVG_NS,
 } from './constants.js';
+import { resolveAnimation } from './animation.js';
 import type {
   BracketType,
   FullPadding,
@@ -46,7 +46,7 @@ function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
   };
 }
 
-/** @internal Exported for testing. Not part of the package entry point. */
+/** @internal Exported for testing. */
 export function parsePadding(config: Pick<ResolvedAnnotationConfig, 'padding'>): FullPadding {
   const { padding } = config;
 
@@ -110,11 +110,6 @@ function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding)
         [rect.x + rect.width, bottom],
       ];
   }
-}
-
-/** @internal */
-export function prefersReducedMotion(): boolean {
-  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
 }
 
 /** Everything a planner needs, resolved from the config. */
@@ -219,7 +214,7 @@ export function renderAnnotation(
   animationDuration: number,
   seed: number,
 ) {
-  const animate = (config.animate ?? true) && !prefersReducedMotion();
+  const { onShow } = resolveAnimation(config.animate);
   const plan = PLANNERS[config.type]({
     rect,
     padding: parsePadding(config),
@@ -246,7 +241,7 @@ export function renderAnnotation(
     return path;
   });
 
-  if (!animate) return;
+  if (!onShow) return;
 
   const lengths = paths.map((path) => path.getTotalLength());
   const totalLength = lengths.reduce((sum, length) => sum + length, 0);

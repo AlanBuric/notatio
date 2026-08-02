@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { annotate, annotationGroup } from '../../src/index.js';
+import { annotate, annotationGroup } from '@/index.js';
 import { cleanup, mountElement, pathsFor } from './helpers.js';
 
 afterEach(cleanup);
@@ -88,7 +88,7 @@ describe('hide completion', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 200,
     });
 
@@ -104,7 +104,7 @@ describe('hide completion', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 400,
     });
 
@@ -122,7 +122,7 @@ describe('hide completion', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 400,
     });
 
@@ -155,8 +155,8 @@ describe('group completion', () => {
     const first = mountElement();
     const second = mountElement();
     const group = annotationGroup([
-      annotate(first, { type: 'underline', animateOnHide: true, animationDuration: 120 }),
-      annotate(second, { type: 'underline', animateOnHide: true, animationDuration: 120 }),
+      annotate(first, { type: 'underline', animate: { onHide: true }, animationDuration: 120 }),
+      annotate(second, { type: 'underline', animate: { onHide: true }, animationDuration: 120 }),
     ]);
 
     group.show();

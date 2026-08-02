@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { annotate } from '../../src/index.js';
+import { annotate } from '@/index.js';
 import { STROKE_JITTER, annotationWidth, cleanup, mountContainer, pathsFor } from './helpers.js';
 
 afterEach(cleanup);

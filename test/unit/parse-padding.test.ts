@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parsePadding } from '../../src/render.js';
-import type { RoughAnnotationConfig, RoughPadding } from '../../src/types.js';
+import { parsePadding } from '@/render.js';
+import type { RoughAnnotationConfig, RoughPadding } from '@/types.js';
 
 function withPadding(padding?: RoughPadding): RoughAnnotationConfig {
   return { type: 'box', padding };

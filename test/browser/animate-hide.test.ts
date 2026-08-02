@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { annotate, annotationGroup } from '../../src/index.js';
+import { annotate, annotationGroup } from '@/index.js';
 import { cleanup, mountElement, pathsFor } from './helpers.js';
 
 afterEach(cleanup);
@@ -14,7 +14,7 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-describe('animateOnHide', () => {
+describe('animate.onHide', () => {
   it('removes the drawing immediately by default', () => {
     const element = mountElement();
     const annotation = annotate(element, { type: 'underline' });
@@ -29,7 +29,7 @@ describe('animateOnHide', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 300,
     });
 
@@ -47,7 +47,7 @@ describe('animateOnHide', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 300,
     });
 
@@ -61,7 +61,7 @@ describe('animateOnHide', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 60,
     });
 
@@ -77,7 +77,7 @@ describe('animateOnHide', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'box',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 400,
       iterations: 1,
     });
@@ -96,7 +96,7 @@ describe('animateOnHide', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 300,
     });
 
@@ -110,13 +110,9 @@ describe('animateOnHide', () => {
     expect(path.style.strokeDashoffset).toBe('0');
   });
 
-  it('does not animate the hide when animate is false', () => {
+  it('does not animate the hide when animation is off entirely', () => {
     const element = mountElement();
-    const annotation = annotate(element, {
-      type: 'underline',
-      animate: false,
-      animateOnHide: true,
-    });
+    const annotation = annotate(element, { type: 'underline', animate: false });
 
     annotation.show();
     annotation.hide();
@@ -124,9 +120,26 @@ describe('animateOnHide', () => {
     expect(pathsFor(element)).toHaveLength(0);
   });
 
+  it('can animate the hide without animating the show', async () => {
+    const element = mountElement();
+    const annotation = annotate(element, {
+      type: 'underline',
+      animate: { onShow: false, onHide: true },
+      animationDuration: 200,
+    });
+
+    annotation.show();
+    pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(''));
+
+    annotation.hide();
+    await nextFrame();
+
+    pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(REVERSE));
+  });
+
   it('does nothing when hide is called twice', () => {
     const element = mountElement();
-    const annotation = annotate(element, { type: 'underline', animateOnHide: true });
+    const annotation = annotate(element, { type: 'underline', animate: { onHide: true } });
 
     annotation.show();
     annotation.hide();
@@ -135,12 +148,12 @@ describe('animateOnHide', () => {
   });
 });
 
-describe('animateOnHide interruptions', () => {
+describe('animate.onHide interruptions', () => {
   it('cancels a pending removal when show interrupts the hide', async () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 60,
     });
 
@@ -159,7 +172,7 @@ describe('animateOnHide interruptions', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 60,
       iterations: 2,
     });
@@ -182,7 +195,7 @@ describe('animateOnHide interruptions', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 60,
     });
 
@@ -198,7 +211,7 @@ describe('animateOnHide interruptions', () => {
     const element = mountElement();
     const annotation = annotate(element, {
       type: 'underline',
-      animateOnHide: true,
+      animate: { onHide: true },
       animationDuration: 60,
     });
 
@@ -212,13 +225,13 @@ describe('animateOnHide interruptions', () => {
   });
 });
 
-describe('annotationGroup with animateOnHide', () => {
+describe('annotationGroup with animate.onHide', () => {
   it('animates every annotation out', async () => {
     const first = mountElement();
     const second = mountElement();
     const group = annotationGroup([
-      annotate(first, { type: 'underline', animateOnHide: true, animationDuration: 300 }),
-      annotate(second, { type: 'underline', animateOnHide: true, animationDuration: 300 }),
+      annotate(first, { type: 'underline', animate: { onHide: true }, animationDuration: 300 }),
+      annotate(second, { type: 'underline', animate: { onHide: true }, animationDuration: 300 }),
     ]);
 
     group.show();

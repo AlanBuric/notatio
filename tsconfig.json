@@ -5,6 +5,9 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "types": [],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "noEmit": true,
 
     "isolatedModules": true,

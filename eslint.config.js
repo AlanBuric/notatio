@@ -14,6 +14,14 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      // The `@/` alias is defined for tests only. Using it here would emit an
+      // unresolvable specifier into the published declarations.
+      'no-restricted-imports': [
+        'error',
+        { patterns: [{ group: ['@/*'], message: 'Use a relative import inside src/.' }] },
+      ],
+    },
   },
   {
     files: ['*.config.{js,ts}'],

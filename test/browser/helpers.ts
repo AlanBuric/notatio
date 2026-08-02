@@ -1,4 +1,4 @@
-import type { RoughAnnotation } from '../../src/types.js';
+import type { RoughAnnotation } from '@/types.js';
 
 const SVG_SELECTOR = 'svg.notatio-annotation';
 

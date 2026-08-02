@@ -6,6 +6,7 @@ First release under the name Notatio, forked from rough-notation 0.5.1.
 
 ### Breaking
 
+- `animateOnHide` is folded into `animate`, which now accepts `boolean | { onShow?: boolean; onHide?: boolean }`. Use `animate: { onHide: true }` in place of `animateOnHide: true`. The object form also makes animating only the removal expressible.
 - The config is a discriminated union on `type`. Passing an option the chosen type does not read is a compile error: `iterations` on `bracket`, `strokeWidth` on `highlight`, `brackets` on any other type, `rtl` on `box` or `circle`. The annotation object keeps every option settable.
 - `show()` and `hide()` return `Promise<void>` rather than `void`. Existing calls that ignore the return value keep working.
 - ESM only. The CommonJS and IIFE builds are removed, along with the `RoughNotation` global.
@@ -15,7 +16,7 @@ First release under the name Notatio, forked from rough-notation 0.5.1.
 ### Added
 
 - `show()` and `hide()` return a promise resolving when the animation finishes, on both annotations and groups ([rough-notation#61](https://github.com/rough-stuff/rough-notation/issues/61)).
-- `animateOnHide` plays the drawing animation in reverse on `hide()` ([rough-notation#57](https://github.com/rough-stuff/rough-notation/issues/57), [PR #88](https://github.com/rough-stuff/rough-notation/pull/88)).
+- `animate.onHide` plays the drawing animation in reverse on `hide()` ([rough-notation#57](https://github.com/rough-stuff/rough-notation/issues/57), [PR #88](https://github.com/rough-stuff/rough-notation/pull/88)).
 - `zIndex` sets the `z-index` of the annotation SVG ([rough-notation#83](https://github.com/rough-stuff/rough-notation/issues/83), [#80](https://github.com/rough-stuff/rough-notation/issues/80)).
 - `textColor` recolors the element while the annotation is showing, so a dark highlight does not swallow dark text ([rough-notation#82](https://github.com/rough-stuff/rough-notation/issues/82)).
 - `observeResize` and a public `detachListeners()` let callers drive their own redraw ([rough-notation#90](https://github.com/rough-stuff/rough-notation/issues/90)).
