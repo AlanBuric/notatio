@@ -20,6 +20,8 @@ export interface RoughAnnotationConfigBase {
   animate?: boolean;
   /** Milliseconds. Defaults to 800. */
   animationDuration?: number;
+  /** Play the drawing animation in reverse on `hide()`. Defaults to `false`. */
+  animateOnHide?: boolean;
   /** Defaults to `currentColor`. */
   color?: string;
   /** Defaults to 2. */

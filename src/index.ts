@@ -2,11 +2,13 @@ import { randomSeed } from 'roughjs/bin/math';
 import {
   ANNOTATION_CLASS,
   DEFAULT_ANIMATION_DURATION,
+  PATH_LENGTH_PROPERTY,
   RESIZE_DEBOUNCE_MS,
+  REVERSE_KEYFRAME_NAME,
   SVG_NS,
 } from './constants.js';
 import { ensureKeyframes } from './keyframes.js';
-import { renderAnnotation } from './render.js';
+import { prefersReducedMotion, renderAnnotation } from './render.js';
 import type {
   Rect,
   RoughAnnotation,
@@ -60,6 +62,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #pendingRefresh?: Promise<void>;
   #animationDelay = 0;
   #previousTextColor?: string;
+  #hideTimer?: number;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     this.#element = element;
@@ -86,6 +89,14 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
   set animationDuration(value) {
     this.#config.animationDuration = value;
+  }
+
+  get animateOnHide() {
+    return this.#config.animateOnHide;
+  }
+
+  set animateOnHide(value) {
+    this.#config.animateOnHide = value;
   }
 
   get iterations() {
@@ -134,32 +145,104 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   show(): void {
-    switch (this.#state) {
-      case 'unattached':
-        break;
-      case 'showing':
-        this.hide();
-        if (this.#svg) this.#render(this.#svg, true);
-        break;
-      case 'not-showing':
-        this.#attach();
-        if (this.#svg) this.#render(this.#svg, false);
-        break;
-    }
+    if (this.#state === 'unattached' || !this.#svg) return;
+
+    /*
+     * Re-showing renders without animation so a visible annotation does not
+     * flicker. `attach()` used to be called here for the not-showing case, but
+     * it returns immediately unless the state is unattached. See upstream #71.
+     */
+    const reshowing = this.#state === 'showing';
+
+    this.#clear();
+    this.#render(this.#svg, reshowing);
   }
 
   hide(): void {
+    if (this.#state === 'showing' && this.#shouldAnimateHide()) {
+      this.#animateHide();
+      return;
+    }
+
+    this.#clear();
+  }
+
+  remove(): void {
+    this.#clear();
+    this.#svg?.remove();
+    this.#svg = undefined;
+    this.#state = 'unattached';
+    this.detachListeners();
+  }
+
+  /** Drops the drawing immediately, cancelling any hide animation in flight. */
+  #clear(): void {
+    if (this.#hideTimer !== undefined) {
+      clearTimeout(this.#hideTimer);
+      this.#hideTimer = undefined;
+    }
+
     this.#restoreTextColor();
     this.#svg?.replaceChildren();
     this.#state = 'not-showing';
   }
 
-  remove(): void {
-    this.#restoreTextColor();
-    this.#svg?.remove();
-    this.#svg = undefined;
-    this.#state = 'unattached';
-    this.detachListeners();
+  #shouldAnimateHide(): boolean {
+    return (
+      (this.#config.animateOnHide ?? false) &&
+      (this.#config.animate ?? true) &&
+      !prefersReducedMotion()
+    );
+  }
+
+  /**
+   * Retreats each stroke back along itself, in the reverse of the order it was
+   * drawn. The paths stay in the DOM until the animation ends, but the state
+   * flips immediately, so `isShowing()` reflects the caller's intent.
+   */
+  #animateHide(): void {
+    const paths = [...(this.#svg?.querySelectorAll('path') ?? [])];
+
+    if (!paths.length) {
+      this.#clear();
+      return;
+    }
+
+    const duration = this.#config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
+    const lengths = paths.map((path) => {
+      /* Clearing the forwards-filled show animation frees stroke-dashoffset. */
+      path.style.animation = 'none';
+
+      return path.getTotalLength();
+    });
+    const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+
+    this.#state = 'not-showing';
+
+    /* A frame is needed for `animation: none` to take effect before restarting. */
+    requestAnimationFrame(() => {
+      let delay = this.#animationDelay;
+
+      paths
+        .map((path, index) => ({ path, length: lengths[index] }))
+        .reverse()
+        .forEach(({ path, length }) => {
+          const segment = totalLength ? duration * (length / totalLength) : 0;
+          const { style } = path;
+
+          style.strokeDashoffset = '0';
+          style.strokeDasharray = `${length}`;
+          style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
+          style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ease-out ${delay}ms forwards`;
+
+          delay += segment;
+        });
+    });
+
+    this.#hideTimer = window.setTimeout(() => {
+      this.#hideTimer = undefined;
+      this.#clear();
+    }, duration + this.#animationDelay);
   }
 
   #applyTextColor(): void {

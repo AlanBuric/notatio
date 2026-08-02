@@ -62,6 +62,7 @@ annotationGroup([a3, a1, a2]).show();
 | `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                                |
 | `animate`           | `boolean`                      | `true`         | Whether to animate the drawing.                                                 |
 | `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                  |
+| `animateOnHide`     | `boolean`                      | `false`        | Play the drawing animation in reverse on `hide()`.                              |
 | `color`             | `string`                       | `currentColor` | Stroke color.                                                                   |
 | `strokeWidth`       | `number`                       | `2`            | Stroke width. Ignored by `highlight`, which derives it from the element height. |
 | `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                     |
@@ -103,7 +104,7 @@ A single number applies to every side. An array follows CSS shorthand order, so 
 
 - **`isShowing(): boolean`** whether the annotation is currently drawn.
 - **`show()`** draws the annotation, animating if configured. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
-- **`hide()`** removes the drawing. Not animated.
+- **`hide()`** removes the drawing, immediately unless `animateOnHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. `isShowing()` reports `false` as soon as `hide()` returns. Calling `show()` during the animation cancels it and redraws.
 - **`remove()`** unlinks the annotation from the element.
 - **`detachListeners()`** stops redrawing on resize, for callers driving their own redraw. The annotation stays drawn, and `show()` reattaches the listeners. Set `observeResize: false` to never attach them.
 

@@ -4,6 +4,11 @@ export const ANNOTATION_CLASS = 'notatio-annotation';
 
 export const KEYFRAME_NAME = 'notatio-dash';
 
+export const REVERSE_KEYFRAME_NAME = 'notatio-dash-reverse';
+
+/** Custom property the reverse keyframe reads the retreat distance from. */
+export const PATH_LENGTH_PROPERTY = '--notatio-path-length';
+
 export const DEFAULT_ANIMATION_DURATION = 800;
 
 export const DEFAULT_ITERATIONS = 2;

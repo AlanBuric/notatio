@@ -109,7 +109,8 @@ function bracketPoints(side: BracketType, rect: Rect, padding: FullPadding): Poi
   }
 }
 
-function prefersReducedMotion(): boolean {
+/** @internal */
+export function prefersReducedMotion(): boolean {
   return window.matchMedia(REDUCED_MOTION_QUERY).matches;
 }
 

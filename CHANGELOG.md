@@ -12,6 +12,7 @@ First release under the name Notatio, forked from rough-notation 0.5.1.
 
 ### Added
 
+- `animateOnHide` plays the drawing animation in reverse on `hide()` ([rough-notation#57](https://github.com/rough-stuff/rough-notation/issues/57), [PR #88](https://github.com/rough-stuff/rough-notation/pull/88)).
 - `zIndex` sets the `z-index` of the annotation SVG ([rough-notation#83](https://github.com/rough-stuff/rough-notation/issues/83), [#80](https://github.com/rough-stuff/rough-notation/issues/80)).
 - `textColor` recolors the element while the annotation is showing, so a dark highlight does not swallow dark text ([rough-notation#82](https://github.com/rough-stuff/rough-notation/issues/82)).
 - `observeResize` and a public `detachListeners()` let callers drive their own redraw ([rough-notation#90](https://github.com/rough-stuff/rough-notation/issues/90)).
