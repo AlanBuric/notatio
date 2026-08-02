@@ -11,7 +11,7 @@ import {
   REDUCED_MOTION_QUERY,
   SVG_NS,
 } from './constants.js';
-import type { BracketType, FullPadding, Rect, RoughAnnotationConfig } from './types.js';
+import type { BracketType, FullPadding, Rectangle, RoughAnnotationConfig } from './types.js';
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
@@ -71,11 +71,11 @@ function alternatingLines(
   });
 }
 
-function bracketPoints(side: BracketType, rect: Rect, padding: FullPadding): Point[] {
+function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding): Point[] {
   const left = rect.x - padding[3] * 2;
-  const right = rect.x + rect.w + padding[1] * 2;
+  const right = rect.x + rect.width + padding[1] * 2;
   const top = rect.y - padding[0] * 2;
-  const bottom = rect.y + rect.h + padding[2] * 2;
+  const bottom = rect.y + rect.height + padding[2] * 2;
 
   switch (side) {
     case 'top':
@@ -87,10 +87,10 @@ function bracketPoints(side: BracketType, rect: Rect, padding: FullPadding): Poi
       ];
     case 'bottom':
       return [
-        [left, rect.y + rect.h],
+        [left, rect.y + rect.height],
         [left, bottom],
         [right, bottom],
-        [right, rect.y + rect.h],
+        [right, rect.y + rect.height],
       ];
     case 'left':
       return [
@@ -101,10 +101,10 @@ function bracketPoints(side: BracketType, rect: Rect, padding: FullPadding): Poi
       ];
     case 'right':
       return [
-        [rect.x + rect.w, top],
+        [rect.x + rect.width, top],
         [right, top],
         [right, bottom],
-        [rect.x + rect.w, bottom],
+        [rect.x + rect.width, bottom],
       ];
   }
 }
@@ -116,7 +116,7 @@ export function prefersReducedMotion(): boolean {
 
 export function renderAnnotation(
   svg: SVGSVGElement,
-  rect: Rect,
+  rect: Rectangle,
   config: RoughAnnotationConfig,
   animationGroupDelay: number,
   animationDuration: number,
@@ -133,23 +133,23 @@ export function renderAnnotation(
 
   switch (config.type) {
     case 'underline': {
-      const y = rect.y + rect.h + padding[2];
-      opList = alternatingLines([rect.x, y], [rect.x + rect.w, y], iterations, rtl, options);
+      const y = rect.y + rect.height + padding[2];
+      opList = alternatingLines([rect.x, y], [rect.x + rect.width, y], iterations, rtl, options);
       break;
     }
     case 'strike-through': {
-      const y = rect.y + rect.h / 2;
-      opList = alternatingLines([rect.x, y], [rect.x + rect.w, y], iterations, rtl, options);
+      const y = rect.y + rect.height / 2;
+      opList = alternatingLines([rect.x, y], [rect.x + rect.width, y], iterations, rtl, options);
       break;
     }
     case 'highlight': {
       const highlightOptions = getOptions('highlight', seed);
-      const y = rect.y + rect.h / 2;
+      const y = rect.y + rect.height / 2;
 
-      strokeWidth = rect.h * HIGHLIGHT_HEIGHT_RATIO;
+      strokeWidth = rect.height * HIGHLIGHT_HEIGHT_RATIO;
       opList = alternatingLines(
         [rect.x, y],
-        [rect.x + rect.w, y],
+        [rect.x + rect.width, y],
         iterations,
         rtl,
         highlightOptions,
@@ -157,8 +157,8 @@ export function renderAnnotation(
       break;
     }
     case 'crossed-off': {
-      const x2 = rect.x + rect.w;
-      const y2 = rect.y + rect.h;
+      const x2 = rect.x + rect.width;
+      const y2 = rect.y + rect.height;
 
       opList = [
         ...alternatingLines([rect.x, rect.y], [x2, y2], iterations, rtl, options),
@@ -169,8 +169,8 @@ export function renderAnnotation(
     case 'box': {
       const x = rect.x - padding[3];
       const y = rect.y - padding[0];
-      const width = rect.w + padding[1] + padding[3];
-      const height = rect.h + padding[0] + padding[2];
+      const width = rect.width + padding[1] + padding[3];
+      const height = rect.height + padding[0] + padding[2];
 
       opList = Array.from({ length: Math.max(iterations, 0) }, () =>
         rectangle(x, y, width, height, options),
@@ -178,8 +178,8 @@ export function renderAnnotation(
       break;
     }
     case 'circle': {
-      const width = rect.w + padding[1] + padding[3];
-      const height = rect.h + padding[0] + padding[2];
+      const width = rect.width + padding[1] + padding[3];
+      const height = rect.height + padding[0] + padding[2];
       const x = rect.x - padding[3] + width / 2;
       const y = rect.y - padding[0] + height / 2;
       const doubleStrokes = Math.floor(iterations / 2);

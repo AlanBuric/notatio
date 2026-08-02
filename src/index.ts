@@ -9,7 +9,7 @@ import {
 import { ensureKeyframes } from './keyframes.js';
 import { prefersReducedMotion, renderAnnotation } from './render.js';
 import type {
-  Rect,
+  Rectangle,
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
@@ -58,11 +58,14 @@ function settled(svg: SVGSVGElement): Promise<void> {
   );
 }
 
-function isSameRect(a: Rect, b: Rect): boolean {
+function isSameRect(a: Rectangle, b: Rectangle): boolean {
   const sameRounded = (x: number, y: number) => Math.round(x) === Math.round(y);
 
   return (
-    sameRounded(a.x, b.x) && sameRounded(a.y, b.y) && sameRounded(a.w, b.w) && sameRounded(a.h, b.h)
+    sameRounded(a.x, b.x) &&
+    sameRounded(a.y, b.y) &&
+    sameRounded(a.width, b.width) &&
+    sameRounded(a.height, b.height)
   );
 }
 
@@ -74,20 +77,25 @@ function isSameRect(a: Rect, b: Rect): boolean {
  * ancestor the two differ by that transform, so screen coordinates are mapped
  * through the inverse of the SVG's screen CTM rather than simply subtracted.
  */
-function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rect {
+function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rectangle {
   const ctm = svg.getScreenCTM();
 
   if (!ctm) {
     const origin = svg.getBoundingClientRect();
 
-    return { x: bounds.x - origin.x, y: bounds.y - origin.y, w: bounds.width, h: bounds.height };
+    return {
+      x: bounds.x - origin.x,
+      y: bounds.y - origin.y,
+      width: bounds.width,
+      height: bounds.height,
+    };
   }
 
   const inverse = ctm.inverse();
   const start = new DOMPoint(bounds.x, bounds.y).matrixTransform(inverse);
   const end = new DOMPoint(bounds.right, bounds.bottom).matrixTransform(inverse);
 
-  return { x: start.x, y: start.y, w: end.x - start.x, h: end.y - start.y };
+  return { x: start.x, y: start.y, width: end.x - start.x, height: end.y - start.y };
 }
 
 class RoughAnnotationImpl implements RoughAnnotation {
@@ -96,7 +104,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #element: HTMLElement;
   #seed = randomSeed();
   #svg?: SVGSVGElement;
-  #lastSizes: Rect[] = [];
+  #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
   #pendingRefresh?: Promise<void>;
   #animationDelay = 0;
@@ -350,7 +358,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
   /** Measures the whole batch, then writes only what actually moved. */
   static flush(annotations: RoughAnnotationImpl[]): void {
-    const stale: { annotation: RoughAnnotationImpl; rects: Rect[] }[] = [];
+    const stale: { annotation: RoughAnnotationImpl; rects: Rectangle[] }[] = [];
 
     annotations.forEach((annotation) => {
       if (annotation.#state !== 'showing') return;
@@ -363,7 +371,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     stale.forEach(({ annotation, rects }) => annotation.#redraw(rects));
   }
 
-  #redraw(rects: Rect[]): void {
+  #redraw(rects: Rectangle[]): void {
     if (!this.#svg) return;
 
     this.#clear();
@@ -386,7 +394,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#resizeObserver?.unobserve(this.#element);
   }
 
-  #rectsDiffer(rects: Rect[]): boolean {
+  #rectsDiffer(rects: Rectangle[]): boolean {
     if (!this.#lastSizes.length) return false;
 
     if (rects.length !== this.#lastSizes.length) return true;
@@ -406,15 +414,15 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
   }
 
-  #render(svg: SVGSVGElement, ensureNoAnimation: boolean, measured?: Rect[]): void {
+  #render(svg: SVGSVGElement, ensureNoAnimation: boolean, measured?: Rectangle[]): void {
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
     const rects = measured ?? this.#rects();
-    const totalWidth = rects.reduce((sum, rect) => sum + rect.w, 0);
+    const totalWidth = rects.reduce((sum, rect) => sum + rect.width, 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
     let delay = 0;
 
     rects.forEach((rect) => {
-      const duration = totalDuration * (rect.w / totalWidth);
+      const duration = totalDuration * (rect.width / totalWidth);
 
       renderAnnotation(svg, rect, config, delay + this.#animationDelay, duration, this.#seed);
       delay += duration;
@@ -425,7 +433,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#state = 'showing';
   }
 
-  #rects(): Rect[] {
+  #rects(): Rectangle[] {
     const svg = this.#svg;
 
     if (!svg) return [];

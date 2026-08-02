@@ -8,11 +8,11 @@ export type FullPadding = [number, number, number, number];
 
 export type RoughPadding = number | [number, number] | FullPadding;
 
-export interface Rect {
+export interface Rectangle {
   x: number;
   y: number;
-  w: number;
-  h: number;
+  width: number;
+  height: number;
 }
 
 export interface RoughAnnotationConfigBase {
