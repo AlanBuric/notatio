@@ -12,6 +12,12 @@ function durationMs(value: string): number {
   return parseFloat(value);
 }
 
+function keyframeStyles(): HTMLStyleElement[] {
+  return [...document.querySelectorAll('style')].filter((style) =>
+    style.textContent?.includes('rough-notation-dash'),
+  );
+}
+
 /** The x coordinate of a path's opening move command. */
 function startX(path: SVGPathElement): number {
   const match = /^M(-?[\d.]+)/.exec(path.getAttribute('d') ?? '');
@@ -146,10 +152,24 @@ describe('animation', () => {
     annotate(mountElement(), { type: 'underline' }).show();
     annotate(mountElement(), { type: 'box' }).show();
 
-    const sheets = [...document.querySelectorAll('style')].filter((style) =>
-      style.textContent?.includes('rough-notation-dash'),
-    );
-    expect(sheets).toHaveLength(1);
+    expect(keyframeStyles()).toHaveLength(1);
+  });
+
+  /*
+   * Client-side routers such as Astro's ClientRouter replace document.head on
+   * navigation. The rule has to come back, or the dash animation resolves to
+   * nothing and annotations render invisible at full stroke-dashoffset.
+   */
+  it('reinjects the keyframes after the document head is replaced', () => {
+    annotate(mountElement(), { type: 'underline' }).show();
+    keyframeStyles().forEach((style) => style.remove());
+
+    const element = mountElement();
+
+    annotate(element, { type: 'underline' }).show();
+
+    expect(keyframeStyles()).toHaveLength(1);
+    expect(pathsFor(element)[0]?.style.animationName).toBe('rough-notation-dash');
   });
 });
 

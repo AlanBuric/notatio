@@ -1,61 +1,115 @@
-import type { BracketType, FullPadding, Rect, RoughAnnotationConfig } from './model.js';
-import { SVG_NS } from './model.js';
 import type { OpSet, ResolvedOptions } from 'roughjs/bin/core';
-import { ellipse, line, linearPath, rectangle } from 'roughjs/bin/renderer';
 import type { Point } from 'roughjs/bin/geometry';
+import { ellipse, line, linearPath, rectangle } from 'roughjs/bin/renderer';
+import {
+  DEFAULT_COLOR,
+  DEFAULT_ITERATIONS,
+  DEFAULT_PADDING,
+  DEFAULT_STROKE_WIDTH,
+  HIGHLIGHT_HEIGHT_RATIO,
+  KEYFRAME_NAME,
+  SVG_NS,
+} from './constants.js';
+import type { BracketType, FullPadding, Rect, RoughAnnotationConfig } from './types.js';
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
+const BASE_OPTIONS = {
+  maxRandomnessOffset: 2,
+  bowing: 1,
+  stroke: '#000',
+  strokeWidth: 1.5,
+  curveTightness: 0,
+  curveFitting: 0.95,
+  curveStepCount: 9,
+  fillStyle: 'hachure',
+  fillWeight: -1,
+  hachureAngle: -41,
+  hachureGap: -1,
+  dashOffset: -1,
+  dashGap: -1,
+  zigzagOffset: -1,
+  disableMultiStrokeFill: false,
+  preserveVertices: false,
+  fillShapeRoughnessGain: 0.8,
+} as const;
+
 function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
   return {
-    maxRandomnessOffset: 2,
+    ...BASE_OPTIONS,
     roughness: type === 'highlight' ? 3 : 1.5,
-    bowing: 1,
-    stroke: '#000',
-    strokeWidth: 1.5,
-    curveTightness: 0,
-    curveFitting: 0.95,
-    curveStepCount: 9,
-    fillStyle: 'hachure',
-    fillWeight: -1,
-    hachureAngle: -41,
-    hachureGap: -1,
-    dashOffset: -1,
-    dashGap: -1,
-    zigzagOffset: -1,
     disableMultiStroke: type !== 'double',
-    disableMultiStrokeFill: false,
-    preserveVertices: false,
-    fillShapeRoughnessGain: 0.8,
     seed,
   };
 }
 
 /** @internal Exported for testing. Not part of the package entry point. */
 export function parsePadding(config: RoughAnnotationConfig): FullPadding {
-  const p = config.padding;
-  if (p || p === 0) {
-    if (typeof p === 'number') {
-      return [p, p, p, p];
-    } else if (Array.isArray(p)) {
-      const pa = p as number[];
-      if (pa.length) {
-        switch (pa.length) {
-          case 4:
-            return [...pa] as FullPadding;
-          case 1:
-            return [pa[0], pa[0], pa[0], pa[0]];
-          case 2:
-            return [...pa, ...pa] as FullPadding;
-          case 3:
-            return [...pa, pa[1]] as FullPadding;
-          default:
-            return [pa[0], pa[1], pa[2], pa[3]];
-        }
-      }
-    }
+  const { padding } = config;
+
+  if (typeof padding === 'number') return [padding, padding, padding, padding];
+
+  if (Array.isArray(padding) && padding.length) {
+    const [top, right = top, bottom = top, left = right] = padding as number[];
+    return [top, right, bottom, left];
   }
-  return [5, 5, 5, 5];
+
+  return [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING];
+}
+
+/**
+ * Strokes drawn back and forth between two points. `rtl` shifts the starting
+ * parity so the first stroke runs in the opposite direction.
+ */
+function alternatingLines(
+  from: Point,
+  to: Point,
+  iterations: number,
+  rtl: number,
+  options: ResolvedOptions,
+): OpSet[] {
+  return Array.from({ length: Math.max(iterations, 0) }, (_, index) => {
+    const [[x1, y1], [x2, y2]] = (index + rtl) % 2 ? [to, from] : [from, to];
+    return line(x1, y1, x2, y2, options);
+  });
+}
+
+function bracketPoints(side: BracketType, rect: Rect, padding: FullPadding): Point[] {
+  const left = rect.x - padding[3] * 2;
+  const right = rect.x + rect.w + padding[1] * 2;
+  const top = rect.y - padding[0] * 2;
+  const bottom = rect.y + rect.h + padding[2] * 2;
+
+  switch (side) {
+    case 'top':
+      return [
+        [left, rect.y],
+        [left, top],
+        [right, top],
+        [right, rect.y],
+      ];
+    case 'bottom':
+      return [
+        [left, rect.y + rect.h],
+        [left, bottom],
+        [right, bottom],
+        [right, rect.y + rect.h],
+      ];
+    case 'left':
+      return [
+        [rect.x, top],
+        [left, top],
+        [left, bottom],
+        [rect.x, bottom],
+      ];
+    case 'right':
+      return [
+        [rect.x + rect.w, top],
+        [right, top],
+        [right, bottom],
+        [rect.x + rect.w, bottom],
+      ];
+  }
 }
 
 export function renderAnnotation(
@@ -66,202 +120,133 @@ export function renderAnnotation(
   animationDuration: number,
   seed: number,
 ) {
-  const opList: OpSet[] = [];
-  let strokeWidth = config.strokeWidth ?? 2;
   const padding = parsePadding(config);
   const animate = config.animate ?? true;
-  const iterations = config.iterations ?? 2;
+  const iterations = config.iterations ?? DEFAULT_ITERATIONS;
   const rtl = config.rtl ? 1 : 0;
-  const o = getOptions('single', seed);
+  const options = getOptions('single', seed);
+
+  let strokeWidth = config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  let opList: OpSet[] = [];
 
   switch (config.type) {
     case 'underline': {
       const y = rect.y + rect.h + padding[2];
-      for (let i = rtl; i < iterations + rtl; i++) {
-        if (i % 2) {
-          opList.push(line(rect.x + rect.w, y, rect.x, y, o));
-        } else {
-          opList.push(line(rect.x, y, rect.x + rect.w, y, o));
-        }
-      }
+      opList = alternatingLines([rect.x, y], [rect.x + rect.w, y], iterations, rtl, options);
       break;
     }
     case 'strike-through': {
       const y = rect.y + rect.h / 2;
-      for (let i = rtl; i < iterations + rtl; i++) {
-        if (i % 2) {
-          opList.push(line(rect.x + rect.w, y, rect.x, y, o));
-        } else {
-          opList.push(line(rect.x, y, rect.x + rect.w, y, o));
-        }
-      }
+      opList = alternatingLines([rect.x, y], [rect.x + rect.w, y], iterations, rtl, options);
+      break;
+    }
+    case 'highlight': {
+      const highlightOptions = getOptions('highlight', seed);
+      const y = rect.y + rect.h / 2;
+
+      strokeWidth = rect.h * HIGHLIGHT_HEIGHT_RATIO;
+      opList = alternatingLines(
+        [rect.x, y],
+        [rect.x + rect.w, y],
+        iterations,
+        rtl,
+        highlightOptions,
+      );
+      break;
+    }
+    case 'crossed-off': {
+      const x2 = rect.x + rect.w;
+      const y2 = rect.y + rect.h;
+
+      opList = [
+        ...alternatingLines([rect.x, rect.y], [x2, y2], iterations, rtl, options),
+        ...alternatingLines([x2, rect.y], [rect.x, y2], iterations, rtl, options),
+      ];
       break;
     }
     case 'box': {
       const x = rect.x - padding[3];
       const y = rect.y - padding[0];
-      const width = rect.w + (padding[1] + padding[3]);
-      const height = rect.h + (padding[0] + padding[2]);
-      for (let i = 0; i < iterations; i++) {
-        opList.push(rectangle(x, y, width, height, o));
-      }
-      break;
-    }
-    case 'bracket': {
-      const brackets: BracketType[] = Array.isArray(config.brackets)
-        ? config.brackets
-        : config.brackets
-          ? [config.brackets]
-          : ['right'];
-      const lx = rect.x - padding[3] * 2;
-      const rx = rect.x + rect.w + padding[1] * 2;
-      const ty = rect.y - padding[0] * 2;
-      const by = rect.y + rect.h + padding[2] * 2;
-      for (const br of brackets) {
-        let points: Point[];
-        switch (br) {
-          case 'bottom':
-            points = [
-              [lx, rect.y + rect.h],
-              [lx, by],
-              [rx, by],
-              [rx, rect.y + rect.h],
-            ];
-            break;
-          case 'top':
-            points = [
-              [lx, rect.y],
-              [lx, ty],
-              [rx, ty],
-              [rx, rect.y],
-            ];
-            break;
-          case 'left':
-            points = [
-              [rect.x, ty],
-              [lx, ty],
-              [lx, by],
-              [rect.x, by],
-            ];
-            break;
-          case 'right':
-            points = [
-              [rect.x + rect.w, ty],
-              [rx, ty],
-              [rx, by],
-              [rect.x + rect.w, by],
-            ];
-            break;
-        }
-        if (points) {
-          opList.push(linearPath(points, false, o));
-        }
-      }
-      break;
-    }
-    case 'crossed-off': {
-      const x = rect.x;
-      const y = rect.y;
-      const x2 = x + rect.w;
-      const y2 = y + rect.h;
-      for (let i = rtl; i < iterations + rtl; i++) {
-        if (i % 2) {
-          opList.push(line(x2, y2, x, y, o));
-        } else {
-          opList.push(line(x, y, x2, y2, o));
-        }
-      }
-      for (let i = rtl; i < iterations + rtl; i++) {
-        if (i % 2) {
-          opList.push(line(x, y2, x2, y, o));
-        } else {
-          opList.push(line(x2, y, x, y2, o));
-        }
-      }
+      const width = rect.w + padding[1] + padding[3];
+      const height = rect.h + padding[0] + padding[2];
+
+      opList = Array.from({ length: Math.max(iterations, 0) }, () =>
+        rectangle(x, y, width, height, options),
+      );
       break;
     }
     case 'circle': {
-      const doubleO = getOptions('double', seed);
-      const width = rect.w + (padding[1] + padding[3]);
-      const height = rect.h + (padding[0] + padding[2]);
+      const width = rect.w + padding[1] + padding[3];
+      const height = rect.h + padding[0] + padding[2];
       const x = rect.x - padding[3] + width / 2;
       const y = rect.y - padding[0] + height / 2;
-      const fullItr = Math.floor(iterations / 2);
-      const singleItr = iterations - fullItr * 2;
-      for (let i = 0; i < fullItr; i++) {
-        opList.push(ellipse(x, y, width, height, doubleO));
-      }
-      for (let i = 0; i < singleItr; i++) {
-        opList.push(ellipse(x, y, width, height, o));
-      }
+      const doubleStrokes = Math.floor(iterations / 2);
+      const singleStrokes = iterations - doubleStrokes * 2;
+      const doubleOptions = getOptions('double', seed);
+
+      opList = [
+        ...Array.from({ length: doubleStrokes }, () => ellipse(x, y, width, height, doubleOptions)),
+        ...Array.from({ length: Math.max(singleStrokes, 0) }, () =>
+          ellipse(x, y, width, height, options),
+        ),
+      ];
       break;
     }
-    case 'highlight': {
-      const o = getOptions('highlight', seed);
-      strokeWidth = rect.h * 0.95;
-      const y = rect.y + rect.h / 2;
-      for (let i = rtl; i < iterations + rtl; i++) {
-        if (i % 2) {
-          opList.push(line(rect.x + rect.w, y, rect.x, y, o));
-        } else {
-          opList.push(line(rect.x, y, rect.x + rect.w, y, o));
-        }
-      }
+    case 'bracket': {
+      const sides = Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'];
+
+      opList = sides.map((side) => linearPath(bracketPoints(side, rect, padding), false, options));
       break;
     }
   }
 
-  if (opList.length) {
-    const pathStrings = opsToPath(opList);
-    const lengths: number[] = [];
-    const pathElements: SVGPathElement[] = [];
-    let totalLength = 0;
-    const setAttr = (p: SVGPathElement, an: string, av: string) => p.setAttribute(an, av);
+  if (!opList.length) return;
 
-    for (const d of pathStrings) {
-      const path = document.createElementNS(SVG_NS, 'path');
-      setAttr(path, 'd', d);
-      setAttr(path, 'fill', 'none');
-      setAttr(path, 'stroke', config.color ?? 'currentColor');
-      setAttr(path, 'stroke-width', `${strokeWidth}`);
-      if (animate) {
-        const length = path.getTotalLength();
-        lengths.push(length);
-        totalLength += length;
-      }
-      svg.appendChild(path);
-      pathElements.push(path);
-    }
+  const paths = opsToPath(opList).map((d) => {
+    const path = document.createElementNS(SVG_NS, 'path');
 
-    if (animate) {
-      let durationOffset = 0;
-      for (let i = 0; i < pathElements.length; i++) {
-        const path = pathElements[i];
-        const length = lengths[i];
-        const duration = totalLength ? animationDuration * (length / totalLength) : 0;
-        const delay = animationGroupDelay + durationOffset;
-        const style = path.style;
-        style.strokeDashoffset = `${length}`;
-        style.strokeDasharray = `${length}`;
-        style.animation = `rough-notation-dash ${duration}ms ease-out ${delay}ms forwards`;
-        durationOffset += duration;
-      }
-    }
-  }
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
+    path.setAttribute('stroke-width', `${strokeWidth}`);
+    svg.appendChild(path);
+
+    return path;
+  });
+
+  if (!animate) return;
+
+  const lengths = paths.map((path) => path.getTotalLength());
+  const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+  let delay = animationGroupDelay;
+
+  paths.forEach((path, index) => {
+    const length = lengths[index];
+    const duration = totalLength ? animationDuration * (length / totalLength) : 0;
+
+    path.style.strokeDashoffset = `${length}`;
+    path.style.strokeDasharray = `${length}`;
+    path.style.animation = `${KEYFRAME_NAME} ${duration}ms ease-out ${delay}ms forwards`;
+
+    delay += duration;
+  });
 }
 
 /** @internal Exported for testing. Not part of the package entry point. */
 export function opsToPath(opList: OpSet[]): string[] {
   const paths: string[] = [];
-  for (const drawing of opList) {
+
+  opList.forEach(({ ops }) => {
     let path = '';
-    for (const item of drawing.ops) {
-      const data = item.data;
-      switch (item.op) {
+
+    const flush = () => {
+      if (path.trim()) paths.push(path.trim());
+    };
+
+    ops.forEach(({ op, data }) => {
+      switch (op) {
         case 'move':
-          if (path.trim()) {
-            paths.push(path.trim());
-          }
+          flush();
           path = `M${data[0]} ${data[1]} `;
           break;
         case 'bcurveTo':
@@ -271,10 +256,10 @@ export function opsToPath(opList: OpSet[]): string[] {
           path += `L${data[0]} ${data[1]} `;
           break;
       }
-    }
-    if (path.trim()) {
-      paths.push(path.trim());
-    }
-  }
+    });
+
+    flush();
+  });
+
   return paths;
 }
