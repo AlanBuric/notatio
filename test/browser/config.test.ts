@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { annotate } from '../../src/rough-notation.js';
+import { annotate } from '../../src/index.js';
 import { cleanup, flushMicrotasks, mountContainer, mountElement, pathsFor } from './helpers.js';
 
 afterEach(cleanup);
@@ -14,7 +14,7 @@ function durationMs(value: string): number {
 
 function keyframeStyles(): HTMLStyleElement[] {
   return [...document.querySelectorAll('style')].filter((style) =>
-    style.textContent?.includes('rough-notation-dash'),
+    style.textContent?.includes('notatio-dash'),
   );
 }
 
@@ -101,7 +101,7 @@ describe('animation', () => {
 
     const style = pathsFor(element)[0]!.style;
 
-    expect(style.animationName).toBe('rough-notation-dash');
+    expect(style.animationName).toBe('notatio-dash');
     expect(durationMs(style.animationDuration)).toBeGreaterThan(0);
   });
 
@@ -169,7 +169,7 @@ describe('animation', () => {
     annotate(element, { type: 'underline' }).show();
 
     expect(keyframeStyles()).toHaveLength(1);
-    expect(pathsFor(element)[0]?.style.animationName).toBe('rough-notation-dash');
+    expect(pathsFor(element)[0]?.style.animationName).toBe('notatio-dash');
   });
 });
 

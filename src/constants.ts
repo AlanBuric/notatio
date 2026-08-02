@@ -1,8 +1,8 @@
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 
-export const ANNOTATION_CLASS = 'rough-annotation';
+export const ANNOTATION_CLASS = 'notatio-annotation';
 
-export const KEYFRAME_NAME = 'rough-notation-dash';
+export const KEYFRAME_NAME = 'notatio-dash';
 
 export const DEFAULT_ANIMATION_DURATION = 800;
 

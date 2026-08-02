@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { annotate } from '../../src/rough-notation.js';
+import { annotate } from '../../src/index.js';
 import type { BracketType, RoughAnnotationConfig, RoughAnnotationType } from '../../src/types.js';
 import { cleanup, mountElement, pathsFor } from './helpers.js';
 

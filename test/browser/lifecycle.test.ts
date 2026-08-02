@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { annotate } from '../../src/rough-notation.js';
+import { annotate } from '../../src/index.js';
 import { cleanup, mountElement, pathsFor, svgFor } from './helpers.js';
 
 afterEach(cleanup);
@@ -11,7 +11,7 @@ describe('attaching', () => {
 
     const svg = element.nextElementSibling;
     expect(svg?.tagName).toBe('svg');
-    expect(svg?.getAttribute('class')).toBe('rough-annotation');
+    expect(svg?.getAttribute('class')).toBe('notatio-annotation');
   });
 
   it('inserts the SVG before the element for highlight, so it paints behind', () => {

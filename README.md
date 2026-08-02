@@ -1,206 +1,138 @@
-![Rough Notation logo](https://roughnotation.com/images/social.png)
-
-# Rough Notation
+# Notatio
 
 A small JavaScript library to create and animate annotations on a web page.
 
-Rough Notation uses [RoughJS](https://roughjs.com) to create a hand-drawn look and feel. Elements can be annotated in a number of different styles. Animation duration can be configured, or just turned off.
+Notatio uses [RoughJS](https://roughjs.com) to give annotations a hand-drawn look and feel. Elements can be annotated in a number of styles, and the animation can be retimed or turned off.
 
-Rough Notation is 3.83kb in size when gzipped.
+The bundle is 3.8kb gzipped and has no runtime dependencies.
 
-[Visit website to see it in action](https://roughnotation.com/) and check out the [source code](https://github.com/pshihn/rough-notation-web) for the website
+Notatio is a fork of [rough-notation](https://github.com/rough-stuff/rough-notation) by Preet Shihn, updated for current tooling and browsers. See [Differences from rough-notation](#differences-from-rough-notation) if you are migrating.
 
 ## Installation
 
-You can add rough-notation to your project via npm
-
 ```
-npm install --save rough-notation
+npm install notatio
 ```
 
-Or load the ES module directly
+Or load the ES module directly:
 
 ```html
-<script type="module" src="https://unpkg.com/rough-notation?module"></script>
-```
-
-Or load the IIFE version which created a `RoughNotation` object in your scope.
-
-```html
-<script src="https://unpkg.com/rough-notation/lib/rough-notation.iife.js"></script>
+<script type="module">
+  import { annotate } from 'https://unpkg.com/notatio';
+</script>
 ```
 
 ## Usage
 
-Create an `annotation` object by passing the element to annotate, and a config to describe the annotation style.
-Once you have the annotation object, you can call `show()` on it to show the annotation
+Create an annotation by passing the element to annotate and a config describing the style, then call `show()`.
 
 ```javascript
-import { annotate } from 'rough-notation';
-// Or using unpkg
-// import { annotate } from 'https://unpkg.com/rough-notation?module';
+import { annotate } from 'notatio';
 
-const e = document.querySelector('#myElement');
-const annotation = annotate(e, { type: 'underline' });
+const element = document.querySelector('#myElement');
+const annotation = annotate(element, { type: 'underline' });
+
 annotation.show();
 ```
 
-_Note: This will add an SVG element as a sibling to the element, which may be troublesome in certain situations like in a `<table>`. You may want to create an inner `<span>` or `<div>` for the content to annotate._
+This inserts an SVG as a sibling of the element, which can be awkward in places that restrict their children, such as a `<table>`. Wrap the content in an inner `<span>` or `<div>` in those cases.
 
-## Annotation Group
+Annotations are measured from the element's rendered size. If a web font is still loading when you call `show()`, the annotation will be sized against the fallback font. Wait for `document.fonts.ready` if that applies.
 
-rough-notation provides a way to order the animation of annotations by creating an annotation-group. Pass the list of annotations to create a group. When show is called on the group, the annotations are animated in order.
+## Annotation groups
+
+A group animates its annotations one after another, in the order given rather than DOM order.
 
 ```javascript
-import { annotate, annotationGroup } from 'rough-notation';
+import { annotate, annotationGroup } from 'notatio';
 
 const a1 = annotate(document.querySelector('#e1'), { type: 'underline' });
-const a2 = annotate(document.querySelector('#e3'), { type: 'box' });
+const a2 = annotate(document.querySelector('#e2'), { type: 'box' });
 const a3 = annotate(document.querySelector('#e3'), { type: 'circle' });
 
-const ag = annotationGroup([a3, a1, a2]);
-ag.show();
+annotationGroup([a3, a1, a2]).show();
 ```
 
-## Live examples
+## Configuration
 
-I have created some basic examples on Glitch for you to remix and play with the code:
+`type` is the only required field.
 
-[Basic demo](https://glitch.com/~basic-rough-notation)
+| Option              | Type                           | Default        | Description                                                                     |
+| ------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------- |
+| `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                                |
+| `animate`           | `boolean`                      | `true`         | Whether to animate the drawing.                                                 |
+| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                  |
+| `color`             | `string`                       | `currentColor` | Stroke color.                                                                   |
+| `strokeWidth`       | `number`                       | `2`            | Stroke width. Ignored by `highlight`, which derives it from the element height. |
+| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                     |
+| `iterations`        | `number`                       | `2`            | Number of strokes drawn. Ignored by `bracket`.                                  |
+| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | Which sides to bracket.                                                         |
+| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                           |
+| `rtl`               | `boolean`                      | `false`        | Draw the first stroke right to left.                                            |
 
-[Annotation group demo](https://glitch.com/~annotation-group)
+### type
 
-## Configuring the Annotation
+- **underline**: a sketchy underline below the element.
+- **box**: a box around the element.
+- **circle**: a circle around the element.
+- **highlight**: a highlighter effect behind the element.
+- **strike-through**: horizontal lines through the element.
+- **crossed-off**: an X across the element.
+- **bracket**: a bracket beside the element, usually a paragraph of text.
 
-When you create an annotation object, you pass in a config. The config only has one mandatory field, which is the `type` of the annotation. But you can configure the annotation in many ways.
+### padding
 
-#### type
+A single number applies to every side. An array follows CSS shorthand order, so `[top, right, bottom, left]`, `[top, right, bottom]`, or `[block, inline]`.
 
-This is a mandatory field. It sets the annotation style. Following are the list of supported annotation types:
+## Annotation object
 
-- **underline**: This style creates a sketchy underline below an element.
-- **box**: This style draws a box around the element.
-- **circle**: This style draws a circle around the element.
-- **highlight**: This style creates a highlight effect as if marked by a highlighter.
-- **strike-through**: This style draws horizontal lines through the element.
-- **crossed-off**: This style draws an 'X' across the element.
-- **bracket**: This style draws a bracket around an element, usually a paragraph of text. By default on the right side, but can be configured to any or all of _left, right, top, bottom_.
+`annotate()` returns an object with:
 
-#### animate
+- **`isShowing(): boolean`** whether the annotation is currently drawn.
+- **`show()`** draws the annotation, animating if configured. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
+- **`hide()`** removes the drawing. Not animated.
+- **`remove()`** unlinks the annotation from the element.
 
-Boolean property to turn on/off animation when annotating. Default value is `true`.
-
-#### animationDuration
-
-Duration of the animation in milliseconds. Default is `800ms`.
-
-#### color
-
-String value representing the color of the annotation sketch. Default value is `currentColor`.
-
-#### strokeWidth
-
-Width of the annotation strokes. Default value is `1`.
-
-#### padding
-
-Padding between the element and roughly where the annotation is drawn. Default value is `5` (in pixels).
-If you wish to specify different `top`, `left`, `right`, `bottom` paddings, you can set the value to an array akin to CSS style padding `[top, right, bottom, left]` or just `[top & bottom, left & right]`.
-
-#### multiline
-
-This property only applies to inline text. To annotate multiline text (each line separately), set this property to `true`.
-
-#### iterations
-
-By default annotations are drawn in two iterations, e.g. when underlining, drawing from left to right and then back from right to left. Setting this property can let you configure the number of iterations.
-
-#### brackets
-
-Value could be a string or an array of strings, each string being one of these values: **left, right, top, bottom**. When drawing a bracket, this configures which side(s) of the element to bracket. Default value is `right`.
-
-#### rtl
-
-By default annotations are drawn from left to right. To start with right to left, set this property to `true`.
-
-## Annotation Object
-
-When you call the `annotate` function, you get back an annotation object, which has the following methods:
-
-#### isShowing(): boolean
-
-Returns if the annotation is showing
-
-#### show()
-
-Draws the annotation. If the annotation is set to animate (default), it will animate the drawing. If called again, it will re-render the annotation, updating any size or location changes.
-
-*Note: to reanimate the annotation, call `hide()` and then `show()` again.
-
-#### hide()
-
-Hides the annotation if showing. This is not animated.
-
-#### remove()
-
-Unlinks the annotation from the element.
-
-#### Updating styles
-
-All the properties in the configuration are also exposed in this object. e.g. if you'd like to change the color, you can do that after the annotation has been drawn.
+Every config property is also exposed as a settable property. Changing `color`, `strokeWidth` or `padding` redraws a visible annotation.
 
 ```javascript
-const e = document.querySelector('#myElement');
-const annotation = annotate(e, { type: 'underline', color: 'red' });
+const annotation = annotate(element, { type: 'underline', color: 'red' });
+
 annotation.show();
 annotation.color = 'green';
 ```
 
-_Note: the type of the annotation cannot be changed. Create a new annotation for that._
+The `type` cannot be changed. Create a new annotation instead.
 
-## Annotation Group Object
+## Annotation group object
 
-When you call the `annotationGroup` function, you get back an annotation group object, which has the following methods:
+`annotationGroup()` returns an object with `show()` and `hide()`, which apply to every annotation in the group.
 
-#### show()
+## Styling
 
-Draws all the annotations in order. If the annotation is set to animate (default), it will animate the drawing.
+The injected SVG carries the class `notatio-annotation`, and the stroke animation uses the keyframe `notatio-dash`.
 
-#### hide()
+## Differences from rough-notation
 
-Hides all the annotations if showing. This is not animated.
+Notatio 1.0.0 is behaviourally compatible with rough-notation 0.5.1 apart from the following.
 
-## Wrappers
+- **ESM only.** The CommonJS and IIFE builds are gone, along with the `RoughNotation` global. Use `<script type="module">` for CDN usage.
+- **The CSS class is `notatio-annotation`**, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`. Update any selectors that target them.
+- **Zero-valued options are honoured.** `strokeWidth: 0`, `iterations: 0` and `animationDuration: 0` previously fell back to their defaults because they were applied with `||`.
+- **Annotations survive a client-side route change.** The keyframes rule is reinjected if a router replaces `document.head`, which previously left annotations invisible.
 
-Others have created handy Rough Notation wrappers for multiple libraries and frameworks:
+## Credits
 
-- [React Rough Notation](https://github.com/linkstrifer/react-rough-notation)
-- [Svelte Rough Notation](https://github.com/dimfeld/svelte-rough-notation)
-- [Vue Rough Notation](https://github.com/Leecason/vue-rough-notation)
-- [Web Component Rough Notation](https://github.com/Matsuuu/vanilla-rough-notation)
-- [Angular Rough Notation](https://github.com/mikyaj/ngx-rough-notation)
+Notatio is a fork of [rough-notation](https://github.com/rough-stuff/rough-notation) by [Preet Shihn](https://github.com/pshihn), who also wrote [RoughJS](https://roughjs.com), which does the drawing.
 
-## Contributors
+These third-party wrappers target the original rough-notation, not Notatio:
 
-### Financial Contributors
+- [React](https://github.com/linkstrifer/react-rough-notation)
+- [Svelte](https://github.com/dimfeld/svelte-rough-notation)
+- [Vue](https://github.com/Leecason/vue-rough-notation)
+- [Web Component](https://github.com/Matsuuu/vanilla-rough-notation)
+- [Angular](https://github.com/mikyaj/ngx-rough-notation)
 
-Become a financial contributor and help us sustain our community. [[Contribute](https://opencollective.com/rough/contribute)]
+## License
 
-#### Individuals
-
-<a href="https://opencollective.com/rough"><img src="https://opencollective.com/rough/individuals.svg?width=890"></a>
-
-#### Organizations
-
-Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/rough/contribute)]
-
-<a href="https://opencollective.com/rough/organization/0/website"><img src="https://opencollective.com/rough/organization/0/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/1/website"><img src="https://opencollective.com/rough/organization/1/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/2/website"><img src="https://opencollective.com/rough/organization/2/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/3/website"><img src="https://opencollective.com/rough/organization/3/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/4/website"><img src="https://opencollective.com/rough/organization/4/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/5/website"><img src="https://opencollective.com/rough/organization/5/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/6/website"><img src="https://opencollective.com/rough/organization/6/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/7/website"><img src="https://opencollective.com/rough/organization/7/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/8/website"><img src="https://opencollective.com/rough/organization/8/avatar.svg"></a>
-<a href="https://opencollective.com/rough/organization/9/website"><img src="https://opencollective.com/rough/organization/9/avatar.svg"></a>
+MIT, copyright 2020 Preet Shihn and 2026 Alan Burić. See [LICENSE](LICENSE).

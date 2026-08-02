@@ -1,19 +1,20 @@
 {
-  "name": "rough-notation",
-  "version": "0.5.1",
+  "name": "notatio",
+  "version": "1.0.0",
   "description": "Create and animate hand-drawn annotations on a web page",
   "type": "module",
-  "types": "./dist/rough-notation.d.ts",
-  "module": "./dist/rough-notation.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
   "exports": {
     ".": {
-      "types": "./dist/rough-notation.d.ts",
-      "default": "./dist/rough-notation.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "engines": {
@@ -32,26 +33,34 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pshihn/rough-notation.git"
+    "url": "git+https://github.com/AlanBuric/notatio.git"
   },
   "keywords": [
     "annotate",
+    "annotation",
+    "hand-drawn",
+    "highlight",
     "rough",
-    "sketchy"
+    "sketchy",
+    "svg",
+    "underline"
   ],
-  "author": "Preet Shihn",
+  "author": "Alan Burić",
+  "contributors": [
+    "Preet Shihn"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/pshihn/rough-notation/issues"
+    "url": "https://github.com/AlanBuric/notatio/issues"
   },
-  "homepage": "https://github.com/pshihn/rough-notation#readme",
+  "homepage": "https://github.com/AlanBuric/notatio#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/browser": "^4.1.10",
-    "@vitest/browser-playwright": "^4.1.10",
+    "@vitest/browser-playwright": "^1.1.2",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
-    "playwright": "^1.62.1",
+    "playwright": "^1.58.1",
     "prettier": "^3.9.6",
     "roughjs": "^4.6.6",
     "terser": "^5.49.0",

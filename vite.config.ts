@@ -7,9 +7,9 @@ export default defineConfig({
     sourcemap: true,
     minify: 'terser',
     lib: {
-      entry: 'src/rough-notation.ts',
+      entry: 'src/index.ts',
       formats: ['es'],
-      fileName: 'rough-notation',
+      fileName: 'index',
     },
     rollupOptions: {
       external: [],
