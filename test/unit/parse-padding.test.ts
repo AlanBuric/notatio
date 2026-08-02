@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { parsePadding } from '../../src/render.js';
 import type { RoughAnnotationConfig, RoughPadding } from '../../src/model.js';
 
-const withPadding = (padding?: RoughPadding): RoughAnnotationConfig => ({ type: 'box', padding });
+function withPadding(padding?: RoughPadding): RoughAnnotationConfig {
+  return { type: 'box', padding };
+}
 
 describe('parsePadding', () => {
   it('defaults to 5px on every side when padding is omitted', () => {
@@ -21,8 +23,6 @@ describe('parsePadding', () => {
     expect(parsePadding(withPadding(-4))).toEqual([-4, -4, -4, -4]);
   });
 
-  // The CSS shorthand rules: 1 value is all sides, 2 is [block, inline],
-  // 3 is [top, inline, bottom], 4 is [top, right, bottom, left].
   it.each([
     { input: [7], expected: [7, 7, 7, 7], label: '1 value covers all sides' },
     { input: [1, 2], expected: [1, 2, 1, 2], label: '2 values are block then inline' },
@@ -45,7 +45,9 @@ describe('parsePadding', () => {
   it('does not alias the caller array', () => {
     const padding: RoughPadding = [1, 2, 3, 4];
     const parsed = parsePadding(withPadding(padding));
+
     parsed[0] = 99;
+
     expect(padding[0]).toBe(1);
   });
 });

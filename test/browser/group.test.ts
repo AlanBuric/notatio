@@ -6,8 +6,10 @@ afterEach(cleanup);
 
 function delayMs(path: SVGPathElement): number {
   const value = path.style.animationDelay;
+
   if (value.endsWith('ms')) return parseFloat(value);
   if (value.endsWith('s')) return parseFloat(value) * 1000;
+
   return parseFloat(value);
 }
 
@@ -110,6 +112,7 @@ describe('annotationGroup', () => {
 
   it('tolerates an empty group', () => {
     const group = annotationGroup([]);
+
     expect(() => {
       group.show();
       group.hide();

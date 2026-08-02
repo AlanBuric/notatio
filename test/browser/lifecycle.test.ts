@@ -55,8 +55,6 @@ describe('attaching', () => {
     const annotation = annotate(orphan, { type: 'underline' });
 
     expect(orphan.nextElementSibling).toBeNull();
-    // An unattached annotation reports as showing, because `isShowing` tests
-    // for the 'not-showing' state specifically. See upstream #71.
     expect(annotation.isShowing()).toBe(true);
 
     annotation.show();

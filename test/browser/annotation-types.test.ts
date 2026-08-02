@@ -7,7 +7,9 @@ afterEach(cleanup);
 
 function render(config: RoughAnnotationConfig): SVGPathElement[] {
   const element = mountElement();
+
   annotate(element, config).show();
+
   return pathsFor(element);
 }
 
@@ -24,11 +26,13 @@ const ALL_TYPES: RoughAnnotationType[] = [
 describe('annotation types', () => {
   it.each(ALL_TYPES)('renders at least one path for %s', (type) => {
     const paths = render({ type });
+
     expect(paths.length).toBeGreaterThan(0);
-    for (const path of paths) {
+
+    paths.forEach((path) => {
       expect(path.getAttribute('d')).toMatch(/^M/);
       expect(path.getAttribute('fill')).toBe('none');
-    }
+    });
   });
 
   // Path counts per iteration, measured against the current renderer. These
@@ -44,25 +48,21 @@ describe('annotation types', () => {
     { type: 'box', perIteration: 4 },
     { type: 'crossed-off', perIteration: 2 },
   ] as const)('$type draws $perIteration path(s) per iteration', ({ type, perIteration }) => {
-    for (const iterations of [1, 2, 3]) {
-      expect(render({ type, iterations })).toHaveLength(perIteration * iterations);
-    }
+    [1, 2, 3].forEach((iterations) =>
+      expect(render({ type, iterations })).toHaveLength(perIteration * iterations),
+    );
   });
 
-  it('draws nothing when iterations is zero', () => {
-    // Regression guard: `iterations: 0` used to be coerced to the default of 2.
-    expect(render({ type: 'underline', iterations: 0 })).toHaveLength(0);
-  });
+  // Regression guard: `iterations: 0` used to be coerced to the default of 2.
+  it('draws nothing when iterations is zero', () =>
+    expect(render({ type: 'underline', iterations: 0 })).toHaveLength(0));
 
-  it('defaults to two iterations', () => {
-    expect(render({ type: 'underline' })).toHaveLength(2);
-  });
+  it('defaults to two iterations', () => expect(render({ type: 'underline' })).toHaveLength(2));
 });
 
 describe('bracket', () => {
-  it('brackets the right side by default', () => {
-    expect(render({ type: 'bracket' })).toHaveLength(3);
-  });
+  it('brackets the right side by default', () =>
+    expect(render({ type: 'bracket' })).toHaveLength(3));
 
   it.each([
     { brackets: 'left', expected: 3 },

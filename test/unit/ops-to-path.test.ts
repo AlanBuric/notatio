@@ -2,16 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { opsToPath } from '../../src/render.js';
 import type { OpSet } from 'roughjs/bin/core';
 
-const opSet = (ops: OpSet['ops']): OpSet => ({ type: 'path', ops });
+function opSet(ops: OpSet['ops']): OpSet {
+  return { type: 'path', ops };
+}
 
 describe('opsToPath', () => {
-  it('returns nothing for an empty op list', () => {
-    expect(opsToPath([])).toEqual([]);
-  });
+  it('returns nothing for an empty op list', () => expect(opsToPath([])).toEqual([]));
 
-  it('returns nothing for an op set with no ops', () => {
-    expect(opsToPath([opSet([])])).toEqual([]);
-  });
+  it('returns nothing for an op set with no ops', () => expect(opsToPath([opSet([])])).toEqual([]));
 
   it('converts a move and a line into a single path string', () => {
     const paths = opsToPath([
@@ -20,6 +18,7 @@ describe('opsToPath', () => {
         { op: 'lineTo', data: [2, 3] },
       ]),
     ]);
+
     expect(paths).toEqual(['M0 1 L2 3']);
   });
 
@@ -30,6 +29,7 @@ describe('opsToPath', () => {
         { op: 'bcurveTo', data: [1, 2, 3, 4, 5, 6] },
       ]),
     ]);
+
     expect(paths).toEqual(['M0 0 C1 2, 3 4, 5 6']);
   });
 
@@ -42,6 +42,7 @@ describe('opsToPath', () => {
         { op: 'lineTo', data: [6, 6] },
       ]),
     ]);
+
     expect(paths).toEqual(['M0 0 L1 1', 'M5 5 L6 6']);
   });
 
@@ -56,13 +57,10 @@ describe('opsToPath', () => {
         { op: 'lineTo', data: [3, 3] },
       ]),
     ]);
+
     expect(paths).toEqual(['M0 0 L1 1', 'M2 2 L3 3']);
   });
 
-  // A trailing move with no drawing command after it still produces a
-  // degenerate path. It renders nothing and has zero length, so it is
-  // harmless, and roughjs does not emit this shape in practice. Recorded
-  // here so a future refactor does not change it by accident.
   it('emits a degenerate path for a trailing move', () => {
     const paths = opsToPath([
       opSet([
@@ -71,6 +69,7 @@ describe('opsToPath', () => {
         { op: 'move', data: [9, 9] },
       ]),
     ]);
+
     expect(paths).toEqual(['M0 0 L1 1', 'M9 9']);
   });
 });
