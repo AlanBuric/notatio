@@ -57,10 +57,10 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@vitest/browser": "^4.1.10",
-    "@vitest/browser-playwright": "^1.1.2",
+    "@vitest/browser-playwright": "^4.1.10",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
-    "playwright": "^1.58.1",
+    "playwright": "^1.62.1",
     "prettier": "^3.9.6",
     "roughjs": "^4.6.6",
     "terser": "^5.49.0",
