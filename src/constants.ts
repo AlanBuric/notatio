@@ -22,6 +22,4 @@ export const DEFAULT_COLOR = 'currentColor';
 /** Fraction of the element height a highlight stroke covers. */
 export const HIGHLIGHT_HEIGHT_RATIO = 0.95;
 
-export const RESIZE_DEBOUNCE_MS = 400;
-
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';

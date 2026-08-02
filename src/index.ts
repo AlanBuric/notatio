@@ -3,7 +3,6 @@ import {
   ANNOTATION_CLASS,
   DEFAULT_ANIMATION_DURATION,
   PATH_LENGTH_PROPERTY,
-  RESIZE_DEBOUNCE_MS,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
 } from './constants.js';
@@ -17,6 +16,32 @@ import type {
 } from './types.js';
 
 type AnnotationState = 'unattached' | 'not-showing' | 'showing';
+
+const dirtyAnnotations = new Set<RoughAnnotationImpl>();
+let flushScheduled = false;
+
+/**
+ * Resize callbacks mark their annotation dirty rather than redrawing inline.
+ * The batch is flushed once per frame, measuring every annotation before
+ * writing any of them, so a page full of annotations cannot interleave reads
+ * and writes and force layout repeatedly.
+ */
+function markDirty(annotation: RoughAnnotationImpl): void {
+  dirtyAnnotations.add(annotation);
+
+  if (flushScheduled) return;
+
+  flushScheduled = true;
+
+  requestAnimationFrame(() => {
+    flushScheduled = false;
+
+    const batch = [...dirtyAnnotations];
+
+    dirtyAnnotations.clear();
+    RoughAnnotationImpl.flush(batch);
+  });
+}
 
 function isSameRect(a: Rect, b: Rect): boolean {
   const sameRounded = (x: number, y: number) => Math.round(x) === Math.round(y);
@@ -57,7 +82,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #seed = randomSeed();
   #svg?: SVGSVGElement;
   #lastSizes: Rect[] = [];
-  #resizing = false;
   #resizeObserver?: ResizeObserver;
   #pendingRefresh?: Promise<void>;
   #animationDelay = 0;
@@ -297,17 +321,29 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#attachListeners();
   }
 
-  #resizeListener = () => {
-    if (this.#resizing) return;
+  #resizeListener = () => markDirty(this);
 
-    this.#resizing = true;
+  /** Measures the whole batch, then writes only what actually moved. */
+  static flush(annotations: RoughAnnotationImpl[]): void {
+    const stale: { annotation: RoughAnnotationImpl; rects: Rect[] }[] = [];
 
-    setTimeout(() => {
-      this.#resizing = false;
+    annotations.forEach((annotation) => {
+      if (annotation.#state !== 'showing') return;
 
-      if (this.#state === 'showing' && this.#haveRectsChanged()) this.show();
-    }, RESIZE_DEBOUNCE_MS);
-  };
+      const rects = annotation.#rects();
+
+      if (annotation.#rectsDiffer(rects)) stale.push({ annotation, rects });
+    });
+
+    stale.forEach(({ annotation, rects }) => annotation.#redraw(rects));
+  }
+
+  #redraw(rects: Rect[]): void {
+    if (!this.#svg) return;
+
+    this.#clear();
+    this.#render(this.#svg, true, rects);
+  }
 
   #attachListeners(): void {
     this.detachListeners();
@@ -325,10 +361,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#resizeObserver?.unobserve(this.#element);
   }
 
-  #haveRectsChanged(): boolean {
+  #rectsDiffer(rects: Rect[]): boolean {
     if (!this.#lastSizes.length) return false;
-
-    const rects = this.#rects();
 
     if (rects.length !== this.#lastSizes.length) return true;
 
@@ -345,9 +379,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
   }
 
-  #render(svg: SVGSVGElement, ensureNoAnimation: boolean): void {
+  #render(svg: SVGSVGElement, ensureNoAnimation: boolean, measured?: Rect[]): void {
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
-    const rects = this.#rects();
+    const rects = measured ?? this.#rects();
     const totalWidth = rects.reduce((sum, rect) => sum + rect.w, 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
     let delay = 0;

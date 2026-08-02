@@ -3,6 +3,24 @@ import type { RoughAnnotation } from '../../src/types.js';
 const SVG_SELECTOR = 'svg.notatio-annotation';
 
 /**
+ * roughjs offsets every stroke by a random amount, so any assertion comparing a
+ * drawn size against a layout size needs headroom. Keep fixtures large enough
+ * that a real error stays well clear of this.
+ */
+export const STROKE_JITTER = 12;
+
+/** Width of an annotation's drawn strokes, in SVG user units. */
+export function annotationWidth(element: HTMLElement): number {
+  const boxes = pathsFor(element).map((path) => path.getBBox());
+
+  if (!boxes.length) return 0;
+
+  return (
+    Math.max(...boxes.map((box) => box.x + box.width)) - Math.min(...boxes.map((box) => box.x))
+  );
+}
+
+/**
  * Mounts a container with a deterministic size so rect maths is stable, and
  * registers it for teardown. Returns the container.
  */

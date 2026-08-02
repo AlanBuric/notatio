@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '../../src/index.js';
-import { cleanup, mountContainer, mountElement, pathsFor, svgFor } from './helpers.js';
+import {
+  STROKE_JITTER,
+  cleanup,
+  mountContainer,
+  mountElement,
+  pathsFor,
+  svgFor,
+} from './helpers.js';
 
 afterEach(cleanup);
 
@@ -144,9 +151,7 @@ describe('transformed ancestors', () => {
     const height =
       Math.max(...boxes.map((box) => box.y + box.height)) - Math.min(...boxes.map((box) => box.y));
 
-    const JITTER = 12;
-
-    expect(Math.abs(width - element.offsetWidth)).toBeLessThan(JITTER);
-    expect(Math.abs(height - element.offsetHeight)).toBeLessThan(JITTER);
+    expect(Math.abs(width - element.offsetWidth)).toBeLessThan(STROKE_JITTER);
+    expect(Math.abs(height - element.offsetHeight)).toBeLessThan(STROKE_JITTER);
   });
 });
