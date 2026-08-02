@@ -24,16 +24,28 @@ function isSameRect(a: Rect, b: Rect): boolean {
   );
 }
 
-/** Element bounds expressed in the annotation SVG's own coordinate space. */
+/**
+ * Element bounds expressed in the annotation SVG's own coordinate space.
+ *
+ * getBoundingClientRect reports post-transform screen pixels, but path
+ * coordinates are read in the SVG's local user space. Under a transformed
+ * ancestor the two differ by that transform, so screen coordinates are mapped
+ * through the inverse of the SVG's screen CTM rather than simply subtracted.
+ */
 function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rect {
-  const origin = svg.getBoundingClientRect();
+  const ctm = svg.getScreenCTM();
 
-  return {
-    x: bounds.x - origin.x,
-    y: bounds.y - origin.y,
-    w: bounds.width,
-    h: bounds.height,
-  };
+  if (!ctm) {
+    const origin = svg.getBoundingClientRect();
+
+    return { x: bounds.x - origin.x, y: bounds.y - origin.y, w: bounds.width, h: bounds.height };
+  }
+
+  const inverse = ctm.inverse();
+  const start = new DOMPoint(bounds.x, bounds.y).matrixTransform(inverse);
+  const end = new DOMPoint(bounds.right, bounds.bottom).matrixTransform(inverse);
+
+  return { x: start.x, y: start.y, w: end.x - start.x, h: end.y - start.y };
 }
 
 class RoughAnnotationImpl implements RoughAnnotation {
@@ -47,6 +59,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #resizeObserver?: ResizeObserver;
   #pendingRefresh?: Promise<void>;
   #animationDelay = 0;
+  #previousTextColor?: string;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     this.#element = element;
@@ -136,15 +149,33 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   hide(): void {
+    this.#restoreTextColor();
     this.#svg?.replaceChildren();
     this.#state = 'not-showing';
   }
 
   remove(): void {
+    this.#restoreTextColor();
     this.#svg?.remove();
     this.#svg = undefined;
     this.#state = 'unattached';
-    this.#detachListeners();
+    this.detachListeners();
+  }
+
+  #applyTextColor(): void {
+    const { textColor } = this.#config;
+
+    if (textColor === undefined) return;
+
+    this.#previousTextColor ??= this.#element.style.color;
+    this.#element.style.color = textColor;
+  }
+
+  #restoreTextColor(): void {
+    if (this.#previousTextColor === undefined) return;
+
+    this.#element.style.color = this.#previousTextColor;
+    this.#previousTextColor = undefined;
   }
 
   #attach(): void {
@@ -155,6 +186,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const svg = document.createElementNS(SVG_NS, 'svg');
 
     svg.setAttribute('class', ANNOTATION_CLASS);
+    /* Annotations are decorative, so keep them out of the accessibility tree. */
+    svg.setAttribute('aria-hidden', 'true');
     Object.assign(svg.style, {
       position: 'absolute',
       top: '0',
@@ -164,6 +197,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
       width: '100px',
       height: '100px',
     });
+
+    if (this.#config.zIndex !== undefined) svg.style.zIndex = `${this.#config.zIndex}`;
 
     /* A highlight paints behind its element, everything else in front. */
     const prepend = this.#config.type === 'highlight';
@@ -192,14 +227,17 @@ class RoughAnnotationImpl implements RoughAnnotation {
   };
 
   #attachListeners(): void {
-    this.#detachListeners();
+    this.detachListeners();
+
+    if (this.#config.observeResize === false) return;
+
     window.addEventListener('resize', this.#resizeListener, { passive: true });
 
     this.#resizeObserver ??= new ResizeObserver(this.#resizeListener);
     this.#resizeObserver.observe(this.#element);
   }
 
-  #detachListeners(): void {
+  detachListeners(): void {
     window.removeEventListener('resize', this.#resizeListener);
     this.#resizeObserver?.unobserve(this.#element);
   }
@@ -238,6 +276,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
       delay += duration;
     });
 
+    this.#applyTextColor();
     this.#lastSizes = rects;
     this.#state = 'showing';
   }

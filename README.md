@@ -69,6 +69,19 @@ annotationGroup([a3, a1, a2]).show();
 | `brackets`          | `BracketType \| BracketType[]` | `'right'`      | Which sides to bracket.                                                         |
 | `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                           |
 | `rtl`               | `boolean`                      | `false`        | Draw the first stroke right to left.                                            |
+| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                                |
+| `textColor`         | `string`                       | unset          | Applied to the element's `color` while the annotation is showing.               |
+| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                            |
+
+Animation is skipped when the user has `prefers-reduced-motion: reduce` set, regardless of `animate`.
+
+### textColor
+
+A dark highlight can swallow dark text. `textColor` recolors the element while the annotation is showing and restores the previous value on `hide()` or `remove()`.
+
+```javascript
+annotate(element, { type: 'highlight', color: '#000', textColor: '#fff' }).show();
+```
 
 ### type
 
@@ -92,6 +105,7 @@ A single number applies to every side. An array follows CSS shorthand order, so 
 - **`show()`** draws the annotation, animating if configured. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
 - **`hide()`** removes the drawing. Not animated.
 - **`remove()`** unlinks the annotation from the element.
+- **`detachListeners()`** stops redrawing on resize, for callers driving their own redraw. The annotation stays drawn, and `show()` reattaches the listeners. Set `observeResize: false` to never attach them.
 
 Every config property is also exposed as a settable property. Changing `color`, `strokeWidth` or `padding` redraws a visible annotation.
 

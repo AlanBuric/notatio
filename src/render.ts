@@ -8,6 +8,7 @@ import {
   DEFAULT_STROKE_WIDTH,
   HIGHLIGHT_HEIGHT_RATIO,
   KEYFRAME_NAME,
+  REDUCED_MOTION_QUERY,
   SVG_NS,
 } from './constants.js';
 import type { BracketType, FullPadding, Rect, RoughAnnotationConfig } from './types.js';
@@ -108,6 +109,10 @@ function bracketPoints(side: BracketType, rect: Rect, padding: FullPadding): Poi
   }
 }
 
+function prefersReducedMotion(): boolean {
+  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+}
+
 export function renderAnnotation(
   svg: SVGSVGElement,
   rect: Rect,
@@ -117,7 +122,7 @@ export function renderAnnotation(
   seed: number,
 ) {
   const padding = parsePadding(config);
-  const animate = config.animate ?? true;
+  const animate = (config.animate ?? true) && !prefersReducedMotion();
   const iterations = config.iterations ?? DEFAULT_ITERATIONS;
   const rtl = config.rtl ? 1 : 0;
   const options = getOptions('single', seed);
