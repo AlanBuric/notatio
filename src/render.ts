@@ -31,7 +31,8 @@ function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
   };
 }
 
-function parsePadding(config: RoughAnnotationConfig): FullPadding {
+/** @internal Exported for testing. Not part of the package entry point. */
+export function parsePadding(config: RoughAnnotationConfig): FullPadding {
   const p = config.padding;
   if (p || p === 0) {
     if (typeof p === 'number') {
@@ -249,7 +250,8 @@ export function renderAnnotation(
   }
 }
 
-function opsToPath(opList: OpSet[]): string[] {
+/** @internal Exported for testing. Not part of the package entry point. */
+export function opsToPath(opList: OpSet[]): string[] {
   const paths: string[] = [];
   for (const drawing of opList) {
     let path = '';

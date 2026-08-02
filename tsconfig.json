@@ -5,11 +5,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "types": [],
-
-    "rootDir": "./src",
-    "outDir": "./dist",
     "noEmit": true,
-    "declaration": true,
 
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
@@ -23,5 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  "include": ["src"]
+  "include": ["src", "test", "vite.config.ts", "vitest.config.ts"]
 }
