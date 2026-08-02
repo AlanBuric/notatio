@@ -233,7 +233,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const rects = this.rects();
     let totalWidth = 0;
     rects.forEach((rect) => (totalWidth += rect.w));
-    const totalDuration = config.animationDuration || DEFAULT_ANIMATION_DURATION;
+    const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
     let delay = 0;
     for (let i = 0; i < rects.length; i++) {
       const rect = rects[i];
@@ -281,9 +281,7 @@ export function annotationGroup(annotations: RoughAnnotation[]): RoughAnnotation
   for (const a of annotations) {
     const ai = a as RoughAnnotationImpl;
     ai._animationDelay = delay;
-    const duration =
-      ai.animationDuration === 0 ? 0 : ai.animationDuration || DEFAULT_ANIMATION_DURATION;
-    delay += duration;
+    delay += ai.animationDuration ?? DEFAULT_ANIMATION_DURATION;
   }
   const list = [...annotations];
   return {

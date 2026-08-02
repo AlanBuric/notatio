@@ -66,10 +66,10 @@ export function renderAnnotation(
   seed: number,
 ) {
   const opList: OpSet[] = [];
-  let strokeWidth = config.strokeWidth || 2;
+  let strokeWidth = config.strokeWidth ?? 2;
   const padding = parsePadding(config);
-  const animate = config.animate === undefined ? true : !!config.animate;
-  const iterations = config.iterations || 2;
+  const animate = config.animate ?? true;
+  const iterations = config.iterations ?? 2;
   const rtl = config.rtl ? 1 : 0;
   const o = getOptions('single', seed);
 
@@ -221,7 +221,7 @@ export function renderAnnotation(
       const path = document.createElementNS(SVG_NS, 'path');
       setAttr(path, 'd', d);
       setAttr(path, 'fill', 'none');
-      setAttr(path, 'stroke', config.color || 'currentColor');
+      setAttr(path, 'stroke', config.color ?? 'currentColor');
       setAttr(path, 'stroke-width', `${strokeWidth}`);
       if (animate) {
         const length = path.getTotalLength();
