@@ -35,11 +35,7 @@ describe('annotation types', () => {
     });
   });
 
-  // Path counts per iteration, measured against the current renderer. These
-  // pin the shape of the output so a refactor cannot silently change how much
-  // is drawn. `paths per iteration` differs by type because roughjs splits a
-  // shape at every move command: a rectangle becomes four sides, a bracket
-  // becomes three segments, and a cross is two strokes.
+  /* Counts differ by type because roughjs splits a shape at every move command. */
   it.each([
     { type: 'underline', perIteration: 1 },
     { type: 'strike-through', perIteration: 1 },
@@ -53,7 +49,7 @@ describe('annotation types', () => {
     );
   });
 
-  // Regression guard: `iterations: 0` used to be coerced to the default of 2.
+  /* Guards against a zero being coerced to the default. */
   it('draws nothing when iterations is zero', () =>
     expect(render({ type: 'underline', iterations: 0 })).toHaveLength(0));
 
@@ -81,9 +77,7 @@ describe('bracket', () => {
     );
   });
 
-  // Unlike every other type, bracket loops over the requested sides and
-  // ignores `iterations` completely. Recorded as current behaviour rather
-  // than endorsed; see the upstream issue backlog.
+  /* Recorded as current behaviour rather than endorsed. */
   it('ignores the iterations option', () => {
     expect(render({ type: 'bracket', iterations: 1 })).toHaveLength(3);
     expect(render({ type: 'bracket', iterations: 5 })).toHaveLength(3);

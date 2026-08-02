@@ -40,11 +40,7 @@ describe('resize handling', () => {
     expect(Math.abs(annotationWidth(element) - 300)).toBeLessThan(STROKE_JITTER);
   });
 
-  /*
-   * Upstream PR #89. The old implementation waited out a fixed 400ms debounce
-   * before redrawing. Batching into an animation frame gets it done in one or
-   * two frames instead.
-   */
+  /* Batched into a frame rather than waiting out a fixed debounce. */
   it('redraws well inside the old 400ms debounce window', async () => {
     const element = sized(100);
 

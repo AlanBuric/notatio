@@ -75,7 +75,7 @@ describe('strokeWidth', () => {
   });
 
   it('honours a zero width', () => {
-    // Regression guard: `strokeWidth: 0` used to be coerced to the default.
+    /* Guards against a zero being coerced to the default. */
     const element = mountElement();
 
     annotate(element, { type: 'underline', strokeWidth: 0 }).show();
@@ -130,7 +130,7 @@ describe('animation', () => {
   });
 
   it('renders instantly when animationDuration is zero', () => {
-    // Regression guard: `animationDuration: 0` used to be coerced to 800ms.
+    /* Guards against a zero being coerced to the default. */
     const element = mountElement();
 
     annotate(element, { type: 'underline', animationDuration: 0 }).show();
@@ -155,11 +155,7 @@ describe('animation', () => {
     expect(keyframeStyles()).toHaveLength(1);
   });
 
-  /*
-   * Client-side routers such as Astro's ClientRouter replace document.head on
-   * navigation. The rule has to come back, or the dash animation resolves to
-   * nothing and annotations render invisible at full stroke-dashoffset.
-   */
+  /* A router replacing document.head must not leave annotations invisible. */
   it('reinjects the keyframes after the document head is replaced', () => {
     annotate(mountElement(), { type: 'underline' }).show();
     keyframeStyles().forEach((style) => style.remove());
@@ -183,8 +179,7 @@ describe('padding', () => {
 
     annotate(loose, { type: 'underline', padding: 40, animate: false }).show();
 
-    // The underline sits at rect.y + rect.h + padding[2], measured in the
-    // SVG's own coordinate space, so a larger bottom padding pushes it down.
+    /* A larger bottom padding pushes the underline further down. */
     const tightY = parseFloat(
       /^M[\d.-]+ ([\d.-]+)/.exec(
         tight.nextElementSibling!.querySelector('path')!.getAttribute('d')!,

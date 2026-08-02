@@ -53,7 +53,7 @@ describe('annotationGroup', () => {
     const second = mountElement();
     const third = mountElement();
 
-    // Deliberately out of DOM order, mirroring the roughnotation.com demo.
+    /* Deliberately out of DOM order. */
     const group = annotationGroup([
       annotate(third, { type: 'underline', animationDuration: 300 }),
       annotate(first, { type: 'underline', animationDuration: 300 }),
@@ -81,9 +81,7 @@ describe('annotationGroup', () => {
   });
 
   it('does not stagger past an annotation with a zero duration', () => {
-    // Regression guard: a zero duration used to be read as the 800ms default
-    // in `render` while `annotationGroup` special-cased it, so the two
-    // disagreed about where the next annotation should start.
+    /* A zero duration must not advance the stagger. */
     const a = mountElement();
     const b = mountElement();
     const group = annotationGroup([

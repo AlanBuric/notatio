@@ -114,7 +114,7 @@ describe('hide completion', () => {
 
     annotation.show();
 
-    // The interrupted hide must settle rather than hang on a cancelled timer.
+    /* The interrupted hide must settle rather than hang on a cancelled timer. */
     await expect(hiding).resolves.toBeUndefined();
   });
 
@@ -147,8 +147,7 @@ describe('group completion', () => {
 
     const elapsed = await timed(group.show());
 
-    // The second annotation is delayed behind the first, so the group takes
-    // longer than any single member.
+    /* The second is delayed behind the first, so the group outlasts either. */
     expect(elapsed).toBeGreaterThan(250);
   });
 

@@ -88,7 +88,7 @@ describe('animateOnHide', () => {
 
     const delays = pathsFor(element).map((path) => parseFloat(path.style.animationDelay));
 
-    // The last stroke drawn is the first to retreat, so delays descend.
+    /* The last stroke drawn is the first to retreat, so delays descend. */
     expect(delays).toEqual([...delays].sort((a, b) => b - a));
   });
 
@@ -168,11 +168,7 @@ describe('animateOnHide interruptions', () => {
 
     const drawn = pathsFor(element).length;
 
-    /*
-     * show() on a visible annotation must drop the old strokes outright. If it
-     * routed through the animated hide, the retreating strokes would linger
-     * alongside the new ones and their pending removal would then strip those.
-     */
+    /* Dropping the old strokes outright, not animating them out. */
     annotation.show();
     expect(pathsFor(element)).toHaveLength(drawn);
 

@@ -54,10 +54,7 @@ export function parsePadding(config: RoughAnnotationConfig): FullPadding {
   return [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING];
 }
 
-/**
- * Strokes drawn back and forth between two points. `rtl` shifts the starting
- * parity so the first stroke runs in the opposite direction.
- */
+/** Strokes back and forth between two points. `rtl` flips the starting direction. */
 function alternatingLines(
   from: Point,
   to: Point,

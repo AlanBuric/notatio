@@ -124,12 +124,7 @@ describe('detachListeners', () => {
 });
 
 describe('transformed ancestors', () => {
-  /*
-   * Upstream #75. getBoundingClientRect is post-transform while path
-   * coordinates are read in the SVG's user space, so a scaled ancestor used to
-   * size and offset the annotation by the scale factor. roughjs jitters each
-   * stroke by a couple of pixels, hence the tolerance.
-   */
+  /* A scaled ancestor must not scale the annotation along with it. */
   it.each([0.5, 1, 2, 3])('draws at layout size under transform: scale(%s)', (scale) => {
     const container = mountContainer();
 
@@ -138,8 +133,7 @@ describe('transformed ancestors', () => {
 
     const element = document.createElement('div');
 
-    // Sized well above roughjs's few pixels of stroke jitter, so a scale error
-    // of 0.5x or 2x cannot be mistaken for noise.
+    /* Sized so a 0.5x or 2x error cannot be mistaken for stroke jitter. */
     element.style.cssText = 'width:200px;height:100px;';
     container.appendChild(element);
 

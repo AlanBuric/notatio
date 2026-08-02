@@ -23,6 +23,7 @@ First release under the name Notatio, forked from rough-notation 0.5.1.
 
 ### Fixed
 
+- Annotations follow their element when it moves. The SVG now sits at its static position and shifts with the element in flow, where before it was pinned to the containing block and only corrected on a resize, which never fires for a move.
 - Annotations are positioned and sized correctly under a `transform: scale()` ancestor ([rough-notation#75](https://github.com/rough-stuff/rough-notation/issues/75)).
 
 - Zero-valued `strokeWidth`, `iterations` and `animationDuration` are honoured instead of falling back to their defaults.

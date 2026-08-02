@@ -4,7 +4,7 @@ A small JavaScript library to create and animate annotations on a web page.
 
 Notatio uses [RoughJS](https://roughjs.com) to give annotations a hand-drawn look and feel. Elements can be annotated in a number of styles, and the animation can be retimed or turned off.
 
-The bundle is 4.6kb gzipped and has no runtime dependencies.
+It has no runtime dependencies.
 
 Notatio is a fork of [rough-notation](https://github.com/rough-stuff/rough-notation) by Preet Shihn, updated for current tooling and browsers. See [Differences from rough-notation](#differences-from-rough-notation) if you are migrating.
 
@@ -146,6 +146,7 @@ Notatio 1.0.0 is behaviourally compatible with rough-notation 0.5.1 apart from t
 - **The CSS class is `notatio-annotation`**, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`. Update any selectors that target them.
 - **`show()` and `hide()` return a promise** instead of nothing. Calls that ignore the return value are unaffected.
 - **Zero-valued options are honoured.** `strokeWidth: 0`, `iterations: 0` and `animationDuration: 0` previously fell back to their defaults because they were applied with `||`.
+- **Annotations follow an element that moves**, not just one that resizes.
 - **Annotations survive a client-side route change.** The keyframes rule is reinjected if a router replaces `document.head`, which previously left annotations invisible.
 
 ## Credits

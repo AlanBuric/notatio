@@ -3,10 +3,9 @@ import { KEYFRAME_NAME, PATH_LENGTH_PROPERTY, REVERSE_KEYFRAME_NAME } from './co
 let styleElement: HTMLStyleElement | undefined;
 
 /**
- * The `isConnected` check matters for client-side routers that swap
- * `document.head` on navigation, which discards the injected rule while the
- * module keeps running. Without it the animation has no keyframes to resolve
- * and annotations render at full stroke-dashoffset, meaning invisible.
+ * Reinjects the rule if it is gone. A client-side router replacing
+ * `document.head` would otherwise leave annotations stuck at full
+ * stroke-dashoffset, meaning invisible.
  */
 export function ensureKeyframes(): void {
   if (styleElement?.isConnected) return;
