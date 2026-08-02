@@ -1,4 +1,10 @@
-import { Rect, RoughAnnotationConfig, RoughAnnotation, SVG_NS, RoughAnnotationGroup, DEFAULT_ANIMATION_DURATION } from './model.js';
+import type {
+  Rect,
+  RoughAnnotation,
+  RoughAnnotationConfig,
+  RoughAnnotationGroup,
+} from './model.js';
+import { DEFAULT_ANIMATION_DURATION, SVG_NS } from './model.js';
 import { renderAnnotation } from './render.js';
 import { ensureKeyframes } from './keyframes.js';
 import { randomSeed } from 'roughjs/bin/math';
@@ -24,16 +30,30 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.attach();
   }
 
-  get animate() { return this._config.animate; }
-  set animate(value) { this._config.animate = value; }
+  get animate() {
+    return this._config.animate;
+  }
+  set animate(value) {
+    this._config.animate = value;
+  }
 
-  get animationDuration() { return this._config.animationDuration; }
-  set animationDuration(value) { this._config.animationDuration = value; }
+  get animationDuration() {
+    return this._config.animationDuration;
+  }
+  set animationDuration(value) {
+    this._config.animationDuration = value;
+  }
 
-  get iterations() { return this._config.iterations; }
-  set iterations(value) { this._config.iterations = value; }
+  get iterations() {
+    return this._config.iterations;
+  }
+  set iterations(value) {
+    this._config.iterations = value;
+  }
 
-  get color() { return this._config.color; }
+  get color() {
+    return this._config.color;
+  }
   set color(value) {
     if (this._config.color !== value) {
       this._config.color = value;
@@ -41,7 +61,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
   }
 
-  get strokeWidth() { return this._config.strokeWidth; }
+  get strokeWidth() {
+    return this._config.strokeWidth;
+  }
   set strokeWidth(value) {
     if (this._config.strokeWidth !== value) {
       this._config.strokeWidth = value;
@@ -49,7 +71,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
   }
 
-  get padding() { return this._config.padding; }
+  get padding() {
+    return this._config.padding;
+  }
   set padding(value) {
     if (this._config.padding !== value) {
       this._config.padding = value;
@@ -69,12 +93,12 @@ class RoughAnnotationImpl implements RoughAnnotation {
         }
       }, 400);
     }
-  }
+  };
 
   private attach() {
     if (this._state === 'unattached' && this._e.parentElement) {
       ensureKeyframes();
-      const svg = this._svg = document.createElementNS(SVG_NS, 'svg');
+      const svg = (this._svg = document.createElementNS(SVG_NS, 'svg'));
       svg.setAttribute('class', 'rough-annotation');
       const style = svg.style;
       style.position = 'absolute';
@@ -91,7 +115,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
       // ensure e is positioned
       if (prepend) {
         const computedPos = window.getComputedStyle(this._e).position;
-        const unpositioned = (!computedPos) || (computedPos === 'static');
+        const unpositioned = !computedPos || computedPos === 'static';
         if (unpositioned) {
           this._e.style.position = 'relative';
         }
@@ -110,7 +134,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   private attachListeners() {
     this.detachListeners();
     window.addEventListener('resize', this._resizeListener, { passive: true });
-    if ((!this._ro) && ('ResizeObserver' in window)) {
+    if (!this._ro && 'ResizeObserver' in window) {
       this._ro = new (window as any).ResizeObserver((entries: any) => {
         for (const entry of entries) {
           if (entry.contentRect) {
@@ -143,20 +167,17 @@ class RoughAnnotationImpl implements RoughAnnotation {
   private isSameRect(rect1: Rect, rect2: Rect): boolean {
     const si = (a: number, b: number) => Math.round(a) === Math.round(b);
     return (
-      si(rect1.x, rect2.x) &&
-      si(rect1.y, rect2.y) &&
-      si(rect1.w, rect2.w) &&
-      si(rect1.h, rect2.h)
+      si(rect1.x, rect2.x) && si(rect1.y, rect2.y) && si(rect1.w, rect2.w) && si(rect1.h, rect2.h)
     );
   }
 
   isShowing(): boolean {
-    return (this._state !== 'not-showing');
+    return this._state !== 'not-showing';
   }
 
   private pendingRefresh?: Promise<void>;
   private refresh() {
-    if (this.isShowing() && (!this.pendingRefresh)) {
+    if (this.isShowing() && !this.pendingRefresh) {
       this.pendingRefresh = Promise.resolve().then(() => {
         if (this.isShowing()) {
           this.show();
@@ -211,8 +232,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
     const rects = this.rects();
     let totalWidth = 0;
-    rects.forEach((rect) => totalWidth += rect.w);
-    const totalDuration = (config.animationDuration || DEFAULT_ANIMATION_DURATION);
+    rects.forEach((rect) => (totalWidth += rect.w));
+    const totalDuration = config.animationDuration || DEFAULT_ANIMATION_DURATION;
     let delay = 0;
     for (let i = 0; i < rects.length; i++) {
       const rect = rects[i];
@@ -246,7 +267,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
       x: (rect2.x || rect2.left) - (rect1.x || rect1.left),
       y: (rect2.y || rect2.top) - (rect1.y || rect1.top),
       w: rect2.width,
-      h: rect2.height
+      h: rect2.height,
     };
   }
 }
@@ -260,7 +281,8 @@ export function annotationGroup(annotations: RoughAnnotation[]): RoughAnnotation
   for (const a of annotations) {
     const ai = a as RoughAnnotationImpl;
     ai._animationDelay = delay;
-    const duration = ai.animationDuration === 0 ? 0 : (ai.animationDuration || DEFAULT_ANIMATION_DURATION);
+    const duration =
+      ai.animationDuration === 0 ? 0 : ai.animationDuration || DEFAULT_ANIMATION_DURATION;
     delay += duration;
   }
   const list = [...annotations];
@@ -274,6 +296,6 @@ export function annotationGroup(annotations: RoughAnnotation[]): RoughAnnotation
       for (const a of list) {
         a.hide();
       }
-    }
+    },
   };
 }

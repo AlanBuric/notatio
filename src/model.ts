@@ -9,7 +9,8 @@ export interface Rect {
   h: number;
 }
 
-export type RoughAnnotationType = 'underline' | 'box' | 'circle' | 'highlight' | 'strike-through' | 'crossed-off' | 'bracket';
+export type RoughAnnotationType =
+  'underline' | 'box' | 'circle' | 'highlight' | 'strike-through' | 'crossed-off' | 'bracket';
 export type FullPadding = [number, number, number, number];
 export type RoughPadding = number | [number, number] | FullPadding;
 export type BracketType = 'left' | 'right' | 'top' | 'bottom';

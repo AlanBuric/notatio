@@ -1,7 +1,8 @@
-import { Rect, RoughAnnotationConfig, SVG_NS, FullPadding, BracketType } from './model.js';
-import { ResolvedOptions, OpSet } from 'roughjs/bin/core';
-import { line, rectangle, ellipse, linearPath } from 'roughjs/bin/renderer';
-import { Point } from 'roughjs/bin/geometry';
+import type { BracketType, FullPadding, Rect, RoughAnnotationConfig } from './model.js';
+import { SVG_NS } from './model.js';
+import type { OpSet, ResolvedOptions } from 'roughjs/bin/core';
+import { ellipse, line, linearPath, rectangle } from 'roughjs/bin/renderer';
+import type { Point } from 'roughjs/bin/geometry';
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
@@ -26,13 +27,13 @@ function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
     disableMultiStrokeFill: false,
     preserveVertices: false,
     fillShapeRoughnessGain: 0.8,
-    seed
+    seed,
   };
 }
 
 function parsePadding(config: RoughAnnotationConfig): FullPadding {
   const p = config.padding;
-  if (p || (p === 0)) {
+  if (p || p === 0) {
     if (typeof p === 'number') {
       return [p, p, p, p];
     } else if (Array.isArray(p)) {
@@ -56,11 +57,18 @@ function parsePadding(config: RoughAnnotationConfig): FullPadding {
   return [5, 5, 5, 5];
 }
 
-export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAnnotationConfig, animationGroupDelay: number, animationDuration: number, seed: number) {
+export function renderAnnotation(
+  svg: SVGSVGElement,
+  rect: Rect,
+  config: RoughAnnotationConfig,
+  animationGroupDelay: number,
+  animationDuration: number,
+  seed: number,
+) {
   const opList: OpSet[] = [];
   let strokeWidth = config.strokeWidth || 2;
   const padding = parsePadding(config);
-  const animate = (config.animate === undefined) ? true : (!!config.animate);
+  const animate = config.animate === undefined ? true : !!config.animate;
   const iterations = config.iterations || 2;
   const rtl = config.rtl ? 1 : 0;
   const o = getOptions('single', seed);
@@ -78,7 +86,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
       break;
     }
     case 'strike-through': {
-      const y = rect.y + (rect.h / 2);
+      const y = rect.y + rect.h / 2;
       for (let i = rtl; i < iterations + rtl; i++) {
         if (i % 2) {
           opList.push(line(rect.x + rect.w, y, rect.x, y, o));
@@ -99,7 +107,11 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
       break;
     }
     case 'bracket': {
-      const brackets: BracketType[] = Array.isArray(config.brackets) ? config.brackets : (config.brackets ? [config.brackets] : ['right']);
+      const brackets: BracketType[] = Array.isArray(config.brackets)
+        ? config.brackets
+        : config.brackets
+          ? [config.brackets]
+          : ['right'];
       const lx = rect.x - padding[3] * 2;
       const rx = rect.x + rect.w + padding[1] * 2;
       const ty = rect.y - padding[0] * 2;
@@ -112,7 +124,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
               [lx, rect.y + rect.h],
               [lx, by],
               [rx, by],
-              [rx, rect.y + rect.h]
+              [rx, rect.y + rect.h],
             ];
             break;
           case 'top':
@@ -120,7 +132,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
               [lx, rect.y],
               [lx, ty],
               [rx, ty],
-              [rx, rect.y]
+              [rx, rect.y],
             ];
             break;
           case 'left':
@@ -128,7 +140,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
               [rect.x, ty],
               [lx, ty],
               [lx, by],
-              [rect.x, by]
+              [rect.x, by],
             ];
             break;
           case 'right':
@@ -136,7 +148,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
               [rect.x + rect.w, ty],
               [rx, ty],
               [rx, by],
-              [rect.x + rect.w, by]
+              [rect.x + rect.w, by],
             ];
             break;
         }
@@ -171,10 +183,10 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
       const doubleO = getOptions('double', seed);
       const width = rect.w + (padding[1] + padding[3]);
       const height = rect.h + (padding[0] + padding[2]);
-      const x = rect.x - padding[3] + (width / 2);
-      const y = rect.y - padding[0] + (height / 2);
+      const x = rect.x - padding[3] + width / 2;
+      const y = rect.y - padding[0] + height / 2;
       const fullItr = Math.floor(iterations / 2);
-      const singleItr = iterations - (fullItr * 2);
+      const singleItr = iterations - fullItr * 2;
       for (let i = 0; i < fullItr; i++) {
         opList.push(ellipse(x, y, width, height, doubleO));
       }
@@ -186,7 +198,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
     case 'highlight': {
       const o = getOptions('highlight', seed);
       strokeWidth = rect.h * 0.95;
-      const y = rect.y + (rect.h / 2);
+      const y = rect.y + rect.h / 2;
       for (let i = rtl; i < iterations + rtl; i++) {
         if (i % 2) {
           opList.push(line(rect.x + rect.w, y, rect.x, y, o));
@@ -225,7 +237,7 @@ export function renderAnnotation(svg: SVGSVGElement, rect: Rect, config: RoughAn
       for (let i = 0; i < pathElements.length; i++) {
         const path = pathElements[i];
         const length = lengths[i];
-        const duration = totalLength ? (animationDuration * (length / totalLength)) : 0;
+        const duration = totalLength ? animationDuration * (length / totalLength) : 0;
         const delay = animationGroupDelay + durationOffset;
         const style = path.style;
         style.strokeDashoffset = `${length}`;

@@ -32,7 +32,7 @@ Or load the IIFE version which created a `RoughNotation` object in your scope.
 
 ## Usage
 
-Create an `annotation` object by passing the element to annotate, and a config to describe the annotation style. 
+Create an `annotation` object by passing the element to annotate, and a config to describe the annotation style.
 Once you have the annotation object, you can call `show()` on it to show the annotation
 
 ```javascript
@@ -45,7 +45,7 @@ const annotation = annotate(e, { type: 'underline' });
 annotation.show();
 ```
 
-*Note: This will add an SVG element as a sibling to the element, which may be troublesome in certain situations like in a `<table>`. You may want to create an inner `<span>` or `<div>` for the content to annotate.*
+_Note: This will add an SVG element as a sibling to the element, which may be troublesome in certain situations like in a `<table>`. You may want to create an inner `<span>` or `<div>` for the content to annotate._
 
 ## Annotation Group
 
@@ -63,6 +63,7 @@ ag.show();
 ```
 
 ## Live examples
+
 I have created some basic examples on Glitch for you to remix and play with the code:
 
 [Basic demo](https://glitch.com/~basic-rough-notation)
@@ -71,66 +72,81 @@ I have created some basic examples on Glitch for you to remix and play with the 
 
 ## Configuring the Annotation
 
-When you create an annotation object, you pass in a config. The config only has one mandatory field, which is the `type` of the annotation. But you can configure the annotation in many ways. 
+When you create an annotation object, you pass in a config. The config only has one mandatory field, which is the `type` of the annotation. But you can configure the annotation in many ways.
 
 #### type
+
 This is a mandatory field. It sets the annotation style. Following are the list of supported annotation types:
 
-* __underline__: This style creates a sketchy underline below an element.
-* __box__: This style draws a box around the element.
-* __circle__: This style draws a circle around the element.
-* __highlight__: This style creates a highlight effect as if marked by a highlighter.
-* __strike-through__: This style draws horizontal lines through the element.
-* __crossed-off__: This style draws an 'X' across the element.
-* __bracket__: This style draws a bracket around an element, usually a paragraph of text. By default on the right side, but can be configured to any or all of *left, right, top, bottom*.
+- **underline**: This style creates a sketchy underline below an element.
+- **box**: This style draws a box around the element.
+- **circle**: This style draws a circle around the element.
+- **highlight**: This style creates a highlight effect as if marked by a highlighter.
+- **strike-through**: This style draws horizontal lines through the element.
+- **crossed-off**: This style draws an 'X' across the element.
+- **bracket**: This style draws a bracket around an element, usually a paragraph of text. By default on the right side, but can be configured to any or all of _left, right, top, bottom_.
 
 #### animate
+
 Boolean property to turn on/off animation when annotating. Default value is `true`.
 
 #### animationDuration
+
 Duration of the animation in milliseconds. Default is `800ms`.
 
 #### color
+
 String value representing the color of the annotation sketch. Default value is `currentColor`.
 
 #### strokeWidth
-Width of the annotation strokes. Default value is `1`. 
+
+Width of the annotation strokes. Default value is `1`.
 
 #### padding
+
 Padding between the element and roughly where the annotation is drawn. Default value is `5` (in pixels).
 If you wish to specify different `top`, `left`, `right`, `bottom` paddings, you can set the value to an array akin to CSS style padding `[top, right, bottom, left]` or just `[top & bottom, left & right]`.
 
 #### multiline
-This property only applies to inline text. To annotate multiline text (each line separately), set this property to `true`. 
+
+This property only applies to inline text. To annotate multiline text (each line separately), set this property to `true`.
 
 #### iterations
-By default annotations are drawn in two iterations, e.g. when underlining, drawing from left to right and then back from right to left. Setting this property can let you configure the number of iterations. 
+
+By default annotations are drawn in two iterations, e.g. when underlining, drawing from left to right and then back from right to left. Setting this property can let you configure the number of iterations.
 
 #### brackets
+
 Value could be a string or an array of strings, each string being one of these values: **left, right, top, bottom**. When drawing a bracket, this configures which side(s) of the element to bracket. Default value is `right`.
 
 #### rtl
-By default annotations are drawn from left to right. To start with right to left, set this property to `true`. 
+
+By default annotations are drawn from left to right. To start with right to left, set this property to `true`.
 
 ## Annotation Object
 
 When you call the `annotate` function, you get back an annotation object, which has the following methods:
 
 #### isShowing(): boolean
+
 Returns if the annotation is showing
 
 #### show()
-Draws the annotation. If the annotation is set to animate (default), it will animate the drawing. If called again, it will re-render the annotation, updating any size or location changes. 
+
+Draws the annotation. If the annotation is set to animate (default), it will animate the drawing. If called again, it will re-render the annotation, updating any size or location changes.
 
 *Note: to reanimate the annotation, call `hide()` and then `show()` again.
 
 #### hide()
-Hides the annotation if showing. This is not animated. 
+
+Hides the annotation if showing. This is not animated.
 
 #### remove()
-Unlinks the annotation from the element. 
+
+Unlinks the annotation from the element.
 
 #### Updating styles
+
 All the properties in the configuration are also exposed in this object. e.g. if you'd like to change the color, you can do that after the annotation has been drawn.
 
 ```javascript
@@ -140,27 +156,29 @@ annotation.show();
 annotation.color = 'green';
 ```
 
-*Note: the type of the annotation cannot be changed. Create a new annotation for that.*
+_Note: the type of the annotation cannot be changed. Create a new annotation for that._
 
 ## Annotation Group Object
 
 When you call the `annotationGroup` function, you get back an annotation group object, which has the following methods:
 
 #### show()
-Draws all the annotations in order. If the annotation is set to animate (default), it will animate the drawing. 
+
+Draws all the annotations in order. If the annotation is set to animate (default), it will animate the drawing.
 
 #### hide()
+
 Hides all the annotations if showing. This is not animated.
 
 ## Wrappers
 
 Others have created handy Rough Notation wrappers for multiple libraries and frameworks:
 
--   [React Rough Notation](https://github.com/linkstrifer/react-rough-notation)
--   [Svelte Rough Notation](https://github.com/dimfeld/svelte-rough-notation)
--   [Vue Rough Notation](https://github.com/Leecason/vue-rough-notation)
--   [Web Component Rough Notation](https://github.com/Matsuuu/vanilla-rough-notation)
--   [Angular Rough Notation](https://github.com/mikyaj/ngx-rough-notation)
+- [React Rough Notation](https://github.com/linkstrifer/react-rough-notation)
+- [Svelte Rough Notation](https://github.com/dimfeld/svelte-rough-notation)
+- [Vue Rough Notation](https://github.com/Leecason/vue-rough-notation)
+- [Web Component Rough Notation](https://github.com/Matsuuu/vanilla-rough-notation)
+- [Angular Rough Notation](https://github.com/mikyaj/ngx-rough-notation)
 
 ## Contributors
 

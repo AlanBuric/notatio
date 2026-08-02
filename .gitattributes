@@ -1,0 +1,4 @@
+# Normalize to LF in the repository regardless of contributor platform.
+* text=auto eol=lf
+
+package-lock.json linguist-generated=true
