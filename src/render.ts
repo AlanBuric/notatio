@@ -14,29 +14,25 @@ import type { BracketType, FullPadding, Rect, RoughAnnotationConfig } from './ty
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
-const BASE_OPTIONS = {
-  maxRandomnessOffset: 2,
-  bowing: 1,
-  stroke: '#000',
-  strokeWidth: 1.5,
-  curveTightness: 0,
-  curveFitting: 0.95,
-  curveStepCount: 9,
-  fillStyle: 'hachure',
-  fillWeight: -1,
-  hachureAngle: -41,
-  hachureGap: -1,
-  dashOffset: -1,
-  dashGap: -1,
-  zigzagOffset: -1,
-  disableMultiStrokeFill: false,
-  preserveVertices: false,
-  fillShapeRoughnessGain: 0.8,
-} as const;
-
 function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
   return {
-    ...BASE_OPTIONS,
+    maxRandomnessOffset: 2,
+    bowing: 1,
+    stroke: '#000',
+    strokeWidth: 1.5,
+    curveTightness: 0,
+    curveFitting: 0.95,
+    curveStepCount: 9,
+    fillStyle: 'hachure',
+    fillWeight: -1,
+    hachureAngle: -41,
+    hachureGap: -1,
+    dashOffset: -1,
+    dashGap: -1,
+    zigzagOffset: -1,
+    disableMultiStrokeFill: false,
+    preserveVertices: false,
+    fillShapeRoughnessGain: 0.8,
     roughness: type === 'highlight' ? 3 : 1.5,
     disableMultiStroke: type !== 'double',
     seed,
@@ -50,7 +46,7 @@ export function parsePadding(config: RoughAnnotationConfig): FullPadding {
   if (typeof padding === 'number') return [padding, padding, padding, padding];
 
   if (Array.isArray(padding) && padding.length) {
-    const [top, right = top, bottom = top, left = right] = padding as number[];
+    const [top, right = top, bottom = top, left = right] = padding;
     return [top, right, bottom, left];
   }
 
@@ -239,9 +235,9 @@ export function opsToPath(opList: OpSet[]): string[] {
   opList.forEach(({ ops }) => {
     let path = '';
 
-    const flush = () => {
-      if (path.trim()) paths.push(path.trim());
-    };
+    function flush() {
+      if (path) paths.push(path.trim());
+    }
 
     ops.forEach(({ op, data }) => {
       switch (op) {
