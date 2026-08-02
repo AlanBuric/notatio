@@ -97,7 +97,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #svg?: SVGSVGElement;
   #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
-  #pendingRefresh?: Promise<void>;
+  #refreshQueued = false;
   #animationDelay = 0;
   #previousTextColor?: string;
   #hideTimer?: number;
@@ -203,6 +203,11 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.detachListeners();
   }
 
+  detachListeners(): void {
+    window.removeEventListener('resize', this.#resizeListener);
+    this.#resizeObserver?.unobserve(this.#element);
+  }
+
   /** Drops the drawing immediately, cancelling any hide animation in flight. */
   #clear(): void {
     if (this.#hideTimer !== undefined) {
@@ -248,22 +253,18 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     /* `animation: none` needs a frame to take effect before restarting. */
     requestAnimationFrame(() => {
-      let delay = this.#animationDelay;
+      paths.reduceRight((delay, path, index) => {
+        const length = lengths[index];
+        const segment = totalLength ? duration * (length / totalLength) : 0;
+        const { style } = path;
 
-      paths
-        .map((path, index) => ({ path, length: lengths[index] }))
-        .reverse()
-        .forEach(({ path, length }) => {
-          const segment = totalLength ? duration * (length / totalLength) : 0;
-          const { style } = path;
+        style.strokeDashoffset = '0';
+        style.strokeDasharray = `${length}`;
+        style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
+        style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ease-out ${delay}ms forwards`;
 
-          style.strokeDashoffset = '0';
-          style.strokeDasharray = `${length}`;
-          style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
-          style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ease-out ${delay}ms forwards`;
-
-          delay += segment;
-        });
+        return delay + segment;
+      }, this.#animationDelay);
     });
 
     /* Resolved by clear(), whether the timer fires or a redraw cancels it. */
@@ -362,11 +363,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#resizeObserver.observe(this.#element);
   }
 
-  detachListeners(): void {
-    window.removeEventListener('resize', this.#resizeListener);
-    this.#resizeObserver?.unobserve(this.#element);
-  }
-
   #rectsDiffer(rects: Rectangle[]): boolean {
     if (!this.#lastSizes.length) return false;
 
@@ -375,14 +371,17 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return rects.some((rect, index) => !isSameRect(rect, this.#lastSizes[index]));
   }
 
+  /** Coalesces several property changes in the same task into one redraw. */
   #refresh(): void {
-    if (!this.isShowing() || this.#pendingRefresh) return;
+    if (!this.isShowing() || this.#refreshQueued) return;
 
-    this.#pendingRefresh = Promise.resolve().then(() => {
-      /* Not awaited: a later property change must not queue behind this redraw. */
+    this.#refreshQueued = true;
+
+    queueMicrotask(() => {
+      this.#refreshQueued = false;
+
+      /* Not awaited: a later change must not queue behind this redraw. */
       if (this.isShowing()) void this.show();
-
-      this.#pendingRefresh = undefined;
     });
   }
 
