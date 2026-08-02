@@ -6,12 +6,14 @@ First release under the name Notatio, forked from rough-notation 0.5.1.
 
 ### Breaking
 
+- `show()` and `hide()` return `Promise<void>` rather than `void`. Existing calls that ignore the return value keep working.
 - ESM only. The CommonJS and IIFE builds are removed, along with the `RoughNotation` global.
 - The annotation CSS class is now `notatio-annotation`, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`.
 - Requires a browser supporting ES2022.
 
 ### Added
 
+- `show()` and `hide()` return a promise resolving when the animation finishes, on both annotations and groups ([rough-notation#61](https://github.com/rough-stuff/rough-notation/issues/61)).
 - `animateOnHide` plays the drawing animation in reverse on `hide()` ([rough-notation#57](https://github.com/rough-stuff/rough-notation/issues/57), [PR #88](https://github.com/rough-stuff/rough-notation/pull/88)).
 - `zIndex` sets the `z-index` of the annotation SVG ([rough-notation#83](https://github.com/rough-stuff/rough-notation/issues/83), [#80](https://github.com/rough-stuff/rough-notation/issues/80)).
 - `textColor` recolors the element while the annotation is showing, so a dark highlight does not swallow dark text ([rough-notation#82](https://github.com/rough-stuff/rough-notation/issues/82)).

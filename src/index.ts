@@ -43,6 +43,21 @@ function markDirty(annotation: RoughAnnotationImpl): void {
   });
 }
 
+/**
+ * Resolves once the animations currently on an SVG's strokes have finished.
+ * Cancelled animations reject, which happens routinely when a redraw replaces
+ * the strokes mid-flight, so they are treated as finished rather than an error.
+ */
+function settled(svg: SVGSVGElement): Promise<void> {
+  const animations = svg.getAnimations({ subtree: true });
+
+  if (!animations.length) return Promise.resolve();
+
+  return Promise.all(animations.map(({ finished }) => finished.catch(() => undefined))).then(
+    () => undefined,
+  );
+}
+
 function isSameRect(a: Rect, b: Rect): boolean {
   const sameRounded = (x: number, y: number) => Math.round(x) === Math.round(y);
 
@@ -87,6 +102,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #animationDelay = 0;
   #previousTextColor?: string;
   #hideTimer?: number;
+  #hideResolve?: () => void;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     this.#element = element;
@@ -168,8 +184,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return this.#state !== 'not-showing';
   }
 
-  show(): void {
-    if (this.#state === 'unattached' || !this.#svg) return;
+  show(): Promise<void> {
+    if (this.#state === 'unattached' || !this.#svg) return Promise.resolve();
 
     /*
      * Re-showing renders without animation so a visible annotation does not
@@ -180,15 +196,16 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#clear();
     this.#render(this.#svg, reshowing);
+
+    return settled(this.#svg);
   }
 
-  hide(): void {
-    if (this.#state === 'showing' && this.#shouldAnimateHide()) {
-      this.#animateHide();
-      return;
-    }
+  hide(): Promise<void> {
+    if (this.#state === 'showing' && this.#shouldAnimateHide()) return this.#animateHide();
 
     this.#clear();
+
+    return Promise.resolve();
   }
 
   remove(): void {
@@ -205,6 +222,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
       clearTimeout(this.#hideTimer);
       this.#hideTimer = undefined;
     }
+
+    this.#hideResolve?.();
+    this.#hideResolve = undefined;
 
     this.#restoreTextColor();
     this.#svg?.replaceChildren();
@@ -224,12 +244,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
    * drawn. The paths stay in the DOM until the animation ends, but the state
    * flips immediately, so `isShowing()` reflects the caller's intent.
    */
-  #animateHide(): void {
+  #animateHide(): Promise<void> {
     const paths = [...(this.#svg?.querySelectorAll('path') ?? [])];
 
     if (!paths.length) {
       this.#clear();
-      return;
+
+      return Promise.resolve();
     }
 
     const duration = this.#config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
@@ -263,10 +284,14 @@ class RoughAnnotationImpl implements RoughAnnotation {
         });
     });
 
-    this.#hideTimer = window.setTimeout(() => {
-      this.#hideTimer = undefined;
-      this.#clear();
-    }, duration + this.#animationDelay);
+    /* Resolved by clear(), whether the timer fires or a redraw cancels it. */
+    const finished = new Promise<void>((resolve) => {
+      this.#hideResolve = resolve;
+    });
+
+    this.#hideTimer = window.setTimeout(() => this.#clear(), duration + this.#animationDelay);
+
+    return finished;
   }
 
   #applyTextColor(): void {
@@ -373,7 +398,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!this.isShowing() || this.#pendingRefresh) return;
 
     this.#pendingRefresh = Promise.resolve().then(() => {
-      if (this.isShowing()) this.show();
+      /* A property change redraws; waiting out the animation would stall the
+       * next refresh behind it. */
+      if (this.isShowing()) void this.show();
 
       this.#pendingRefresh = undefined;
     });
@@ -425,9 +452,12 @@ export function annotationGroup(annotations: RoughAnnotation[]): RoughAnnotation
 
   const group = [...annotations];
 
+  const all = (run: (annotation: RoughAnnotation) => Promise<void>) =>
+    Promise.all(group.map(run)).then(() => undefined);
+
   return {
-    show: () => group.forEach((annotation) => annotation.show()),
-    hide: () => group.forEach((annotation) => annotation.hide()),
+    show: () => all((annotation) => annotation.show()),
+    hide: () => all((annotation) => annotation.hide()),
   };
 }
 

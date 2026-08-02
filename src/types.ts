@@ -54,8 +54,10 @@ export interface RoughAnnotationConfig extends RoughAnnotationConfigBase {
  */
 export interface RoughAnnotation extends RoughAnnotationConfigBase {
   isShowing(): boolean;
-  show(): void;
-  hide(): void;
+  /** Resolves once the drawing animation has finished, or immediately if there is none. */
+  show(): Promise<void>;
+  /** Resolves once the annotation is gone, after the reverse animation if one runs. */
+  hide(): Promise<void>;
   /** Unlinks the annotation from its element. */
   remove(): void;
   /**
@@ -67,6 +69,8 @@ export interface RoughAnnotation extends RoughAnnotationConfigBase {
 
 /** Annotations animated in sequence. */
 export interface RoughAnnotationGroup {
-  show(): void;
-  hide(): void;
+  /** Resolves once every annotation in the group has finished drawing. */
+  show(): Promise<void>;
+  /** Resolves once every annotation in the group is gone. */
+  hide(): Promise<void>;
 }

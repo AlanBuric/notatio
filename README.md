@@ -4,7 +4,7 @@ A small JavaScript library to create and animate annotations on a web page.
 
 Notatio uses [RoughJS](https://roughjs.com) to give annotations a hand-drawn look and feel. Elements can be annotated in a number of styles, and the animation can be retimed or turned off.
 
-The bundle is 3.8kb gzipped and has no runtime dependencies.
+The bundle is 4.6kb gzipped and has no runtime dependencies.
 
 Notatio is a fork of [rough-notation](https://github.com/rough-stuff/rough-notation) by Preet Shihn, updated for current tooling and browsers. See [Differences from rough-notation](#differences-from-rough-notation) if you are migrating.
 
@@ -103,8 +103,8 @@ A single number applies to every side. An array follows CSS shorthand order, so 
 `annotate()` returns an object with:
 
 - **`isShowing(): boolean`** whether the annotation is currently drawn.
-- **`show()`** draws the annotation, animating if configured. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
-- **`hide()`** removes the drawing, immediately unless `animateOnHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. `isShowing()` reports `false` as soon as `hide()` returns. Calling `show()` during the animation cancels it and redraws.
+- **`show()`** draws the annotation, animating if configured, and returns a promise that resolves when the animation finishes. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
+- **`hide()`** removes the drawing, immediately unless `animateOnHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. Returns a promise that resolves once the annotation is gone. `isShowing()` reports `false` as soon as `hide()` is called. Calling `show()` during the animation cancels it and redraws.
 - **`remove()`** unlinks the annotation from the element.
 - **`detachListeners()`** stops redrawing on resize, for callers driving their own redraw. The annotation stays drawn, and `show()` reattaches the listeners. Set `observeResize: false` to never attach them.
 
@@ -119,9 +119,20 @@ annotation.color = 'green';
 
 The `type` cannot be changed. Create a new annotation instead.
 
+### Waiting for the animation
+
+`show()` and `hide()` both return a promise, so work can follow the animation without a timer. They resolve immediately when nothing is animating.
+
+```javascript
+await annotate(element, { type: 'highlight' }).show();
+console.log('drawn');
+```
+
+Interrupting an animation still settles its promise, so a `show()` cancelled by another `show()` resolves rather than hanging.
+
 ## Annotation group object
 
-`annotationGroup()` returns an object with `show()` and `hide()`, which apply to every annotation in the group.
+`annotationGroup()` returns an object with `show()` and `hide()`, which apply to every annotation in the group. Both return a promise that resolves once every annotation in the group has finished.
 
 ## Styling
 
@@ -133,6 +144,7 @@ Notatio 1.0.0 is behaviourally compatible with rough-notation 0.5.1 apart from t
 
 - **ESM only.** The CommonJS and IIFE builds are gone, along with the `RoughNotation` global. Use `<script type="module">` for CDN usage.
 - **The CSS class is `notatio-annotation`**, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`. Update any selectors that target them.
+- **`show()` and `hide()` return a promise** instead of nothing. Calls that ignore the return value are unaffected.
 - **Zero-valued options are honoured.** `strokeWidth: 0`, `iterations: 0` and `animationDuration: 0` previously fell back to their defaults because they were applied with `||`.
 - **Annotations survive a client-side route change.** The keyframes rule is reinjected if a router replaces `document.head`, which previously left annotations invisible.
 
