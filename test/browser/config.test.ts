@@ -82,9 +82,10 @@ describe('strokeWidth', () => {
     expect(pathsFor(element)[0]?.getAttribute('stroke-width')).toBe('0');
   });
 
-  it('derives the width from element height for highlight, ignoring the config', () => {
+  it('does not accept a width for highlight, deriving it from element height', () => {
     const element = mountElement();
 
+    // @ts-expect-error highlight sizes its stroke to the element.
     annotate(element, { type: 'highlight', strokeWidth: 1 }).show();
 
     const width = parseFloat(pathsFor(element)[0]!.getAttribute('stroke-width')!);

@@ -6,6 +6,7 @@ First release under the name Notatio, forked from rough-notation 0.5.1.
 
 ### Breaking
 
+- The config is a discriminated union on `type`. Passing an option the chosen type does not read is a compile error: `iterations` on `bracket`, `strokeWidth` on `highlight`, `brackets` on any other type, `rtl` on `box` or `circle`. The annotation object keeps every option settable.
 - `show()` and `hide()` return `Promise<void>` rather than `void`. Existing calls that ignore the return value keep working.
 - ESM only. The CommonJS and IIFE builds are removed, along with the `RoughNotation` global.
 - The annotation CSS class is now `notatio-annotation`, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`.

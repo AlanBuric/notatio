@@ -10,6 +10,7 @@ import { ensureKeyframes } from './keyframes.js';
 import { prefersReducedMotion, renderAnnotation } from './render.js';
 import type {
   Rectangle,
+  ResolvedAnnotationConfig,
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
@@ -89,7 +90,7 @@ function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rectangle {
 
 class RoughAnnotationImpl implements RoughAnnotation {
   #state: AnnotationState = 'unattached';
-  #config: RoughAnnotationConfig;
+  #config: ResolvedAnnotationConfig;
   #element: HTMLElement;
   #seed = randomSeed();
   #svg?: SVGSVGElement;

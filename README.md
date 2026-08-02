@@ -57,22 +57,22 @@ annotationGroup([a3, a1, a2]).show();
 
 `type` is the only required field.
 
-| Option              | Type                           | Default        | Description                                                                     |
-| ------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------- |
-| `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                                |
-| `animate`           | `boolean`                      | `true`         | Whether to animate the drawing.                                                 |
-| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                  |
-| `animateOnHide`     | `boolean`                      | `false`        | Play the drawing animation in reverse on `hide()`.                              |
-| `color`             | `string`                       | `currentColor` | Stroke color.                                                                   |
-| `strokeWidth`       | `number`                       | `2`            | Stroke width. Ignored by `highlight`, which derives it from the element height. |
-| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                     |
-| `iterations`        | `number`                       | `2`            | Number of strokes drawn. Ignored by `bracket`.                                  |
-| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | Which sides to bracket.                                                         |
-| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                           |
-| `rtl`               | `boolean`                      | `false`        | Draw the first stroke right to left.                                            |
-| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                                |
-| `textColor`         | `string`                       | unset          | Applied to the element's `color` while the annotation is showing.               |
-| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                            |
+| Option              | Type                           | Default        | Description                                                                 |
+| ------------------- | ------------------------------ | -------------- | --------------------------------------------------------------------------- |
+| `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                            |
+| `animate`           | `boolean`                      | `true`         | Whether to animate the drawing.                                             |
+| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                              |
+| `animateOnHide`     | `boolean`                      | `false`        | Play the drawing animation in reverse on `hide()`.                          |
+| `color`             | `string`                       | `currentColor` | Stroke color.                                                               |
+| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element height.    |
+| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                 |
+| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.   |
+| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                             |
+| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                       |
+| `rtl`               | `boolean`                      | `false`        | Types drawn as back-and-forth strokes, so not `box`, `circle` or `bracket`. |
+| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                            |
+| `textColor`         | `string`                       | unset          | Applied to the element's `color` while the annotation is showing.           |
+| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                        |
 
 Animation is skipped when the user has `prefers-reduced-motion: reduce` set, regardless of `animate`.
 
@@ -144,6 +144,7 @@ Notatio 1.0.0 is behaviourally compatible with rough-notation 0.5.1 apart from t
 
 - **ESM only.** The CommonJS and IIFE builds are gone, along with the `RoughNotation` global. Use `<script type="module">` for CDN usage.
 - **The CSS class is `notatio-annotation`**, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`. Update any selectors that target them.
+- **The config is a discriminated union on `type`.** Options a type does not read are now compile errors rather than silently ignored: `iterations` on `bracket`, `strokeWidth` on `highlight`, `brackets` on anything else, and `rtl` on `box` or `circle`.
 - **`show()` and `hide()` return a promise** instead of nothing. Calls that ignore the return value are unaffected.
 - **Zero-valued options are honoured.** `strokeWidth: 0`, `iterations: 0` and `animationDuration: 0` previously fell back to their defaults because they were applied with `||`.
 - **Annotations follow an element that moves**, not just one that resizes.

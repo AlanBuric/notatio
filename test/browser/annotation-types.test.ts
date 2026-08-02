@@ -77,9 +77,8 @@ describe('bracket', () => {
     );
   });
 
-  /* Recorded as current behaviour rather than endorsed. */
-  it('ignores the iterations option', () => {
-    expect(render({ type: 'bracket', iterations: 1 })).toHaveLength(3);
+  it('does not accept iterations, and draws one bracket per side regardless', () => {
+    // @ts-expect-error bracket draws one bracket per side, so iterations does not apply.
     expect(render({ type: 'bracket', iterations: 5 })).toHaveLength(3);
   });
 });

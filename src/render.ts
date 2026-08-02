@@ -11,7 +11,13 @@ import {
   REDUCED_MOTION_QUERY,
   SVG_NS,
 } from './constants.js';
-import type { BracketType, FullPadding, Rectangle, RoughAnnotationConfig } from './types.js';
+import type {
+  BracketType,
+  FullPadding,
+  Rectangle,
+  ResolvedAnnotationConfig,
+  RoughAnnotationType,
+} from './types.js';
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
@@ -41,7 +47,7 @@ function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
 }
 
 /** @internal Exported for testing. Not part of the package entry point. */
-export function parsePadding(config: RoughAnnotationConfig): FullPadding {
+export function parsePadding(config: Pick<ResolvedAnnotationConfig, 'padding'>): FullPadding {
   const { padding } = config;
 
   if (typeof padding === 'number') return [padding, padding, padding, padding];
@@ -111,97 +117,124 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia(REDUCED_MOTION_QUERY).matches;
 }
 
+/** Everything a planner needs, resolved from the config. */
+interface StrokeContext {
+  rect: Rectangle;
+  padding: FullPadding;
+  iterations: number;
+  rtl: number;
+  brackets: BracketType[];
+  options: ResolvedOptions;
+  seed: number;
+}
+
+interface StrokePlan {
+  ops: OpSet[];
+  /** Set when the type derives its own width rather than taking the configured one. */
+  strokeWidth?: number;
+}
+
+function repeat(count: number, draw: () => OpSet): OpSet[] {
+  return Array.from({ length: Math.max(count, 0) }, draw);
+}
+
+function horizontal({ rect, iterations, rtl, options }: StrokeContext, y: number): OpSet[] {
+  return alternatingLines([rect.x, y], [rect.x + rect.width, y], iterations, rtl, options);
+}
+
+/** Outer box of the annotation, the element rect grown by its padding. */
+function paddedBox({ rect, padding }: StrokeContext) {
+  return {
+    x: rect.x - padding[3],
+    y: rect.y - padding[0],
+    width: rect.width + padding[1] + padding[3],
+    height: rect.height + padding[0] + padding[2],
+  };
+}
+
+const PLANNERS: Record<RoughAnnotationType, (context: StrokeContext) => StrokePlan> = {
+  underline: (context) => ({
+    ops: horizontal(context, context.rect.y + context.rect.height + context.padding[2]),
+  }),
+
+  'strike-through': (context) => ({
+    ops: horizontal(context, context.rect.y + context.rect.height / 2),
+  }),
+
+  highlight: (context) => ({
+    ops: horizontal(
+      { ...context, options: getOptions('highlight', context.seed) },
+      context.rect.y + context.rect.height / 2,
+    ),
+    strokeWidth: context.rect.height * HIGHLIGHT_HEIGHT_RATIO,
+  }),
+
+  'crossed-off': ({ rect, iterations, rtl, options }) => {
+    const right = rect.x + rect.width;
+    const bottom = rect.y + rect.height;
+
+    return {
+      ops: [
+        ...alternatingLines([rect.x, rect.y], [right, bottom], iterations, rtl, options),
+        ...alternatingLines([right, rect.y], [rect.x, bottom], iterations, rtl, options),
+      ],
+    };
+  },
+
+  box: (context) => {
+    const { x, y, width, height } = paddedBox(context);
+
+    return {
+      ops: repeat(context.iterations, () => rectangle(x, y, width, height, context.options)),
+    };
+  },
+
+  circle: (context) => {
+    const { x, y, width, height } = paddedBox(context);
+    const centreX = x + width / 2;
+    const centreY = y + height / 2;
+    const doubleStrokes = Math.floor(context.iterations / 2);
+    const doubleOptions = getOptions('double', context.seed);
+
+    return {
+      ops: [
+        ...repeat(doubleStrokes, () => ellipse(centreX, centreY, width, height, doubleOptions)),
+        ...repeat(context.iterations - doubleStrokes * 2, () =>
+          ellipse(centreX, centreY, width, height, context.options),
+        ),
+      ],
+    };
+  },
+
+  bracket: ({ rect, padding, brackets, options }) => ({
+    ops: brackets.map((side) => linearPath(bracketPoints(side, rect, padding), false, options)),
+  }),
+};
+
 export function renderAnnotation(
   svg: SVGSVGElement,
   rect: Rectangle,
-  config: RoughAnnotationConfig,
+  config: ResolvedAnnotationConfig,
   animationGroupDelay: number,
   animationDuration: number,
   seed: number,
 ) {
-  const padding = parsePadding(config);
   const animate = (config.animate ?? true) && !prefersReducedMotion();
-  const iterations = config.iterations ?? DEFAULT_ITERATIONS;
-  const rtl = config.rtl ? 1 : 0;
-  const options = getOptions('single', seed);
+  const plan = PLANNERS[config.type]({
+    rect,
+    padding: parsePadding(config),
+    iterations: config.iterations ?? DEFAULT_ITERATIONS,
+    rtl: config.rtl ? 1 : 0,
+    brackets: Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'],
+    options: getOptions('single', seed),
+    seed,
+  });
 
-  let strokeWidth = config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
-  let opList: OpSet[] = [];
+  if (!plan.ops.length) return;
 
-  switch (config.type) {
-    case 'underline': {
-      const y = rect.y + rect.height + padding[2];
-      opList = alternatingLines([rect.x, y], [rect.x + rect.width, y], iterations, rtl, options);
-      break;
-    }
-    case 'strike-through': {
-      const y = rect.y + rect.height / 2;
-      opList = alternatingLines([rect.x, y], [rect.x + rect.width, y], iterations, rtl, options);
-      break;
-    }
-    case 'highlight': {
-      const highlightOptions = getOptions('highlight', seed);
-      const y = rect.y + rect.height / 2;
+  const strokeWidth = plan.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
 
-      strokeWidth = rect.height * HIGHLIGHT_HEIGHT_RATIO;
-      opList = alternatingLines(
-        [rect.x, y],
-        [rect.x + rect.width, y],
-        iterations,
-        rtl,
-        highlightOptions,
-      );
-      break;
-    }
-    case 'crossed-off': {
-      const x2 = rect.x + rect.width;
-      const y2 = rect.y + rect.height;
-
-      opList = [
-        ...alternatingLines([rect.x, rect.y], [x2, y2], iterations, rtl, options),
-        ...alternatingLines([x2, rect.y], [rect.x, y2], iterations, rtl, options),
-      ];
-      break;
-    }
-    case 'box': {
-      const x = rect.x - padding[3];
-      const y = rect.y - padding[0];
-      const width = rect.width + padding[1] + padding[3];
-      const height = rect.height + padding[0] + padding[2];
-
-      opList = Array.from({ length: Math.max(iterations, 0) }, () =>
-        rectangle(x, y, width, height, options),
-      );
-      break;
-    }
-    case 'circle': {
-      const width = rect.width + padding[1] + padding[3];
-      const height = rect.height + padding[0] + padding[2];
-      const x = rect.x - padding[3] + width / 2;
-      const y = rect.y - padding[0] + height / 2;
-      const doubleStrokes = Math.floor(iterations / 2);
-      const singleStrokes = iterations - doubleStrokes * 2;
-      const doubleOptions = getOptions('double', seed);
-
-      opList = [
-        ...Array.from({ length: doubleStrokes }, () => ellipse(x, y, width, height, doubleOptions)),
-        ...Array.from({ length: Math.max(singleStrokes, 0) }, () =>
-          ellipse(x, y, width, height, options),
-        ),
-      ];
-      break;
-    }
-    case 'bracket': {
-      const sides = Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'];
-
-      opList = sides.map((side) => linearPath(bracketPoints(side, rect, padding), false, options));
-      break;
-    }
-  }
-
-  if (!opList.length) return;
-
-  const paths = opsToPath(opList).map((d) => {
+  const paths = opsToPath(plan.ops).map((d) => {
     const path = document.createElementNS(SVG_NS, 'path');
 
     path.setAttribute('d', d);
