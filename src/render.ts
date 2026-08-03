@@ -147,7 +147,9 @@ function paddedBox({ rect, padding }: StrokeContext) {
   };
 }
 
-const PLANNERS: Record<RoughAnnotationType, (context: StrokeContext) => StrokePlan> = {
+type PlanFunction = (context: StrokeContext) => StrokePlan;
+
+const PLANNERS: Record<RoughAnnotationType, PlanFunction> = {
   underline: (context) => ({
     ops: horizontal(context, context.rect.y + context.rect.height + context.padding[2]),
   }),
@@ -267,20 +269,21 @@ export function opsToPath(opList: OpSet[]): string[] {
     let path = '';
 
     function flush() {
-      if (path) paths.push(path.trim());
+      if (path) paths.push(path);
     }
 
+    /* Separator leads each command, so no trailing space needs trimming off. */
     ops.forEach(({ op, data }) => {
       switch (op) {
         case 'move':
           flush();
-          path = `M${data[0]} ${data[1]} `;
+          path = `M${data[0]} ${data[1]}`;
           break;
         case 'bcurveTo':
-          path += `C${data[0]} ${data[1]}, ${data[2]} ${data[3]}, ${data[4]} ${data[5]} `;
+          path += ` C${data[0]} ${data[1]}, ${data[2]} ${data[3]}, ${data[4]} ${data[5]}`;
           break;
         case 'lineTo':
-          path += `L${data[0]} ${data[1]} `;
+          path += ` L${data[0]} ${data[1]}`;
           break;
       }
     });
