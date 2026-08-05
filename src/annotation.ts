@@ -10,6 +10,7 @@ import { ensureKeyframes } from './keyframes.js';
 import { resolveAnimation } from './animation.js';
 import { renderAnnotation } from './render.js';
 import type {
+  AnnotationOptions,
   Rectangle,
   ResolvedAnnotationConfig,
   RoughAnnotation,
@@ -20,6 +21,23 @@ import type {
 } from './types.js';
 
 type AnnotationState = 'unattached' | 'not-showing' | 'showing';
+
+/** Setting one of these changes the drawing, so a visible annotation is redrawn. */
+const REDRAWN_OPTIONS = [
+  'color',
+  'strokeWidth',
+  'padding',
+  'iterations',
+  'multiline',
+  'rtl',
+  'brackets',
+  'amplitude',
+  'frequency',
+  'textColor',
+] as const;
+
+/** Read at the next `show()` or `hide()`, so setting one changes nothing now. */
+const DEFERRED_OPTIONS = ['animate', 'animationDuration'] as const;
 
 const dirtyAnnotations = new Set<RoughAnnotationImpl>();
 let flushScheduled = false;
@@ -114,8 +132,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #hideResolve?: () => void;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
-    /* A `root` element is not structured-cloneable, so it is resolved up front
-       and kept out of the config. */
     const { showOnVisible, ...cloneable } = config;
 
     this.#element = element;
@@ -129,61 +145,49 @@ class RoughAnnotationImpl implements RoughAnnotation {
     (annotation as RoughAnnotationImpl).#animationDelay = delay;
   }
 
-  get animate() {
-    return this.#config.animate;
+  static {
+    const define = (key: keyof AnnotationOptions, redraw: boolean) =>
+      Object.defineProperty(this.prototype, key, {
+        configurable: true,
+        get(this: RoughAnnotationImpl) {
+          return this.#config[key];
+        },
+        set(this: RoughAnnotationImpl, value: never) {
+          if (this.#config[key] !== value) {
+            this.#config[key] = value;
+
+            if (redraw) this.#refresh();
+          }
+        },
+      });
+
+    REDRAWN_OPTIONS.forEach((key) => define(key, true));
+    DEFERRED_OPTIONS.forEach((key) => define(key, false));
   }
 
-  set animate(value) {
-    this.#config.animate = value;
+  get zIndex() {
+    return this.#config.zIndex;
   }
 
-  get animationDuration() {
-    return this.#config.animationDuration;
+  set zIndex(value) {
+    if (this.#config.zIndex === value) return;
+
+    this.#config.zIndex = value;
+
+    if (this.#svg) this.#svg.style.zIndex = value === undefined ? '' : `${value}`;
   }
 
-  set animationDuration(value) {
-    this.#config.animationDuration = value;
+  get observeResize() {
+    return this.#config.observeResize;
   }
 
-  get iterations() {
-    return this.#config.iterations;
-  }
+  set observeResize(value) {
+    if (this.#config.observeResize === value) return;
 
-  set iterations(value) {
-    this.#config.iterations = value;
-  }
+    this.#config.observeResize = value;
 
-  get color() {
-    return this.#config.color;
-  }
-
-  set color(value) {
-    if (this.#config.color === value) return;
-
-    this.#config.color = value;
-    this.#refresh();
-  }
-
-  get strokeWidth() {
-    return this.#config.strokeWidth;
-  }
-
-  set strokeWidth(value) {
-    if (this.#config.strokeWidth === value) return;
-
-    this.#config.strokeWidth = value;
-    this.#refresh();
-  }
-
-  get padding() {
-    return this.#config.padding;
-  }
-
-  set padding(value) {
-    if (this.#config.padding === value) return;
-
-    this.#config.padding = value;
-    this.#refresh();
+    if (value === false) this.detachListeners();
+    else this.#attachListeners();
   }
 
   isShowing(): boolean {
@@ -284,9 +288,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
 
     /* Resolved by clear(), whether the timer fires or a redraw cancels it. */
-    const finished = new Promise<void>((resolve) => {
-      this.#hideResolve = resolve;
-    });
+    const finished = new Promise<void>((resolve) => (this.#hideResolve = resolve));
 
     this.#hideTimer = window.setTimeout(() => this.#clear(), duration + this.#animationDelay);
 
@@ -296,17 +298,17 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #applyTextColor(): void {
     const { textColor } = this.#config;
 
-    if (textColor === undefined) return;
-
-    this.#previousTextColor ??= this.#element.style.color;
-    this.#element.style.color = textColor;
+    if (textColor !== undefined) {
+      this.#previousTextColor ??= this.#element.style.color;
+      this.#element.style.color = textColor;
+    }
   }
 
   #restoreTextColor(): void {
-    if (this.#previousTextColor === undefined) return;
-
-    this.#element.style.color = this.#previousTextColor;
-    this.#previousTextColor = undefined;
+    if (this.#previousTextColor !== undefined) {
+      this.#element.style.color = this.#previousTextColor;
+      this.#previousTextColor = undefined;
+    }
   }
 
   #attach(): void {
@@ -345,29 +347,23 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#observeVisibility();
   }
 
-  /**
-   * Draws the annotation once the element scrolls into view. `repeat` keeps the
-   * observer alive so the annotation tracks visibility both ways; without it,
-   * the observer is dropped after the first draw.
-   */
   #observeVisibility(): void {
     if (!this.#visibility) return;
 
     const { repeat, ...init } = this.#visibility;
 
     this.#visibilityObserver = new IntersectionObserver((entries) => {
-      /* Several entries can be delivered at once, and only the last one
-         describes where the element ended up. */
+      /* Only the last of a batch describes where the element ended up. */
       const entry = entries.at(-1);
 
       if (!entry) return;
 
       if (entry.isIntersecting) {
-        void this.show();
+        this.show();
 
         if (!repeat) this.#disconnectVisibility();
       } else if (repeat && this.isShowing()) {
-        void this.hide();
+        this.hide();
       }
     }, init);
 
@@ -432,7 +428,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
       this.#refreshQueued = false;
 
       /* Not awaited: a later change must not queue behind this redraw. */
-      if (this.isShowing()) void this.show();
+      if (this.isShowing()) this.show();
     });
   }
 
@@ -472,11 +468,11 @@ export function annotate(element: HTMLElement, config: RoughAnnotationConfig): R
   return new RoughAnnotationImpl(element, config);
 }
 
-function runAll(
+async function runAll(
   annotations: RoughAnnotation[],
   run: (annotation: RoughAnnotation) => Promise<void>,
-): Promise<void> {
-  return Promise.all(annotations.map(run)).then(() => undefined);
+) {
+  await Promise.all(annotations.map(run));
 }
 
 export function annotationGroup(annotations: RoughAnnotation[]): RoughAnnotationGroup {

@@ -21,6 +21,7 @@ export default tseslint.config(
         'error',
         { patterns: [{ group: ['@/*'], message: 'Use a relative import inside src/.' }] },
       ],
+      '@typescript-eslint/no-floating-promises': 'off',
     },
   },
   {

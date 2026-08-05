@@ -5,10 +5,7 @@ import { cleanup, mountContainer, nextFrame, pathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
-/**
- * Puts the element well below the fold so the observer starts out reporting it
- * as hidden, and returns both the element and the spacer to scroll past.
- */
+/** Mounts an element below the fold, so the observer starts out reporting it as hidden. */
 function mountBelowFold(): HTMLElement {
   const container = mountContainer();
   const spacer = document.createElement('div');
@@ -32,7 +29,7 @@ function scrollAway(): void {
   window.scrollTo(0, 0);
 }
 
-/** The observer fires off the main thread, so assertions have to be retried. */
+/** The observer fires asynchronously, so assertions have to be retried. */
 function waitForPaths(element: HTMLElement, count: number): Promise<void> {
   return vi.waitFor(() => expect(pathsFor(element).length).toBe(count));
 }

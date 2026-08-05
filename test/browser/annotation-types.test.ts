@@ -85,7 +85,6 @@ describe('bracket', () => {
   });
 });
 
-/** Vertical extent of the drawn strokes, in SVG user units. */
 function drawnHeight(paths: SVGPathElement[]): number {
   const boxes = paths.map((path) => path.getBBox());
 
@@ -94,7 +93,6 @@ function drawnHeight(paths: SVGPathElement[]): number {
   );
 }
 
-/** Combined length of the drawn strokes. */
 function drawnLength(paths: SVGPathElement[]): number {
   return paths.reduce((total, path) => total + path.getTotalLength(), 0);
 }

@@ -32,16 +32,7 @@ export interface AnimationOptions {
 /** `true` animates the drawing only. The object form controls each direction. */
 export type AnimateOption = boolean | AnimationOptions;
 
-/**
- * Passed through to `IntersectionObserver`, so `root`, `rootMargin` and
- * `threshold` mean what they do there. The platform defaults apply, which means
- * the annotation is drawn as soon as any part of the element enters the
- * viewport.
- */
-export interface VisibilityOptions {
-  root?: Element | Document | null;
-  rootMargin?: string;
-  threshold?: number | number[];
+export interface VisibilityOptions extends IntersectionObserverInit {
   /**
    * Hides the annotation again when the element leaves, and redraws it when it
    * comes back. Defaults to `false`, which draws once and stops observing.
@@ -49,7 +40,6 @@ export interface VisibilityOptions {
   repeat?: boolean;
 }
 
-/** `true` observes with the platform defaults. */
 export type ShowOnVisibleOption = boolean | VisibilityOptions;
 
 /** Options every annotation type reads. */
@@ -165,13 +155,14 @@ export type RoughAnnotationConfig =
  * is harmless once the annotation exists.
  */
 export interface AnnotationOptions
-  extends CommonAnnotationOptions, Iterated, Stroked, Directional, Waved {
+  extends Omit<CommonAnnotationOptions, 'showOnVisible'>, Iterated, Stroked, Directional, Waved {
   brackets?: BracketType | BracketType[];
 }
 
 /**
- * A single annotation. Changing `color`, `strokeWidth` or `padding` redraws a
- * visible annotation.
+ * A single annotation. Setting any option that changes the drawing redraws a
+ * visible annotation; `animate` and `animationDuration` apply from the next
+ * `show()` or `hide()`.
  */
 export interface RoughAnnotation extends AnnotationOptions {
   isShowing(): boolean;

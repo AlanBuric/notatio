@@ -68,6 +68,7 @@ Nothing else needs changing. `show()`, `hide()` and `remove()` keep their old be
 
 - `wavy`, an underline drawn along a sine wave, shaped by `amplitude` and `frequency`. `frequency` counts complete waves per 100px of width, so the wavelength holds steady across elements of different widths, and is rounded to a whole number of waves so the stroke starts and ends on the baseline.
 - `showOnVisible` draws the annotation the first time the element scrolls into view, using an `IntersectionObserver`. `true` uses the platform defaults; the object form takes `root`, `rootMargin` and `threshold`, plus `repeat` to hide the annotation again when the element leaves and redraw it when it returns. Without `repeat` the observer is dropped after the first draw.
+- Every option is settable on the annotation object. rough-notation declared the full option set on its annotation type but only implemented accessors for `animate`, `animationDuration`, `iterations`, `color`, `strokeWidth` and `padding`, so reading `zIndex`, `textColor`, `multiline`, `rtl` or `brackets` gave `undefined` and writing one was silently dropped.
 - `show()` and `hide()` return a promise resolving when the animation finishes, on both annotations and groups ([rough-notation#61](https://github.com/rough-stuff/rough-notation/issues/61)).
 - `animate.onHide` plays the drawing animation in reverse on `hide()` ([rough-notation#57](https://github.com/rough-stuff/rough-notation/issues/57), [PR #88](https://github.com/rough-stuff/rough-notation/pull/88)).
 - `zIndex` sets the `z-index` of the annotation SVG ([rough-notation#83](https://github.com/rough-stuff/rough-notation/issues/83), [#80](https://github.com/rough-stuff/rough-notation/issues/80)).
@@ -87,6 +88,8 @@ Nothing else needs changing. `show()`, `hide()` and `remove()` keep their old be
 
 ### Changed
 
+- Setting any option that changes the drawing redraws a visible annotation, where rough-notation redrew only for `color`, `strokeWidth` and `padding`. `animate` and `animationDuration` still apply from the next `show()` or `hide()`, since redrawing on those would cancel the animation in flight.
+- `showOnVisible` is accepted by `annotate()` but is not settable on the annotation object, unlike every other option. It only decides when the first draw happens, so changing it later has nothing to act on.
 - Resize redraws are batched into an animation frame instead of waiting out a fixed 400ms debounce. Every annotation in a batch is measured before any is redrawn, so a batch cannot interleave layout reads with writes, and an annotation whose rect did not actually change is skipped ([rough-notation PR #89](https://github.com/rough-stuff/rough-notation/pull/89)).
 - Build moves from tsc plus Rollup to Vite, with declarations from vite-plugin-dts.
 - tslint is replaced by ESLint and Prettier.

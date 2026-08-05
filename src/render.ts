@@ -77,11 +77,8 @@ function alternatingLines(
   });
 }
 
-/**
- * Samples a sine wave spanning the rect width at `y`. The wave count is rounded
- * to a whole number so the stroke starts and ends on the baseline rather than
- * mid-crest, which leaves the wavelength slightly off the requested frequency.
- */
+/* Rounded to whole waves so the stroke starts and ends on the baseline, which
+   leaves the wavelength slightly off the requested frequency. */
 function wavePoints(rect: Rectangle, y: number, amplitude: number, frequency: number): Point[] {
   const waves = Math.max(Math.round((rect.width * frequency) / 100), 1);
   const steps = waves * WAVE_RESOLUTION;
@@ -96,7 +93,6 @@ function wavePoints(rect: Rectangle, y: number, amplitude: number, frequency: nu
   });
 }
 
-/** Traces the same points back and forth. `rtl` flips the starting direction. */
 function alternatingCurves(
   points: Point[],
   iterations: number,
@@ -204,7 +200,7 @@ const PLANNERS: Record<RoughAnnotationType, PlanFunction> = {
     strokeWidth: context.rect.height * HIGHLIGHT_HEIGHT_RATIO,
   }),
 
-  'crossed-off': ({ rect, iterations, rtl, options }) => {
+  'crossed-off'({ rect, iterations, rtl, options }) {
     const right = rect.x + rect.width;
     const bottom = rect.y + rect.height;
 
@@ -216,7 +212,7 @@ const PLANNERS: Record<RoughAnnotationType, PlanFunction> = {
     };
   },
 
-  box: (context) => {
+  box(context) {
     const { x, y, width, height } = paddedBox(context);
 
     return {
@@ -224,7 +220,7 @@ const PLANNERS: Record<RoughAnnotationType, PlanFunction> = {
     };
   },
 
-  circle: (context) => {
+  circle(context) {
     const { x, y, width, height } = paddedBox(context);
     const centreX = x + width / 2;
     const centreY = y + height / 2;

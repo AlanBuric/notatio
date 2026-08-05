@@ -152,7 +152,7 @@ A single number applies to every side. An array follows CSS shorthand order, so 
 - **`remove()`** unlinks the annotation from the element.
 - **`detachListeners()`** stops redrawing on resize, for callers driving their own redraw. The annotation stays drawn, and `show()` reattaches the listeners. Set `observeResize: false` to never attach them.
 
-Every config property is also exposed as a settable property. Changing `color`, `strokeWidth` or `padding` redraws a visible annotation.
+Every config property is also exposed as a settable property, whatever the type was configured as, since a value the type ignores is harmless once the annotation exists.
 
 ```javascript
 const annotation = annotate(element, { type: 'underline', color: 'red' });
@@ -161,7 +161,11 @@ annotation.show();
 annotation.color = 'green';
 ```
 
-The `type` cannot be changed. Create a new annotation instead.
+Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude`, `frequency` and `textColor`. Several changes in the same task are coalesced into one redraw.
+
+`animate` and `animationDuration` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` restyles the SVG in place, and `observeResize` attaches or detaches the resize listeners.
+
+`type` and `showOnVisible` cannot be changed. `type` decides how the SVG is inserted, and `showOnVisible` only decides when the first draw happens, so both belong to `annotate()`. Create a new annotation instead.
 
 ### Waiting for the animation
 
@@ -197,7 +201,3 @@ These third-party wrappers target the original rough-notation, not Notatio:
 - [Vue](https://github.com/Leecason/vue-rough-notation)
 - [Web Component](https://github.com/Matsuuu/vanilla-rough-notation)
 - [Angular](https://github.com/mikyaj/ngx-rough-notation)
-
-## License
-
-MIT, copyright 2020 Preet Shihn and 2026 Alan Burić. See [LICENSE](LICENSE).
