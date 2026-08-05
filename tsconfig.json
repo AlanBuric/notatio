@@ -1,24 +1,26 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "es2015",
-    "moduleResolution": "node",
-    "lib": [
-      "es2017",
-      "dom"
-    ],
-    "declaration": true,
-    "outDir": "./lib",
-    "baseUrl": ".",
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": [],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "noEmit": true,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+
     "strict": true,
-    "strictNullChecks": true,
-    "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src", "test", "vite.config.ts", "vitest.config.ts"]
 }
