@@ -99,10 +99,10 @@ function alternatingCurves(
   rtl: number,
   options: ResolvedOptions,
 ): OpSet[] {
-  const reversed = [...points].reverse();
+  let reversed: Point[] | undefined;
 
   return Array.from({ length: Math.max(iterations, 0) }, (_, index) =>
-    curve((index + rtl) % 2 ? reversed : points, options),
+    curve((index + rtl) % 2 ? (reversed ??= [...points].reverse()) : points, options),
   );
 }
 
@@ -181,9 +181,9 @@ function paddedBox({ rect, padding }: StrokeContext) {
   };
 }
 
-type PlanFunction = (context: StrokeContext) => StrokePlan;
+type Planner = (context: StrokeContext) => StrokePlan;
 
-const PLANNERS: Record<RoughAnnotationType, PlanFunction> = {
+const PLANNERS: Record<RoughAnnotationType, Planner> = {
   underline: (context) => ({
     ops: horizontal(context, context.rect.y + context.rect.height + context.padding[2]),
   }),
@@ -313,15 +313,11 @@ export function opsToPath(opList: OpSet[]): string[] {
   opList.forEach(({ ops }) => {
     let path = '';
 
-    function flush() {
-      if (path) paths.push(path);
-    }
-
-    /* Separator leads each command, so no trailing space needs trimming off. */
     ops.forEach(({ op, data }) => {
       switch (op) {
         case 'move':
-          flush();
+          if (path) paths.push(path);
+
           path = `M${data[0]} ${data[1]}`;
           break;
         case 'bcurveTo':
@@ -333,7 +329,7 @@ export function opsToPath(opList: OpSet[]): string[] {
       }
     });
 
-    flush();
+    if (path) paths.push(path);
   });
 
   return paths;

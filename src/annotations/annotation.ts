@@ -5,10 +5,10 @@ import {
   PATH_LENGTH_PROPERTY,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
-} from './constants.js';
-import { ensureKeyframes } from './keyframes.js';
-import { resolveAnimation } from './animation.js';
-import { renderAnnotation } from './render.js';
+} from '../constants.js';
+import { ensureKeyframes } from '../keyframes.js';
+import { resolveAnimation } from '../animation.js';
+import { renderAnnotation } from '../render.js';
 import type {
   AnnotationOptions,
   Rectangle,
@@ -16,106 +16,22 @@ import type {
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
-  ShowOnVisibleOption,
   VisibilityOptions,
-} from './types.js';
-
-type AnnotationState = 'unattached' | 'not-showing' | 'showing';
-
-/** Setting one of these changes the drawing, so a visible annotation is redrawn. */
-const REDRAWN_OPTIONS = [
-  'color',
-  'strokeWidth',
-  'padding',
-  'iterations',
-  'multiline',
-  'rtl',
-  'brackets',
-  'amplitude',
-  'frequency',
-  'textColor',
-] as const;
-
-/** Read at the next `show()` or `hide()`, so setting one changes nothing now. */
-const DEFERRED_OPTIONS = ['animate', 'animationDuration'] as const;
-
-const dirtyAnnotations = new Set<RoughAnnotationImpl>();
-let flushScheduled = false;
-
-/** Defers redraws to one batch per frame so reads and writes do not interleave. */
-function markDirty(annotation: RoughAnnotationImpl): void {
-  dirtyAnnotations.add(annotation);
-
-  if (flushScheduled) return;
-
-  flushScheduled = true;
-
-  requestAnimationFrame(() => {
-    flushScheduled = false;
-
-    const batch = [...dirtyAnnotations];
-
-    dirtyAnnotations.clear();
-    RoughAnnotationImpl.flush(batch);
-  });
-}
-
-/** Cancelled animations reject, and a redraw cancels routinely, so treat that as done. */
-function settled(svg: SVGSVGElement): Promise<void> {
-  const animations = svg.getAnimations({ subtree: true });
-
-  if (!animations.length) return Promise.resolve();
-
-  return Promise.all(animations.map(({ finished }) => finished.catch(() => undefined))).then(
-    () => undefined,
-  );
-}
-
-function resolveVisibility(option: ShowOnVisibleOption | undefined): VisibilityOptions | undefined {
-  if (!option) return undefined;
-
-  return option === true ? {} : option;
-}
-
-function sameRounded(a: number, b: number): boolean {
-  return Math.round(a) === Math.round(b);
-}
-
-function isSameRect(a: Rectangle, b: Rectangle): boolean {
-  return (
-    sameRounded(a.x, b.x) &&
-    sameRounded(a.y, b.y) &&
-    sameRounded(a.width, b.width) &&
-    sameRounded(a.height, b.height)
-  );
-}
-
-/**
- * Element bounds in the SVG's user space. Going through the screen CTM rather
- * than subtracting rects keeps annotations correct under a scaled ancestor.
- */
-function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rectangle {
-  const ctm = svg.getScreenCTM();
-
-  if (!ctm) {
-    const origin = svg.getBoundingClientRect();
-
-    return {
-      x: bounds.x - origin.x,
-      y: bounds.y - origin.y,
-      width: bounds.width,
-      height: bounds.height,
-    };
-  }
-
-  const inverse = ctm.inverse();
-  const start = new DOMPoint(bounds.x, bounds.y).matrixTransform(inverse);
-  const end = new DOMPoint(bounds.right, bounds.bottom).matrixTransform(inverse);
-
-  return { x: start.x, y: start.y, width: end.x - start.x, height: end.y - start.y };
-}
+} from '../types.js';
+import {
+  DEFERRED_OPTIONS,
+  REDRAWN_OPTIONS,
+  isSameRect,
+  resolveVisibility,
+  settled,
+  toSvgRect,
+  type AnnotationState,
+} from './utils.js';
 
 class RoughAnnotationImpl implements RoughAnnotation {
+  static #dirtyAnnotations = new Set<RoughAnnotationImpl>();
+  static #flushScheduled = false;
+
   #state: AnnotationState = 'unattached';
   #config: ResolvedAnnotationConfig;
   #element: HTMLElement;
@@ -375,7 +291,25 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#visibilityObserver = undefined;
   }
 
-  #resizeListener = () => markDirty(this);
+  #resizeListener = () => RoughAnnotationImpl.#markDirty(this);
+
+  /** Defers redraws to one batch per frame so reads and writes do not interleave. */
+  static #markDirty(annotation: RoughAnnotationImpl): void {
+    this.#dirtyAnnotations.add(annotation);
+
+    if (this.#flushScheduled) return;
+
+    this.#flushScheduled = true;
+
+    requestAnimationFrame(() => {
+      this.#flushScheduled = false;
+
+      const batch = [...this.#dirtyAnnotations];
+
+      this.#dirtyAnnotations.clear();
+      this.flush(batch);
+    });
+  }
 
   /** Measures the whole batch, then writes only what actually moved. */
   static flush(annotations: RoughAnnotationImpl[]): void {
