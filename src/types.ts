@@ -1,5 +1,12 @@
 export type RoughAnnotationType =
-  'underline' | 'box' | 'circle' | 'highlight' | 'strike-through' | 'crossed-off' | 'bracket';
+  | 'underline'
+  | 'box'
+  | 'circle'
+  | 'highlight'
+  | 'strike-through'
+  | 'crossed-off'
+  | 'bracket'
+  | 'wavy';
 
 export type BracketType = 'left' | 'right' | 'top' | 'bottom';
 
@@ -25,6 +32,26 @@ export interface AnimationOptions {
 /** `true` animates the drawing only. The object form controls each direction. */
 export type AnimateOption = boolean | AnimationOptions;
 
+/**
+ * Passed through to `IntersectionObserver`, so `root`, `rootMargin` and
+ * `threshold` mean what they do there. The platform defaults apply, which means
+ * the annotation is drawn as soon as any part of the element enters the
+ * viewport.
+ */
+export interface VisibilityOptions {
+  root?: Element | Document | null;
+  rootMargin?: string;
+  threshold?: number | number[];
+  /**
+   * Hides the annotation again when the element leaves, and redraws it when it
+   * comes back. Defaults to `false`, which draws once and stops observing.
+   */
+  repeat?: boolean;
+}
+
+/** `true` observes with the platform defaults. */
+export type ShowOnVisibleOption = boolean | VisibilityOptions;
+
 /** Options every annotation type reads. */
 export interface CommonAnnotationOptions {
   /** Defaults to `true`, which animates the drawing but not the removal. */
@@ -43,6 +70,11 @@ export interface CommonAnnotationOptions {
   textColor?: string;
   /** Redraw on element and window resize. Defaults to `true`. */
   observeResize?: boolean;
+  /**
+   * Calls `show()` the first time the element scrolls into view. Unset by
+   * default, leaving the caller to decide when to draw.
+   */
+  showOnVisible?: ShowOnVisibleOption;
 }
 
 /** Marks options a given type does not read, so passing one is a type error. */
@@ -63,18 +95,33 @@ interface Directional {
   rtl?: boolean;
 }
 
+/** Shape of the wave, for the types drawn as one. */
+interface Waved {
+  /** Peak distance from the baseline, in pixels. Defaults to 3. */
+  amplitude?: number;
+  /**
+   * Complete waves per 100px of width, so the wavelength stays the same under
+   * short and long text. Defaults to 5. Rounded to a whole number of waves
+   * across the element, so the stroke starts and ends on the baseline.
+   */
+  frequency?: number;
+}
+
+/** Options only the wave types read. */
+type UnwavedKeys = 'amplitude' | 'frequency';
+
 type StrokeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
   Directional &
-  Unsupported<'brackets'> & {
+  Unsupported<'brackets' | UnwavedKeys> & {
     type: 'underline' | 'strike-through' | 'crossed-off';
   };
 
 type ShapeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
-  Unsupported<'brackets' | 'rtl'> & {
+  Unsupported<'brackets' | 'rtl' | UnwavedKeys> & {
     type: 'box' | 'circle';
   };
 
@@ -82,31 +129,43 @@ type ShapeAnnotationConfig = CommonAnnotationOptions &
 type HighlightAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Directional &
-  Unsupported<'brackets' | 'strokeWidth'> & {
+  Unsupported<'brackets' | 'strokeWidth' | UnwavedKeys> & {
     type: 'highlight';
   };
 
 /** Draws one bracket per side, so `iterations` does not apply. */
 type BracketAnnotationConfig = CommonAnnotationOptions &
   Stroked &
-  Unsupported<'iterations' | 'rtl'> & {
+  Unsupported<'iterations' | 'rtl' | UnwavedKeys> & {
     type: 'bracket';
     /** Sides to bracket. Defaults to `right`. */
     brackets?: BracketType | BracketType[];
+  };
+
+/** A wavy underline, drawn like `underline` but along a sine wave. */
+type WavyAnnotationConfig = CommonAnnotationOptions &
+  Iterated &
+  Stroked &
+  Directional &
+  Waved &
+  Unsupported<'brackets'> & {
+    type: 'wavy';
   };
 
 export type RoughAnnotationConfig =
   | StrokeAnnotationConfig
   | ShapeAnnotationConfig
   | HighlightAnnotationConfig
-  | BracketAnnotationConfig;
+  | BracketAnnotationConfig
+  | WavyAnnotationConfig;
 
 /**
  * The config options as plain optional properties. The annotation object
  * exposes them as settable regardless of type, since a value the type ignores
  * is harmless once the annotation exists.
  */
-export interface AnnotationOptions extends CommonAnnotationOptions, Iterated, Stroked, Directional {
+export interface AnnotationOptions
+  extends CommonAnnotationOptions, Iterated, Stroked, Directional, Waved {
   brackets?: BracketType | BracketType[];
 }
 

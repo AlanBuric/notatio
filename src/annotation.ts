@@ -15,6 +15,8 @@ import type {
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
+  ShowOnVisibleOption,
+  VisibilityOptions,
 } from './types.js';
 
 type AnnotationState = 'unattached' | 'not-showing' | 'showing';
@@ -49,6 +51,12 @@ function settled(svg: SVGSVGElement): Promise<void> {
   return Promise.all(animations.map(({ finished }) => finished.catch(() => undefined))).then(
     () => undefined,
   );
+}
+
+function resolveVisibility(option: ShowOnVisibleOption | undefined): VisibilityOptions | undefined {
+  if (!option) return undefined;
+
+  return option === true ? {} : option;
 }
 
 function sameRounded(a: number, b: number): boolean {
@@ -97,6 +105,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #svg?: SVGSVGElement;
   #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
+  #visibility?: VisibilityOptions;
+  #visibilityObserver?: IntersectionObserver;
   #refreshQueued = false;
   #animationDelay = 0;
   #previousTextColor?: string;
@@ -104,8 +114,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #hideResolve?: () => void;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
+    /* A `root` element is not structured-cloneable, so it is resolved up front
+       and kept out of the config. */
+    const { showOnVisible, ...cloneable } = config;
+
     this.#element = element;
-    this.#config = structuredClone(config);
+    this.#config = structuredClone(cloneable);
+    this.#visibility = resolveVisibility(showOnVisible);
     this.#attach();
   }
 
@@ -201,6 +216,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#svg = undefined;
     this.#state = 'unattached';
     this.detachListeners();
+    this.#disconnectVisibility();
   }
 
   detachListeners(): void {
@@ -326,6 +342,41 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
 
     this.#attachListeners();
+    this.#observeVisibility();
+  }
+
+  /**
+   * Draws the annotation once the element scrolls into view. `repeat` keeps the
+   * observer alive so the annotation tracks visibility both ways; without it,
+   * the observer is dropped after the first draw.
+   */
+  #observeVisibility(): void {
+    if (!this.#visibility) return;
+
+    const { repeat, ...init } = this.#visibility;
+
+    this.#visibilityObserver = new IntersectionObserver((entries) => {
+      /* Several entries can be delivered at once, and only the last one
+         describes where the element ended up. */
+      const entry = entries.at(-1);
+
+      if (!entry) return;
+
+      if (entry.isIntersecting) {
+        void this.show();
+
+        if (!repeat) this.#disconnectVisibility();
+      } else if (repeat && this.isShowing()) {
+        void this.hide();
+      }
+    }, init);
+
+    this.#visibilityObserver.observe(this.#element);
+  }
+
+  #disconnectVisibility(): void {
+    this.#visibilityObserver?.disconnect();
+    this.#visibilityObserver = undefined;
   }
 
   #resizeListener = () => markDirty(this);

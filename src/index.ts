@@ -11,4 +11,6 @@ export type {
   RoughAnnotationGroup,
   RoughAnnotationType,
   RoughPadding,
+  ShowOnVisibleOption,
+  VisibilityOptions,
 } from './types.js';

@@ -1,14 +1,17 @@
 import type { OpSet, ResolvedOptions } from 'roughjs/bin/core';
 import type { Point } from 'roughjs/bin/geometry';
-import { ellipse, line, linearPath, rectangle } from 'roughjs/bin/renderer';
+import { curve, ellipse, line, linearPath, rectangle } from 'roughjs/bin/renderer';
 import {
+  DEFAULT_AMPLITUDE,
   DEFAULT_COLOR,
+  DEFAULT_FREQUENCY,
   DEFAULT_ITERATIONS,
   DEFAULT_PADDING,
   DEFAULT_STROKE_WIDTH,
   HIGHLIGHT_HEIGHT_RATIO,
   KEYFRAME_NAME,
   SVG_NS,
+  WAVE_RESOLUTION,
 } from './constants.js';
 import { resolveAnimation } from './animation.js';
 import type {
@@ -74,6 +77,39 @@ function alternatingLines(
   });
 }
 
+/**
+ * Samples a sine wave spanning the rect width at `y`. The wave count is rounded
+ * to a whole number so the stroke starts and ends on the baseline rather than
+ * mid-crest, which leaves the wavelength slightly off the requested frequency.
+ */
+function wavePoints(rect: Rectangle, y: number, amplitude: number, frequency: number): Point[] {
+  const waves = Math.max(Math.round((rect.width * frequency) / 100), 1);
+  const steps = waves * WAVE_RESOLUTION;
+
+  return Array.from({ length: steps + 1 }, (_, index) => {
+    const progress = index / steps;
+
+    return [
+      rect.x + rect.width * progress,
+      y + amplitude * Math.sin(progress * waves * 2 * Math.PI),
+    ];
+  });
+}
+
+/** Traces the same points back and forth. `rtl` flips the starting direction. */
+function alternatingCurves(
+  points: Point[],
+  iterations: number,
+  rtl: number,
+  options: ResolvedOptions,
+): OpSet[] {
+  const reversed = [...points].reverse();
+
+  return Array.from({ length: Math.max(iterations, 0) }, (_, index) =>
+    curve((index + rtl) % 2 ? reversed : points, options),
+  );
+}
+
 function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding): Point[] {
   const left = rect.x - padding[3] * 2;
   const right = rect.x + rect.width + padding[1] * 2;
@@ -119,6 +155,8 @@ interface StrokeContext {
   iterations: number;
   rtl: number;
   brackets: BracketType[];
+  amplitude: number;
+  frequency: number;
   options: ResolvedOptions;
   seed: number;
 }
@@ -206,6 +244,15 @@ const PLANNERS: Record<RoughAnnotationType, PlanFunction> = {
   bracket: ({ rect, padding, brackets, options }) => ({
     ops: brackets.map((side) => linearPath(bracketPoints(side, rect, padding), false, options)),
   }),
+
+  wavy: ({ rect, padding, amplitude, frequency, iterations, rtl, options }) => ({
+    ops: alternatingCurves(
+      wavePoints(rect, rect.y + rect.height + padding[2], amplitude, frequency),
+      iterations,
+      rtl,
+      options,
+    ),
+  }),
 };
 
 export function renderAnnotation(
@@ -223,6 +270,8 @@ export function renderAnnotation(
     iterations: config.iterations ?? DEFAULT_ITERATIONS,
     rtl: config.rtl ? 1 : 0,
     brackets: Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'],
+    amplitude: config.amplitude ?? DEFAULT_AMPLITUDE,
+    frequency: config.frequency ?? DEFAULT_FREQUENCY,
     options: getOptions('single', seed),
     seed,
   });

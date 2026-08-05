@@ -60,19 +60,21 @@ annotationGroup([a3, a1, a2]).show();
 | Option              | Type                           | Default        | Description                                                                 |
 | ------------------- | ------------------------------ | -------------- | --------------------------------------------------------------------------- |
 | `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                            |
-| `animate`           | `boolean`                      | `true`         | Whether to animate the drawing.                                             |
+| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See below.                                  |
 | `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                              |
-| `animateOnHide`     | `boolean`                      | `false`        | Play the drawing animation in reverse on `hide()`.                          |
 | `color`             | `string`                       | `currentColor` | Stroke color.                                                               |
 | `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element height.    |
 | `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                 |
 | `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.   |
 | `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                             |
+| `amplitude`         | `number`                       | `3`            | `wavy` only. Peak distance from the baseline, in pixels.                    |
+| `frequency`         | `number`                       | `5`            | `wavy` only. Complete waves per 100px of width.                             |
 | `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                       |
 | `rtl`               | `boolean`                      | `false`        | Types drawn as back-and-forth strokes, so not `box`, `circle` or `bracket`. |
 | `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                            |
 | `textColor`         | `string`                       | unset          | Applied to the element's `color` while the annotation is showing.           |
 | `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                        |
+| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view. See below.                   |
 
 ### animate
 
@@ -93,6 +95,28 @@ A dark highlight can swallow dark text. `textColor` recolors the element while t
 annotate(element, { type: 'highlight', color: '#000', textColor: '#fff' }).show();
 ```
 
+### showOnVisible
+
+Draws the annotation the first time the element scrolls into view, so it does not animate off screen where nobody sees it.
+
+```javascript
+annotate(element, { type: 'underline', showOnVisible: true });
+```
+
+There is no need to call `show()` yourself. `true` uses the platform defaults, which fire as soon as any part of the element enters the viewport. The object form takes `root`, `rootMargin` and `threshold`, passed straight through to `IntersectionObserver`, plus `repeat`.
+
+```javascript
+annotate(element, { type: 'box', showOnVisible: { threshold: 0.5 } });
+```
+
+By default the annotation is drawn once and the observer is dropped. `repeat` keeps it, hiding the annotation when the element leaves and drawing it again when it returns.
+
+```javascript
+annotate(element, { type: 'box', showOnVisible: { repeat: true } });
+```
+
+`remove()` stops the observer. `detachListeners()` does not, since it governs resize redraws only.
+
 ### type
 
 - **underline**: a sketchy underline below the element.
@@ -102,6 +126,17 @@ annotate(element, { type: 'highlight', color: '#000', textColor: '#fff' }).show(
 - **strike-through**: horizontal lines through the element.
 - **crossed-off**: an X across the element.
 - **bracket**: a bracket beside the element, usually a paragraph of text.
+- **wavy**: an underline drawn along a sine wave, for a spellchecker look.
+
+### wavy
+
+`wavy` sits where `underline` does and takes the same options, plus the shape of the wave.
+
+```javascript
+annotate(element, { type: 'wavy', color: 'red', amplitude: 4, frequency: 8 });
+```
+
+`frequency` counts complete waves per 100px of width rather than across the whole element, so a short label and a long heading get the same wavelength. It is rounded to a whole number of waves across the element so the stroke starts and ends on the baseline, which puts the drawn wavelength slightly off the requested one.
 
 ### padding
 
@@ -113,7 +148,7 @@ A single number applies to every side. An array follows CSS shorthand order, so 
 
 - **`isShowing(): boolean`** whether the annotation is currently drawn.
 - **`show()`** draws the annotation, animating if configured, and returns a promise that resolves when the animation finishes. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
-- **`hide()`** removes the drawing, immediately unless `animateOnHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. Returns a promise that resolves once the annotation is gone. `isShowing()` reports `false` as soon as `hide()` is called. Calling `show()` during the animation cancels it and redraws.
+- **`hide()`** removes the drawing, immediately unless `animate.onHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. Returns a promise that resolves once the annotation is gone. `isShowing()` reports `false` as soon as `hide()` is called. Calling `show()` during the animation cancels it and redraws.
 - **`remove()`** unlinks the annotation from the element.
 - **`detachListeners()`** stops redrawing on resize, for callers driving their own redraw. The annotation stays drawn, and `show()` reattaches the listeners. Set `observeResize: false` to never attach them.
 
@@ -149,16 +184,7 @@ The injected SVG carries the class `notatio-annotation`, and the stroke animatio
 
 ## Differences from rough-notation
 
-Notatio 1.0.0 is behaviourally compatible with rough-notation 0.5.1 apart from the following.
-
-- **ESM only.** The CommonJS and IIFE builds are gone, along with the `RoughNotation` global. Use `<script type="module">` for CDN usage.
-- **The CSS class is `notatio-annotation`**, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`. Update any selectors that target them.
-- **`animateOnHide` folded into `animate`,** which now takes `boolean | { onShow?, onHide? }`. `animate: { onHide: true }` replaces `animateOnHide: true`.
-- **The config is a discriminated union on `type`.** Options a type does not read are now compile errors rather than silently ignored: `iterations` on `bracket`, `strokeWidth` on `highlight`, `brackets` on anything else, and `rtl` on `box` or `circle`.
-- **`show()` and `hide()` return a promise** instead of nothing. Calls that ignore the return value are unaffected.
-- **Zero-valued options are honoured.** `strokeWidth: 0`, `iterations: 0` and `animationDuration: 0` previously fell back to their defaults because they were applied with `||`.
-- **Annotations follow an element that moves**, not just one that resizes.
-- **Annotations survive a client-side route change.** The keyframes rule is reinjected if a router replaces `document.head`, which previously left annotations invisible.
+Notatio 1.0.0 is behaviourally compatible with rough-notation 0.5.1 apart from a handful of renames and signature changes, each with a one-line migration. The [changelog](CHANGELOG.md) covers them in full, along with everything fixed and added.
 
 ## Credits
 
