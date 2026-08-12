@@ -46,6 +46,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #previousTextColor?: string;
   #hideTimer?: number;
   #hideResolve?: () => void;
+  #multilineWarned = false;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
@@ -391,10 +392,25 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return [];
 
     const bounds = this.#config.multiline
-      ? [...this.#element.getClientRects()]
+      ? this.#multilineRects()
       : [this.#element.getBoundingClientRect()];
 
     return bounds.map((bound) => toSvgRect(svg, bound));
+  }
+
+  #multilineRects(): DOMRect[] {
+    if (!this.#multilineWarned) {
+      this.#multilineWarned = true;
+
+      if (window.getComputedStyle(this.#element).display !== 'inline') {
+        console.warn(
+          '[notatio] `multiline: true` requires the annotated element to have `display: inline` for correct behavior.',
+          this.#element,
+        );
+      }
+    }
+
+    return [...this.#element.getClientRects()];
   }
 }
 
