@@ -22,12 +22,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Resolve Playwright version
         id: playwright
@@ -42,19 +44,19 @@ jobs:
 
       - name: Install Chromium
         if: steps.browser-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       # The cache holds the browser but not the system libraries it links.
       - name: Install Chromium system dependencies
         if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium
 
-      - run: npm run typecheck
+      - run: pnpm run typecheck
 
-      - run: npm run lint
+      - run: pnpm run lint
 
-      - run: npm run format:check
+      - run: pnpm run format:check
 
-      - run: npm test
+      - run: pnpm test
 
-      - run: npm run build
+      - run: pnpm run build
