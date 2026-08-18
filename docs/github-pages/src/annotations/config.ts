@@ -39,7 +39,8 @@ export function toConfig(options: AnnotationOptionValues): RoughAnnotationConfig
     case 'highlight':
       return { ...common, type, iterations, rtl };
     case 'bracket':
-      return { ...common, type, strokeWidth, brackets };
+      /* The config is structured-cloned by the library, which a reactive array would not survive. */
+      return { ...common, type, strokeWidth, brackets: [...brackets] };
     case 'wavy':
       return { ...common, type, strokeWidth, iterations, rtl, amplitude, frequency };
   }

@@ -50,17 +50,25 @@
     border-radius: 2px;
   }
 
+  .annotated[data-selected='true'] {
+    background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+
   .erasing .annotated {
     cursor: crosshair;
-    box-shadow: inset 0 -0.75em 0 var(--color-accent-soft);
+    background-color: color-mix(in srgb, var(--color-accent) 8%, transparent);
+    outline: 1px dashed color-mix(in srgb, var(--color-accent) 45%, transparent);
+    outline-offset: 1px;
   }
 
   .erasing .annotated:hover,
   .erasing .annotated:focus-visible {
-    box-shadow: inset 0 -0.75em 0 #fca5a5;
+    background-color: color-mix(in srgb, var(--color-accent) 28%, transparent);
   }
 
-  .annotated[data-selected='true'] {
-    box-shadow: inset 0 -0.75em 0 var(--color-accent-soft);
+  /* The dashed outline above would otherwise replace the focus ring. */
+  .erasing .annotated:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
   }
 }
