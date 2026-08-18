@@ -11,7 +11,13 @@ import { REPOSITORY_URL } from '@/site';
         href="https://github.com/rough-stuff/rough-notation"
         rel="noopener"
         >rough-notation</a
-      >, drawn with <a class="underline underline-offset-2 hover:text-ink" href="https://roughjs.com" rel="noopener">RoughJS</a>.
+      >, drawn with
+      <a
+        class="underline underline-offset-2 hover:text-ink"
+        href="https://roughjs.com"
+        rel="noopener"
+        >RoughJS</a
+      >.
       <a class="underline underline-offset-2 hover:text-ink" :href="REPOSITORY_URL" rel="noopener"
         >Source code on GitHub</a
       >.

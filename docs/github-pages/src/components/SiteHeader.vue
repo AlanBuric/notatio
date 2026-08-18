@@ -2,26 +2,20 @@
 import { REPOSITORY_URL } from '@/site';
 
 const links = [
-  { label: 'Read me', href: `${REPOSITORY_URL}#readme` },
-  { label: 'Issues', href: `${REPOSITORY_URL}/issues` },
-  { label: 'Source code', href: REPOSITORY_URL },
+  { label: 'Read me', href: `${REPOSITORY_URL}#readme`, wide: true },
+  { label: 'Issues', href: `${REPOSITORY_URL}/issues`, wide: false },
+  { label: 'Source code', href: REPOSITORY_URL, wide: false },
 ] as const;
 </script>
 
 <template>
-  <header class="sticky top-0 z-30 bg-ink text-paper shadow-sm">
-    <nav
-      aria-label="Site"
-      class="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 sm:px-6"
-    >
-      <a
-        href="#top"
-        class="font-serif text-2xl italic tracking-tight text-paper hover:text-white"
-      >
+  <header class="sticky top-0 z-30 h-14 bg-ink text-paper">
+    <nav aria-label="Site" class="mx-auto flex h-full max-w-7xl items-center gap-x-6 px-4 sm:px-6">
+      <a href="#top" class="font-serif text-2xl italic tracking-tight text-paper hover:text-white">
         Notatio
       </a>
-      <ul class="flex flex-1 flex-wrap items-center justify-end gap-x-5 gap-y-1 font-sans text-sm">
-        <li v-for="link in links" :key="link.href">
+      <ul class="flex flex-1 items-center justify-end gap-x-5 font-sans text-sm">
+        <li v-for="link in links" :key="link.href" :class="{ 'hidden sm:block': link.wide }">
           <a
             :href="link.href"
             rel="noopener"

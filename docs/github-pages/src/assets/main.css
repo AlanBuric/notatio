@@ -13,8 +13,7 @@
   --font-serif:
     'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman',
     serif;
-  --font-sans:
-    ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-arabic:
     'Noto Naskh Arabic', 'Amiri', 'Scheherazade New', 'Traditional Arabic', 'Geeza Pro', serif;
 
@@ -24,7 +23,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 9rem;
+    scroll-padding-top: 4.5rem;
   }
 
   body {

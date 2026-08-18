@@ -108,8 +108,8 @@
         <p data-block="quote-ar">العلم صيد والكتابة قيده، قيد صيودك بالحبال الواثقة</p>
       </blockquote>
       <p class="attribution" data-block="quote-en">
-        "Knowledge is game, and writing is its snare; bind your quarry with strong rope."
-        Attributed to al-Shafi'i. Select inside the Arabic line above and annotate it with
+        "Knowledge is game, and writing is its snare; bind your quarry with strong rope." Attributed
+        to al-Shafi'i. Select inside the Arabic line above and annotate it with
         <code>rtl</code> turned on.
       </p>
     </section>

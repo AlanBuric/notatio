@@ -10,7 +10,10 @@ export default defineConfig({
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: [
-      { find: /^notatio$/, replacement: fileURLToPath(new URL('../../src/index.ts', import.meta.url)) },
+      {
+        find: /^notatio$/,
+        replacement: fileURLToPath(new URL('../../src/index.ts', import.meta.url)),
+      },
       { find: /^@\//, replacement: fileURLToPath(new URL('./src/', import.meta.url)) },
     ],
   },
