@@ -24,6 +24,8 @@ Or load the ES module straight from a CDN:
 
 ## Example usage
 
+### Individual annotations
+
 Pass the element to annotate and a config describing the style, then call `show()`.
 
 ```javascript
@@ -43,13 +45,13 @@ const annotation = annotate(element, {
 annotation.show();
 ```
 
-Options can be changed afterwards, and a visible annotation redraws itself.
+Certain options can be changed afterwards, causing the visible annotation to redraw itself.
 
 ```javascript
 annotation.color = 'seagreen';
 ```
 
-Annotations can also draw themselves the first time the element scrolls into view.
+Annotations can also draw themselves the first time the element is scrolled into the view.
 
 ```javascript
 annotate(element, {
@@ -60,7 +62,9 @@ annotate(element, {
 });
 ```
 
-Group annotations to animate them one after another, in the order given.
+### Annotation groups
+
+You can group annotations to animate them one after another, in the given order.
 
 ```javascript
 import { annotate, annotationGroup } from 'notatio';
@@ -102,3 +106,4 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Credits
 
 Notatio is a fork of [rough-notation](https://github.com/rough-stuff/rough-notation) by [Preet Shihn](https://github.com/pshihn), who also wrote [RoughJS](https://roughjs.com), which does the drawing.
+A couple of open issues and pull requests were also applied from the source repository.
