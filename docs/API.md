@@ -4,18 +4,22 @@ The full option list and behaviour of every export. See the [README](../README.m
 
 ## Contents
 
-- [annotate](#annotate)
-- [Configuration](#configuration)
-  - [type](#type)
-  - [animate](#animate)
-  - [padding](#padding)
-  - [textColor](#textcolor)
-  - [showOnVisible](#showonvisible)
-  - [wavy](#wavy)
-- [The annotation object](#the-annotation-object)
-- [annotationGroup](#annotationgroup)
-- [Styling](#styling)
-- [Notes and caveats](#notes-and-caveats)
+- [API reference](#api-reference)
+  - [Contents](#contents)
+  - [annotate](#annotate)
+  - [Configuration](#configuration)
+    - [type](#type)
+    - [animate](#animate)
+    - [padding](#padding)
+    - [textColor](#textcolor)
+    - [showOnVisible](#showonvisible)
+    - [wavy](#wavy)
+  - [The annotation object](#the-annotation-object)
+    - [Changing options after creation](#changing-options-after-creation)
+    - [Waiting for the animation](#waiting-for-the-animation)
+  - [annotationGroup](#annotationgroup)
+  - [Styling](#styling)
+  - [Notes and caveats](#notes-and-caveats)
 
 ## annotate
 
@@ -82,7 +86,7 @@ A single number applies to every side. An array follows CSS shorthand order, so 
 
 ### textColor
 
-A dark highlight can swallow dark text. `textColor` recolors the element while the annotation is showing and restores the previous value on `hide()` or `remove()`.
+A dark highlight can hide dark text. `textColor` recolors the element while the annotation is showing and restores the previous value on `hide()` or `remove()`.
 
 ```javascript
 annotate(element, { type: 'highlight', color: '#000', textColor: '#fff' }).show();

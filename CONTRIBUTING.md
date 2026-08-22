@@ -40,3 +40,5 @@ Then run:
 ```
 pnpm install
 ```
+
+More scripts are available in [package.json](package.json).
