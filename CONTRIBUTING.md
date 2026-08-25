@@ -31,12 +31,12 @@ Once ready, fork the repository, write your changes in a branch, and open a pull
 
 By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).
 
-
 ### Project setup
 
 **Requirements:** Node.js and pnpm installed.
 
 Then run:
+
 ```
 pnpm install
 ```
