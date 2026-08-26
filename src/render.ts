@@ -3,6 +3,7 @@ import type { Point } from 'roughjs/bin/geometry';
 import { curve, ellipse, line, linearPath, rectangle } from 'roughjs/bin/renderer';
 import {
   DEFAULT_AMPLITUDE,
+  DEFAULT_ANIMATION_EASING,
   DEFAULT_COLOR,
   DEFAULT_FREQUENCY,
   DEFAULT_ITERATIONS,
@@ -292,6 +293,7 @@ export function renderAnnotation(
 
   const lengths = paths.map((path) => path.getTotalLength());
   const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+  const easing = config.animationEasing ?? DEFAULT_ANIMATION_EASING;
   let delay = animationGroupDelay;
 
   paths.forEach((path, index) => {
@@ -300,7 +302,7 @@ export function renderAnnotation(
 
     path.style.strokeDashoffset = `${length}`;
     path.style.strokeDasharray = `${length}`;
-    path.style.animation = `${KEYFRAME_NAME} ${duration}ms ease-out ${delay}ms forwards`;
+    path.style.animation = `${KEYFRAME_NAME} ${duration}ms ${easing} ${delay}ms forwards`;
 
     delay += duration;
   });

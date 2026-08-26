@@ -27,6 +27,8 @@ export interface AnimationOptions {
   onShow?: boolean;
   /** Retreat the strokes on `hide()`. Defaults to `false`. */
   onHide?: boolean;
+  /** Overrides `animationEasing` for the retreat on `hide()`. */
+  hideEasing?: string;
 }
 
 /** `true` animates the drawing only. The object form controls each direction. */
@@ -48,6 +50,8 @@ export interface CommonAnnotationOptions {
   animate?: AnimateOption;
   /** Milliseconds. Defaults to 800. */
   animationDuration?: number;
+  /** Any valid CSS `animation-timing-function` value. Defaults to `ease-out`. */
+  animationEasing?: string;
   /** Defaults to `currentColor`. */
   color?: string;
   /** Defaults to 5px on every side. Ignored by types that fill the element box. */

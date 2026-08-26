@@ -62,6 +62,7 @@ annotationGroup([a3, a1, a2]).show();
 | `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                            |
 | `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See below.                                  |
 | `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                              |
+| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                            |
 | `color`             | `string`                       | `currentColor` | Stroke color.                                                               |
 | `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element height.    |
 | `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                 |
@@ -85,6 +86,16 @@ annotate(element, { type: 'underline', animate: { onShow: false, onHide: true } 
 ```
 
 `onShow` defaults to `true` and `onHide` to `false`, so `animate: true` and `animate: {}` mean the same thing. Animation is skipped entirely when the user has `prefers-reduced-motion: reduce` set, whatever is configured here.
+
+The retreat on `hide()` uses `animationEasing` unless `animate.hideEasing` overrides it:
+
+```javascript
+annotate(element, {
+  type: 'underline',
+  animate: { onHide: true, hideEasing: 'ease-in' },
+  animationEasing: 'ease-out',
+});
+```
 
 ### showOnVisible
 
@@ -153,7 +164,7 @@ annotation.color = 'green';
 
 Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude` and `frequency`. Several changes in the same task are coalesced into one redraw.
 
-`animate` and `animationDuration` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` restyles the SVG in place.
+`animate`, `animationDuration`, and `animationEasing` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` restyles the SVG in place.
 
 `observeResize` attaches or detaches the resize listeners, so it is the single switch for callers driving their own redraw. Set it to `false` in the config to never attach them, or on the annotation at any point to stop and start.
 

@@ -4,6 +4,7 @@ import type { AnimateOption } from './types.js';
 interface ResolvedAnimation {
   onShow: boolean;
   onHide: boolean;
+  hideEasing?: string;
 }
 
 function prefersReducedMotion(): boolean {
@@ -19,5 +20,9 @@ export function resolveAnimation(animate: AnimateOption | undefined): ResolvedAn
 
   if (typeof animate === 'boolean') return { onShow: animate, onHide: false };
 
-  return { onShow: animate?.onShow ?? true, onHide: animate?.onHide ?? false };
+  return {
+    onShow: animate?.onShow ?? true,
+    onHide: animate?.onHide ?? false,
+    hideEasing: animate?.hideEasing,
+  };
 }

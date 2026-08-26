@@ -2,6 +2,7 @@ import { randomSeed } from 'roughjs/bin/math';
 import {
   ANNOTATION_CLASS,
   DEFAULT_ANIMATION_DURATION,
+  DEFAULT_ANIMATION_EASING,
   PATH_LENGTH_PROPERTY,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
@@ -176,6 +177,10 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
 
     const duration = this.#config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
+    const easing =
+      resolveAnimation(this.#config.animate).hideEasing ??
+      this.#config.animationEasing ??
+      DEFAULT_ANIMATION_EASING;
     const lengths = paths.map((path) => {
       /* Frees stroke-dashoffset from the forwards-filled show animation. */
       path.style.animation = 'none';
@@ -196,7 +201,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
         style.strokeDashoffset = '0';
         style.strokeDasharray = `${length}`;
         style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
-        style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ease-out ${delay}ms forwards`;
+        style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ${easing} ${delay}ms forwards`;
 
         return delay + segment;
       }, this.#animationDelay);

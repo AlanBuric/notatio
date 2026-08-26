@@ -16,7 +16,7 @@ export const REDRAWN_OPTIONS = [
 ] as const;
 
 /** Read at the next `show()` or `hide()`, so setting one changes nothing now. */
-export const DEFERRED_OPTIONS = ['animate', 'animationDuration'] as const;
+export const DEFERRED_OPTIONS = ['animate', 'animationDuration', 'animationEasing'] as const;
 
 /** Cancelled animations reject, and a redraw cancels routinely, so treat that as done. */
 export async function settled(svg: SVGSVGElement): Promise<void> {

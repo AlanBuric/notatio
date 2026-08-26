@@ -16,6 +16,7 @@ afterEach(cleanup);
 const VALUES = {
   animate: false,
   animationDuration: 120,
+  animationEasing: 'linear',
   color: 'rgb(1, 2, 3)',
   padding: 11,
   multiline: true,
@@ -120,9 +121,7 @@ describe('redrawing on set', () => {
     expect(pathsFor(element)).toHaveLength(0);
   });
 
-  /* animate and animationDuration are read by the next show(), so setting one
-     must not tear down the current drawing. */
-  it.each(['animate', 'animationDuration'] as const)(
+  it.each(['animate', 'animationDuration', 'animationEasing'] as const)(
     'does not redraw when %s changes',
     async (key) => {
       const element = mountElement();
@@ -132,7 +131,7 @@ describe('redrawing on set', () => {
 
       const before = pathsFor(element)[0];
 
-      Object.assign(annotation, { [key]: key === 'animate' ? false : 50 });
+      Object.assign(annotation, { [key]: VALUES[key] });
       await flushMicrotasks();
 
       expect(pathsFor(element)[0]).toBe(before);

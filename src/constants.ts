@@ -11,6 +11,8 @@ export const PATH_LENGTH_PROPERTY = '--notatio-path-length';
 
 export const DEFAULT_ANIMATION_DURATION = 800;
 
+export const DEFAULT_ANIMATION_EASING = 'ease-out';
+
 export const DEFAULT_ITERATIONS = 2;
 
 export const DEFAULT_STROKE_WIDTH = 2;
