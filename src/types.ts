@@ -56,8 +56,6 @@ export interface CommonAnnotationOptions {
   multiline?: boolean;
   /** `z-index` of the annotation SVG. Unset by default. */
   zIndex?: number;
-  /** Applied to the element's `color` while the annotation is showing. */
-  textColor?: string;
   /** Redraw on element and window resize. Defaults to `true`. */
   observeResize?: boolean;
   /**

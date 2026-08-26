@@ -13,7 +13,6 @@ export const REDRAWN_OPTIONS = [
   'brackets',
   'amplitude',
   'frequency',
-  'textColor',
 ] as const;
 
 /** Read at the next `show()` or `hide()`, so setting one changes nothing now. */

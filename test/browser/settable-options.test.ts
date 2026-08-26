@@ -20,7 +20,6 @@ const VALUES = {
   padding: 11,
   multiline: true,
   zIndex: 3,
-  textColor: 'rgb(4, 5, 6)',
   observeResize: false,
   iterations: 5,
   strokeWidth: 9,
@@ -95,17 +94,6 @@ describe('redrawing on set', () => {
     await flushMicrotasks();
 
     expect(pathsFor(span)).toHaveLength(span.getClientRects().length);
-  });
-
-  it('applies textColor set after showing', async () => {
-    const element = mountElement();
-    const annotation = annotate(element, { type: 'highlight' });
-
-    annotation.show();
-    annotation.textColor = 'rgb(7, 8, 9)';
-    await flushMicrotasks();
-
-    expect(element.style.color).toBe('rgb(7, 8, 9)');
   });
 
   it.each(['amplitude', 'frequency'] as const)('redraws when %s changes', async (key) => {

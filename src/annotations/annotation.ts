@@ -43,7 +43,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #visibilityObserver?: IntersectionObserver;
   #refreshQueued = false;
   #animationDelay = 0;
-  #previousTextColor?: string;
   #hideTimer?: number;
   #hideResolve?: () => void;
   #multilineWarned = false;
@@ -155,7 +154,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#hideResolve?.();
     this.#hideResolve = undefined;
 
-    this.#restoreTextColor();
     this.#svg?.replaceChildren();
     this.#state = 'not-showing';
   }
@@ -210,22 +208,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#hideTimer = window.setTimeout(() => this.#clear(), duration + this.#animationDelay);
 
     return finished;
-  }
-
-  #applyTextColor(): void {
-    const { textColor } = this.#config;
-
-    if (textColor !== undefined) {
-      this.#previousTextColor ??= this.#element.style.color;
-      this.#element.style.color = textColor;
-    }
-  }
-
-  #restoreTextColor(): void {
-    if (this.#previousTextColor !== undefined) {
-      this.#element.style.color = this.#previousTextColor;
-      this.#previousTextColor = undefined;
-    }
   }
 
   #attach(): void {
@@ -381,7 +363,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
       delay += duration;
     });
 
-    this.#applyTextColor();
     this.#lastSizes = rects;
     this.#state = 'showing';
   }

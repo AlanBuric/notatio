@@ -72,7 +72,6 @@ annotationGroup([a3, a1, a2]).show();
 | `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                       |
 | `rtl`               | `boolean`                      | `false`        | Types drawn as back-and-forth strokes, so not `box`, `circle` or `bracket`. |
 | `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                            |
-| `textColor`         | `string`                       | unset          | Applied to the element's `color` while the annotation is showing.           |
 | `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                        |
 | `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view. See below.                   |
 
@@ -86,14 +85,6 @@ annotate(element, { type: 'underline', animate: { onShow: false, onHide: true } 
 ```
 
 `onShow` defaults to `true` and `onHide` to `false`, so `animate: true` and `animate: {}` mean the same thing. Animation is skipped entirely when the user has `prefers-reduced-motion: reduce` set, whatever is configured here.
-
-### textColor
-
-A dark highlight can swallow dark text. `textColor` recolors the element while the annotation is showing and restores the previous value on `hide()` or `remove()`.
-
-```javascript
-annotate(element, { type: 'highlight', color: '#000', textColor: '#fff' }).show();
-```
 
 ### showOnVisible
 
@@ -160,7 +151,7 @@ annotation.show();
 annotation.color = 'green';
 ```
 
-Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude`, `frequency` and `textColor`. Several changes in the same task are coalesced into one redraw.
+Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude` and `frequency`. Several changes in the same task are coalesced into one redraw.
 
 `animate` and `animationDuration` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` restyles the SVG in place.
 

@@ -47,55 +47,6 @@ describe('zIndex', () => {
   });
 });
 
-describe('textColor', () => {
-  it('leaves the element colour alone by default', () => {
-    const element = mountElement();
-
-    annotate(element, { type: 'highlight' }).show();
-
-    expect(element.style.color).toBe('');
-  });
-
-  it('applies while showing and restores on hide', () => {
-    const element = mountElement();
-
-    element.style.color = 'rgb(0, 0, 0)';
-
-    const annotation = annotate(element, { type: 'highlight', textColor: 'rgb(255, 255, 255)' });
-
-    annotation.show();
-    expect(element.style.color).toBe('rgb(255, 255, 255)');
-
-    annotation.hide();
-    expect(element.style.color).toBe('rgb(0, 0, 0)');
-  });
-
-  it('restores on remove', () => {
-    const element = mountElement();
-    const annotation = annotate(element, { type: 'highlight', textColor: 'red' });
-
-    annotation.show();
-    annotation.remove();
-
-    expect(element.style.color).toBe('');
-  });
-
-  it('does not compound across repeated show and hide cycles', () => {
-    const element = mountElement();
-
-    element.style.color = 'rgb(1, 2, 3)';
-
-    const annotation = annotate(element, { type: 'highlight', textColor: 'rgb(9, 9, 9)' });
-
-    annotation.show();
-    annotation.hide();
-    annotation.show();
-    annotation.hide();
-
-    expect(element.style.color).toBe('rgb(1, 2, 3)');
-  });
-});
-
 describe('observeResize', () => {
   it('leaves an already-drawn annotation in place when switched off', () => {
     const element = mountElement();
