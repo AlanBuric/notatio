@@ -57,24 +57,25 @@ annotationGroup([a3, a1, a2]).show();
 
 `type` is the only required field.
 
-| Option              | Type                           | Default        | Description                                                                 |
-| ------------------- | ------------------------------ | -------------- | --------------------------------------------------------------------------- |
-| `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                            |
-| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See below.                                  |
-| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                              |
-| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                            |
-| `color`             | `string`                       | `currentColor` | Stroke color.                                                               |
-| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element height.    |
-| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                 |
-| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.   |
-| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                             |
-| `amplitude`         | `number`                       | `3`            | `wavy` only. Peak distance from the baseline, in pixels.                    |
-| `frequency`         | `number`                       | `5`            | `wavy` only. Complete waves per 100px of width.                             |
-| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                       |
-| `rtl`               | `boolean`                      | `false`        | Types drawn as back-and-forth strokes, so not `box`, `circle` or `bracket`. |
-| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                            |
-| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                        |
-| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view. See below.                   |
+| Option              | Type                           | Default        | Description                                                                                 |
+| ------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------------------- |
+| `type`              | `RoughAnnotationType`          | required       | The annotation style. See below.                                                            |
+| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See below.                                                  |
+| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                              |
+| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                                            |
+| `color`             | `string`                       | `currentColor` | Stroke color.                                                                               |
+| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element height.                    |
+| `roughness`         | `number`                       | `1.5`          | How far strokes wander off a straight/geometric path. `3` for `highlight`. `0` disables it. |
+| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation.                                                 |
+| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.                   |
+| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                                             |
+| `amplitude`         | `number`                       | `3`            | `wavy` only. Peak distance from the baseline, in pixels.                                    |
+| `frequency`         | `number`                       | `5`            | `wavy` only. Complete waves per 100px of width.                                             |
+| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                                       |
+| `rtl`               | `boolean`                      | `false`        | Types drawn as back-and-forth strokes, so not `box`, `circle` or `bracket`.                 |
+| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                                            |
+| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                                        |
+| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view. See below.                                   |
 
 ### animate
 
@@ -162,7 +163,7 @@ annotation.show();
 annotation.color = 'green';
 ```
 
-Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude` and `frequency`. Several changes in the same task are coalesced into one redraw.
+Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `roughness`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude` and `frequency`. Several changes in the same task are coalesced into one redraw.
 
 `animate`, `animationDuration`, and `animationEasing` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` restyles the SVG in place.
 

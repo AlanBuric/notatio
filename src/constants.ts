@@ -21,6 +21,11 @@ export const DEFAULT_PADDING = 5;
 
 export const DEFAULT_COLOR = 'currentColor';
 
+export const DEFAULT_ROUGHNESS = 1.5;
+
+/** Highlights use a rougher default since the stroke is thick enough to hide it. */
+export const DEFAULT_HIGHLIGHT_ROUGHNESS = 3;
+
 /** Fraction of the element height a highlight stroke covers. */
 export const HIGHLIGHT_HEIGHT_RATIO = 0.95;
 

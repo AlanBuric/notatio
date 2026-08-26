@@ -28,6 +28,7 @@ const VALUES = {
   brackets: 'left',
   amplitude: 6,
   frequency: 7,
+  roughness: 4,
 } as const satisfies Required<AnnotationOptions>;
 
 const KEYS = Object.keys(VALUES) as (keyof typeof VALUES)[];

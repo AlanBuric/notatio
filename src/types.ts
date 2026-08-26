@@ -54,6 +54,11 @@ export interface CommonAnnotationOptions {
   animationEasing?: string;
   /** Defaults to `currentColor`. */
   color?: string;
+  /**
+   * How far strokes wander from a straight/geometric path. Defaults to 1.5,
+   * or 3 for `highlight`. 0 draws exactly on the shape, with no wobble.
+   */
+  roughness?: number;
   /** Defaults to 5px on every side. Ignored by types that fill the element box. */
   padding?: RoughPadding;
   /** Annotates each wrapped line of inline text separately. */

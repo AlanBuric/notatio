@@ -73,6 +73,7 @@ Nothing else needs changing. `show()`, `hide()` and `remove()` keep their old be
 - `animate.onHide` plays the drawing animation in reverse on `hide()` ([rough-notation#57](https://github.com/rough-stuff/rough-notation/issues/57), [PR #88](https://github.com/rough-stuff/rough-notation/pull/88)).
 - `zIndex` sets the `z-index` of the annotation SVG ([rough-notation#83](https://github.com/rough-stuff/rough-notation/issues/83), [#80](https://github.com/rough-stuff/rough-notation/issues/80)).
 - `observeResize` lets callers drive their own redraw, settable in the config and on the annotation. [rough-notation#90](https://github.com/rough-stuff/rough-notation/issues/90) asked for a way to detach the internal listener because its 400ms debounce fought with the caller's own `ResizeObserver`. That debounce is gone, so the remaining need is only to turn the listeners off, which one option covers without a second method beside it.
+- `roughness` controls how far strokes wander off a straight/geometric path, previously fixed at 1.5 (3 for `highlight`) ([rough-notation#73](https://github.com/rough-stuff/rough-notation/issues/73)).
 - The annotation SVG carries `aria-hidden="true"`, keeping decorative strokes out of the accessibility tree.
 - Animation is skipped when `prefers-reduced-motion: reduce` is set, whatever `animate` is configured to.
 

@@ -6,8 +6,10 @@ import {
   DEFAULT_ANIMATION_EASING,
   DEFAULT_COLOR,
   DEFAULT_FREQUENCY,
+  DEFAULT_HIGHLIGHT_ROUGHNESS,
   DEFAULT_ITERATIONS,
   DEFAULT_PADDING,
+  DEFAULT_ROUGHNESS,
   DEFAULT_STROKE_WIDTH,
   HIGHLIGHT_HEIGHT_RATIO,
   KEYFRAME_NAME,
@@ -25,7 +27,7 @@ import type {
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
-function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
+function getOptions(type: RoughOptionsType, seed: number, roughness?: number): ResolvedOptions {
   return {
     maxRandomnessOffset: 2,
     bowing: 1,
@@ -44,7 +46,8 @@ function getOptions(type: RoughOptionsType, seed: number): ResolvedOptions {
     disableMultiStrokeFill: false,
     preserveVertices: false,
     fillShapeRoughnessGain: 0.8,
-    roughness: type === 'highlight' ? 3 : 1.5,
+    roughness:
+      roughness ?? (type === 'highlight' ? DEFAULT_HIGHLIGHT_ROUGHNESS : DEFAULT_ROUGHNESS),
     disableMultiStroke: type !== 'double',
     seed,
   };
@@ -156,6 +159,7 @@ interface StrokeContext {
   frequency: number;
   options: ResolvedOptions;
   seed: number;
+  roughness?: number;
 }
 
 interface StrokePlan {
@@ -195,7 +199,7 @@ const PLANNERS: Record<RoughAnnotationType, Planner> = {
 
   highlight: (context) => ({
     ops: horizontal(
-      { ...context, options: getOptions('highlight', context.seed) },
+      { ...context, options: getOptions('highlight', context.seed, context.roughness) },
       context.rect.y + context.rect.height / 2,
     ),
     strokeWidth: context.rect.height * HIGHLIGHT_HEIGHT_RATIO,
@@ -226,7 +230,7 @@ const PLANNERS: Record<RoughAnnotationType, Planner> = {
     const centreX = x + width / 2;
     const centreY = y + height / 2;
     const doubleStrokes = Math.floor(context.iterations / 2);
-    const doubleOptions = getOptions('double', context.seed);
+    const doubleOptions = getOptions('double', context.seed, context.roughness);
 
     return {
       ops: [
@@ -269,8 +273,9 @@ export function renderAnnotation(
     brackets: Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'],
     amplitude: config.amplitude ?? DEFAULT_AMPLITUDE,
     frequency: config.frequency ?? DEFAULT_FREQUENCY,
-    options: getOptions('single', seed),
+    options: getOptions('single', seed, config.roughness),
     seed,
+    roughness: config.roughness,
   });
 
   if (!plan.ops.length) return;
