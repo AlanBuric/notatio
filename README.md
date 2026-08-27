@@ -92,8 +92,6 @@ await annotationGroup([heading, note, typo]).show();
 
 The [API reference](docs/API.md) covers every annotation type, all configuration options, the annotation and group objects, and styling hooks.
 
-Migrating from rough-notation? The [changelog](CHANGELOG.md) lists the renames and signature changes, each with a one-line migration.
-
 ## Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
