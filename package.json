@@ -1,7 +1,7 @@
 {
   "name": "notatio",
   "version": "1.0.0",
-  "description": "Create and animate hand-drawn annotations on a web page",
+  "description": "Create and animate hand-drawn annotations on any HTML element",
   "type": "module",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",

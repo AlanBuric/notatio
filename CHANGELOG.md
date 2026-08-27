@@ -2,58 +2,7 @@
 
 ## 1.0.0
 
-First release under the name Notatio, forked from rough-notation 0.5.1.
-
-The library does the same job it always did, and most code moves over by changing the import. The sections below cover what changed, why, and what to write instead.
-
-### Migrating from rough-notation
-
-Install `notatio` in place of `rough-notation` and update the import. The package is ESM only, so a CDN usage needs `<script type="module">`.
-
-```javascript
-// Before
-import { annotate, annotationGroup } from 'rough-notation';
-
-// After
-import { annotate, annotationGroup } from 'notatio';
-```
-
-`animateOnHide` is now part of `animate`.
-
-```javascript
-// Before
-annotate(element, { type: 'underline', animateOnHide: true });
-
-// After
-annotate(element, { type: 'underline', animate: { onHide: true } });
-```
-
-CSS that targets the injected SVG or the stroke keyframe needs the new names.
-
-```css
-/* Before */
-.rough-annotation {
-}
-@keyframes rough-notation-dash {
-}
-
-/* After */
-.notatio-annotation {
-}
-@keyframes notatio-dash {
-}
-```
-
-If TypeScript now rejects a config it used to accept, the option is one the chosen type never read. Drop it, or switch to the type that does read it.
-
-```javascript
-annotate(element, { type: 'bracket', iterations: 3 }); // iterations: bracket draws one per side
-annotate(element, { type: 'highlight', strokeWidth: 4 }); // strokeWidth: derived from the element height
-annotate(element, { type: 'box', rtl: true }); // rtl: box has no stroke direction
-annotate(element, { type: 'underline', brackets: 'left' }); // brackets: bracket only
-```
-
-Nothing else needs changing. `show()`, `hide()` and `remove()` keep their old behaviour for callers that ignore the return value, and every other option keeps its name and meaning.
+First release under the name Notatio, forked from rough-notation 0.5.1. It does the same job as the fork, but with lots of API, performance and feature improvements and breaking changes.
 
 ### Breaking
 
