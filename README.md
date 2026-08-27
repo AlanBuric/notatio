@@ -57,7 +57,6 @@ Annotations can also draw themselves the first time the element is scrolled into
 annotate(element, {
   type: 'highlight',
   color: '#1e293b',
-  textColor: '#f8fafc',
   showOnVisible: { threshold: 0.5, repeat: true },
 });
 ```

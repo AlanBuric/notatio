@@ -137,6 +137,38 @@ describe('animate.onHide', () => {
     pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(REVERSE));
   });
 
+  it('uses animationEasing for the retreat by default', async () => {
+    const element = mountElement();
+    const annotation = annotate(element, {
+      type: 'underline',
+      animate: { onHide: true },
+      animationDuration: 300,
+      animationEasing: 'linear',
+    });
+
+    annotation.show();
+    annotation.hide();
+    await nextFrame();
+
+    expect(pathsFor(element)[0]!.style.animationTimingFunction).toBe('linear');
+  });
+
+  it('overrides animationEasing for the retreat when animate.hideEasing is set', async () => {
+    const element = mountElement();
+    const annotation = annotate(element, {
+      type: 'underline',
+      animate: { onHide: true, hideEasing: 'ease-in' },
+      animationDuration: 300,
+      animationEasing: 'linear',
+    });
+
+    annotation.show();
+    annotation.hide();
+    await nextFrame();
+
+    expect(pathsFor(element)[0]!.style.animationTimingFunction).toBe('ease-in');
+  });
+
   it('does nothing when hide is called twice', () => {
     const element = mountElement();
     const annotation = annotate(element, { type: 'underline', animate: { onHide: true } });

@@ -11,6 +11,8 @@ export const PATH_LENGTH_PROPERTY = '--notatio-path-length';
 
 export const DEFAULT_ANIMATION_DURATION = 800;
 
+export const DEFAULT_ANIMATION_EASING = 'ease-out';
+
 export const DEFAULT_ITERATIONS = 2;
 
 export const DEFAULT_STROKE_WIDTH = 2;
@@ -18,6 +20,11 @@ export const DEFAULT_STROKE_WIDTH = 2;
 export const DEFAULT_PADDING = 5;
 
 export const DEFAULT_COLOR = 'currentColor';
+
+export const DEFAULT_ROUGHNESS = 1.5;
+
+/** Highlights use a rougher default since the stroke is thick enough to hide it. */
+export const DEFAULT_HIGHLIGHT_ROUGHNESS = 3;
 
 /** Fraction of the element height a highlight stroke covers. */
 export const HIGHLIGHT_HEIGHT_RATIO = 0.95;

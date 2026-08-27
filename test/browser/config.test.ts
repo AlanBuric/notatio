@@ -94,6 +94,35 @@ describe('strokeWidth', () => {
   });
 });
 
+describe('roughness', () => {
+  it('wobbles off the straight baseline by default', () => {
+    const element = mountElement();
+
+    annotate(element, { type: 'underline', animate: false }).show();
+    expect(pathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+  });
+
+  it('draws an exact line when set to 0', () => {
+    const element = mountElement();
+
+    annotate(element, { type: 'underline', roughness: 0, animate: false }).show();
+    expect(pathsFor(element)[0]!.getBBox().height).toBeCloseTo(0, 5);
+  });
+
+  it('re-renders when roughness is set after showing', async () => {
+    const element = mountElement();
+    const annotation = annotate(element, { type: 'underline', roughness: 0 });
+
+    annotation.show();
+
+    annotation.roughness = 5;
+    await flushMicrotasks();
+
+    expect(annotation.roughness).toBe(5);
+    expect(pathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+  });
+});
+
 describe('animation', () => {
   it('animates by default', () => {
     const element = mountElement();

@@ -27,6 +27,8 @@ export interface AnimationOptions {
   onShow?: boolean;
   /** Retreat the strokes on `hide()`. Defaults to `false`. */
   onHide?: boolean;
+  /** Overrides `animationEasing` for the retreat on `hide()`. */
+  hideEasing?: string;
 }
 
 /** `true` animates the drawing only. The object form controls each direction. */
@@ -48,16 +50,21 @@ export interface CommonAnnotationOptions {
   animate?: AnimateOption;
   /** Milliseconds. Defaults to 800. */
   animationDuration?: number;
+  /** Any valid CSS `animation-timing-function` value. Defaults to `ease-out`. */
+  animationEasing?: string;
   /** Defaults to `currentColor`. */
   color?: string;
+  /**
+   * How far strokes wander from a straight/geometric path. Defaults to 1.5,
+   * or 3 for `highlight`. 0 draws exactly on the shape, with no wobble.
+   */
+  roughness?: number;
   /** Defaults to 5px on every side. Ignored by types that fill the element box. */
   padding?: RoughPadding;
   /** Annotates each wrapped line of inline text separately. */
   multiline?: boolean;
   /** `z-index` of the annotation SVG. Unset by default. */
   zIndex?: number;
-  /** Applied to the element's `color` while the annotation is showing. */
-  textColor?: string;
   /** Redraw on element and window resize. Defaults to `true`. */
   observeResize?: boolean;
   /**

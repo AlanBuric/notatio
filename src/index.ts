@@ -1,9 +1,10 @@
 export { annotate, annotationGroup } from './annotations/annotation.js';
 
 export type {
+  AnimateOption,
+  AnimationOptions,
   BracketType,
   FullPadding,
-  Rectangle,
   RoughAnnotation,
   RoughAnnotationConfig,
   AnnotationOptions,

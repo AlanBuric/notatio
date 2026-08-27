@@ -16,11 +16,11 @@ afterEach(cleanup);
 const VALUES = {
   animate: false,
   animationDuration: 120,
+  animationEasing: 'linear',
   color: 'rgb(1, 2, 3)',
   padding: 11,
   multiline: true,
   zIndex: 3,
-  textColor: 'rgb(4, 5, 6)',
   observeResize: false,
   iterations: 5,
   strokeWidth: 9,
@@ -28,6 +28,7 @@ const VALUES = {
   brackets: 'left',
   amplitude: 6,
   frequency: 7,
+  roughness: 4,
 } as const satisfies Required<AnnotationOptions>;
 
 const KEYS = Object.keys(VALUES) as (keyof typeof VALUES)[];
@@ -97,17 +98,6 @@ describe('redrawing on set', () => {
     expect(pathsFor(span)).toHaveLength(span.getClientRects().length);
   });
 
-  it('applies textColor set after showing', async () => {
-    const element = mountElement();
-    const annotation = annotate(element, { type: 'highlight' });
-
-    annotation.show();
-    annotation.textColor = 'rgb(7, 8, 9)';
-    await flushMicrotasks();
-
-    expect(element.style.color).toBe('rgb(7, 8, 9)');
-  });
-
   it.each(['amplitude', 'frequency'] as const)('redraws when %s changes', async (key) => {
     const element = mountElement();
     const annotation = annotate(element, { type: 'wavy', animate: false, iterations: 1 });
@@ -132,9 +122,7 @@ describe('redrawing on set', () => {
     expect(pathsFor(element)).toHaveLength(0);
   });
 
-  /* animate and animationDuration are read by the next show(), so setting one
-     must not tear down the current drawing. */
-  it.each(['animate', 'animationDuration'] as const)(
+  it.each(['animate', 'animationDuration', 'animationEasing'] as const)(
     'does not redraw when %s changes',
     async (key) => {
       const element = mountElement();
@@ -144,7 +132,7 @@ describe('redrawing on set', () => {
 
       const before = pathsFor(element)[0];
 
-      Object.assign(annotation, { [key]: key === 'animate' ? false : 50 });
+      Object.assign(annotation, { [key]: VALUES[key] });
       await flushMicrotasks();
 
       expect(pathsFor(element)[0]).toBe(before);
