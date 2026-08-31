@@ -23,6 +23,7 @@ The full option list and behaviour of every export. See the [README](../README.m
     - [Pausing an animation](#pausing-an-animation)
     - [Reaching the SVG](#reaching-the-svg)
   - [annotationGroup](#annotationgroup)
+  - [Accessibility](#accessibility)
   - [Styling](#styling)
   - [Notes and caveats](#notes-and-caveats)
 
@@ -313,6 +314,29 @@ annotationGroup([a3, a1, a2]).show();
 - **`annotations`**, the annotations it was built from. The group snapshots the array it is handed, so mutating that array afterwards does not change the group.
 
 An annotation's own [`delay`](#delay) adds to the slot the group gives it.
+
+## Accessibility
+
+Annotations are decoration, and are treated as such:
+
+- The annotation SVG carries `aria-hidden="true"`, keeping its strokes out of the accessibility tree.
+- It is `pointer-events: none`, so it never intercepts clicks, hover or text selection.
+- Animation is skipped when `prefers-reduced-motion: reduce` is set. This is checked before `animate` is read, so no configuration can draw motion the user has declined.
+- Annotating never changes the element's text content. Only `highlight` touches the element at all, setting `position: relative` when it is otherwise `static`, because it paints behind the element rather than in front.
+
+Two things the library cannot do for you.
+
+**An annotation that carries meaning needs that meaning somewhere else.** A `strike-through` that means "completed", or a `wavy` underline that means "misspelled", reaches assistive technology as nothing at all. That is the right default, since announcing every decorative underline would be noise, but it means the meaning has to live in the text or on the annotated element:
+
+```html
+<span aria-label="Misspelled: recieve">recieve</span>
+```
+
+```javascript
+annotate(element, { type: 'wavy', color: 'red' });
+```
+
+**Check the contrast of a `highlight`.** It paints behind the text, so a dark highlight under dark text fails WCAG contrast whatever the annotation does. `color` is the highlight's own color, not the text's, and the two have to be checked together.
 
 ## Styling
 
