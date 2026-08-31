@@ -10,12 +10,18 @@ The full option list and behaviour of every export. See the [README](../README.m
   - [Configuration](#configuration)
     - [type](#type)
     - [animate](#animate)
+    - [delay](#delay)
     - [padding](#padding)
+    - [position](#position)
     - [showOnVisible](#showonvisible)
-    - [wavy](#wavy)
+    - [wavy and zigzag](#wavy-and-zigzag)
+    - [seed and stroke options](#seed-and-stroke-options)
+  - [Writing modes](#writing-modes)
   - [The annotation object](#the-annotation-object)
     - [Changing options after creation](#changing-options-after-creation)
     - [Waiting for the animation](#waiting-for-the-animation)
+    - [Pausing an animation](#pausing-an-animation)
+    - [Reaching the SVG](#reaching-the-svg)
   - [annotationGroup](#annotationgroup)
   - [Styling](#styling)
   - [Notes and caveats](#notes-and-caveats)
@@ -36,38 +42,45 @@ annotation.show();
 
 `type` is the only required field.
 
-| Option              | Type                           | Default        | Description                                                                                 |
-| ------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------------------- |
-| `type`              | `RoughAnnotationType`          | required       | The annotation style. See [type](#type).                                                    |
-| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See [animate](#animate).                                    |
-| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                              |
-| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                                            |
-| `color`             | `string`                       | `currentColor` | Stroke color.                                                                               |
-| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element height.                    |
-| `roughness`         | `number`                       | `1.5`          | How far strokes wander off a straight/geometric path. `3` for `highlight`. `0` disables it. |
-| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation. See [padding](#padding).                        |
-| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.                   |
-| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                                             |
-| `amplitude`         | `number`                       | `3`            | `wavy` only. Peak distance from the baseline, in pixels.                                    |
-| `frequency`         | `number`                       | `5`            | `wavy` only. Complete waves per 100px of width.                                             |
-| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                                       |
-| `rtl`               | `boolean`                      | `false`        | Types drawn as back-and-forth strokes, so not `box`, `circle` or `bracket`.                 |
-| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                                            |
-| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                                        |
-| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view.                                              |
+| Option              | Type                           | Default        | Description                                                                    |
+| ------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------ |
+| `type`              | `RoughAnnotationType`          | required       | The annotation style. See [type](#type).                                       |
+| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See [animate](#animate).                       |
+| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                 |
+| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                               |
+| `delay`             | `number`                       | `0`            | Milliseconds to wait before drawing. See [delay](#delay).                      |
+| `color`             | `string`                       | `currentColor` | Stroke color.                                                                  |
+| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element.              |
+| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation. See [padding](#padding).           |
+| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.      |
+| `position`          | `'under' \| 'over' \| 'both'`  | `'under'`      | Which side of the text a line sits on. See [position](#position).              |
+| `reverse`           | `boolean`                      | `false`        | Draw the first stroke against the text flow. Not `box`, `circle` or `bracket`. |
+| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                                |
+| `amplitude`         | `number`                       | `3`            | Wave types only. Peak distance from the baseline, in pixels.                   |
+| `frequency`         | `number`                       | `5`            | Wave types only. Complete waves per 100px of text.                             |
+| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                          |
+| `class`             | `string`                       | unset          | Added to the annotation SVG alongside `notatio-annotation`.                    |
+| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                               |
+| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                           |
+| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view.                                 |
+| `seed`              | `number`                       | random         | Pins the random variation. See [seed](#seed-and-stroke-options).               |
+| `roughness`         | `number`                       | `1.5`          | How far strokes wander off a straight/geometric path. `3` for `highlight`.     |
+
+Plus the rest of the [stroke options](#seed-and-stroke-options), which tune how RoughJS draws.
 
 Options a type does not read are a type error in TypeScript, so `strokeWidth` on a `highlight` or `amplitude` on a `box` is caught at compile time.
 
 ### type
 
-- **underline**: a sketchy underline below the element.
+- **underline**: a sketchy line alongside the element.
 - **box**: a box around the element.
 - **circle**: a circle around the element.
 - **highlight**: a highlighter effect behind the element.
-- **strike-through**: horizontal lines through the element.
+- **strike-through**: lines through the middle of the element.
 - **crossed-off**: an X across the element.
 - **bracket**: a bracket beside the element, usually a paragraph of text.
 - **wavy**: an underline drawn along a sine wave, for a spellchecker look.
+- **zigzag**: the same wave with sharp corners instead of curves.
 
 ### animate
 
@@ -90,9 +103,34 @@ annotate(element, {
 });
 ```
 
+### delay
+
+Milliseconds to wait before the drawing starts, on top of the slot the annotation gets from its [group](#annotationgroup). Use it to hold an annotation back without building a group around it.
+
+```javascript
+annotate(element, { type: 'underline', delay: 400 });
+```
+
 ### padding
 
 A single number applies to every side. An array follows CSS shorthand order, so `[top, right, bottom, left]`, `[top, right, bottom]`, or `[block, inline]`.
+
+Padding is named physically, but read logically: an underline sits beyond the padding on whichever side is the block-end for the element's [writing mode](#writing-modes), which is `bottom` for horizontal text and `left` under `vertical-rl`.
+
+### position
+
+Which side of the text a line runs along. Applies to `underline`, `wavy` and `zigzag`; the other types either cross the text or surround it, so there is no side to choose.
+
+```javascript
+annotate(element, { type: 'underline', position: 'over' });
+annotate(element, { type: 'wavy', position: 'both' });
+```
+
+`under` is the default and puts the stroke below horizontal text. `over` puts it above. `both` draws one of each, doubling the stroke count. Each side reads its own padding.
+
+The names are logical rather than physical, so they follow the text: under `vertical-rl`, `under` is the left of the column and `over` is the right. See [writing modes](#writing-modes).
+
+`position` never mirrors a wave for you. To flip one, negate its [`amplitude`](#wavy-and-zigzag).
 
 ### showOnVisible
 
@@ -116,15 +154,65 @@ annotate(element, { type: 'box', showOnVisible: { repeat: true } });
 
 `remove()` stops the observer.
 
-### wavy
+### wavy and zigzag
 
-`wavy` sits where `underline` does and takes the same options, plus the shape of the wave.
+Both sit where `underline` does and take the same options, plus the shape of the wave. `wavy` curves between its points; `zigzag` samples the same wave only where it crosses and peaks, and joins those with straight strokes.
 
 ```javascript
 annotate(element, { type: 'wavy', color: 'red', amplitude: 4, frequency: 8 });
+annotate(element, { type: 'zigzag', color: 'orange', amplitude: 5, frequency: 4 });
 ```
 
-`frequency` counts complete waves per 100px of width rather than across the whole element, so a short label and a long heading get the same wavelength. It is rounded to a whole number of waves across the element so the stroke starts and ends on the baseline, which puts the drawn wavelength slightly off the requested one.
+`frequency` counts complete waves per 100px of text rather than across the whole element, so a short label and a long heading get the same wavelength. It is rounded to a whole number of waves across the element so the stroke starts and ends on the baseline, which puts the drawn wavelength slightly off the requested one.
+
+A negative `amplitude` mirrors the wave, starting it on the other side of the baseline. That is the whole of it: there is no separate flag.
+
+```javascript
+annotate(element, { type: 'wavy', position: 'both', amplitude: -3 });
+```
+
+### seed and stroke options
+
+`seed` chooses the random variation. The same seed, options and geometry always draw the same strokes, which makes annotations reproducible across reloads and in screenshot tests.
+
+It is assigned randomly when the config omits one, and readable from the annotation afterwards, so a variation you like can be captured and pinned:
+
+```javascript
+const annotation = annotate(element, { type: 'circle' });
+
+annotation.show();
+console.log(annotation.seed); // 482913 — paste it into the config to keep this one
+```
+
+The rest of the stroke options are RoughJS parameters, passed through to the renderer:
+
+| Option                | Default | Description                                                   |
+| --------------------- | ------- | ------------------------------------------------------------- |
+| `roughness`           | `1.5`   | How far strokes wander off the ideal path. `0` draws exactly. |
+| `maxRandomnessOffset` | `2`     | Ceiling on a single point's random displacement.              |
+| `bowing`              | `1`     | How far a straight line bends on its way across.              |
+| `curveFitting`        | `0.95`  | How closely an ellipse follows its ideal curve.               |
+| `curveTightness`      | `0`     | Slack in the curve through a wave's points.                   |
+| `curveStepCount`      | `9`     | Points sampled around an ellipse.                             |
+| `preserveVertices`    | `false` | Pins path endpoints in place instead of jittering them.       |
+
+These are the RoughJS options that reach the stroke renderers. RoughJS accepts more, but the rest only affect fills, which annotations never draw, so they are deliberately not exposed.
+
+## Writing modes
+
+Annotations read the element's computed `writing-mode` and draw along the text rather than along the screen. Nothing has to be configured for this.
+
+Under `horizontal-tb` an underline runs left to right below the text. Under `vertical-rl` the same annotation runs top to bottom, to the left of the column; under `vertical-lr` it runs to the right. `sideways-rl` and `sideways-lr` follow whichever of the two shares their block direction.
+
+```html
+<p style="writing-mode: vertical-rl">縦書きのテキスト</p>
+```
+
+```javascript
+annotate(element, { type: 'underline' });
+```
+
+This applies throughout: `strike-through` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those reads the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
 
 ## The annotation object
 
@@ -133,7 +221,10 @@ annotate(element, { type: 'wavy', color: 'red', amplitude: 4, frequency: 8 });
 - **`isShowing(): boolean`** whether the annotation is currently drawn.
 - **`show()`** draws the annotation, animating if configured, and returns a promise that resolves when the animation finishes. Calling it again re-renders at the element's current size and position, without replaying the animation. To replay it, call `hide()` first.
 - **`hide()`** removes the drawing, immediately unless `animate.onHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. Returns a promise that resolves once the annotation is gone. `isShowing()` reports `false` as soon as `hide()` is called. Calling `show()` during the animation cancels it and redraws.
+- **`pause()`** and **`resume()`** hold and release an animation in progress. See [pausing an animation](#pausing-an-animation).
 - **`remove()`** unlinks the annotation from the element.
+- **`svg`** and **`layer`** the drawn elements. See [reaching the SVG](#reaching-the-svg).
+- **`seed`** the variation in use, readable and settable. See [seed](#seed-and-stroke-options).
 
 ### Changing options after creation
 
@@ -146,9 +237,9 @@ annotation.show();
 annotation.color = 'green';
 ```
 
-Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `roughness`, `padding`, `iterations`, `multiline`, `rtl`, `brackets`, `amplitude` and `frequency`. Several changes in the same task are coalesced into one redraw.
+Setting an option that changes the drawing redraws a visible annotation: `color`, `strokeWidth`, `padding`, `iterations`, `multiline`, `reverse`, `position`, `brackets`, `amplitude`, `frequency`, `seed` and the rest of the [stroke options](#seed-and-stroke-options). Several changes in the same task are coalesced into one redraw.
 
-`animate`, `animationDuration`, and `animationEasing` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` restyles the SVG in place.
+`animate`, `animationDuration`, `animationEasing` and `delay` apply from the next `show()` or `hide()`, so setting one leaves the current drawing alone. `zIndex` and `class` restyle the SVG in place.
 
 `observeResize` attaches or detaches the resize listeners, so it is the single switch for callers driving their own redraw. Set it to `false` in the config to never attach them, or on the annotation at any point to stop and start.
 
@@ -172,6 +263,35 @@ console.log('drawn');
 
 Interrupting an animation still settles its promise, so a `show()` cancelled by another `show()` resolves rather than hanging.
 
+### Pausing an animation
+
+`pause()` holds every animation on the annotation where it is, and `resume()` runs them on from that point. Both are safe to call when nothing is animating.
+
+```javascript
+const annotation = annotate(element, { type: 'box', animationDuration: 2000 });
+
+annotation.show();
+annotation.pause();
+annotation.resume();
+```
+
+This covers the retreat on `hide()` as well, since the teardown follows the animations rather than a timer. A paused `hide()` leaves the strokes on the page until it is resumed, and its promise resolves only once the animation actually finishes.
+
+### Reaching the SVG
+
+`annotation.svg` is the injected `<svg>`, and `annotation.layer` is the `<g>` inside it that holds the strokes. Both are `undefined` after `remove()`.
+
+Use `layer` for anything visual: transforms, filters, opacity.
+
+```javascript
+annotation.layer.style.transform = 'rotate(-2deg)';
+annotation.svg.style.opacity = '0.6';
+```
+
+Opacity is worth setting on one of the two rather than on individual strokes: overlapping passes would otherwise darken where they cross, while opacity on a parent composites the whole annotation once.
+
+The reason to prefer `layer` for transforms is that the element's geometry is measured against `svg`. A transform set on the root is included in that measurement, so the next redraw compensates for it and the annotation snaps back onto the element. `layer` sits below the measurement and composes cleanly.
+
 ## annotationGroup
 
 A group animates its annotations one after another, in the order given rather than DOM order.
@@ -186,11 +306,33 @@ const a3 = annotate(document.querySelector('#e3'), { type: 'circle' });
 annotationGroup([a3, a1, a2]).show();
 ```
 
-`annotationGroup()` returns an object with `show()` and `hide()`, which apply to every annotation in the group. Both return a promise that resolves once every annotation in the group has finished.
+`annotationGroup()` returns an object with:
+
+- **`show()`** and **`hide()`**, which apply to every annotation in the group. Both return a promise that resolves once every annotation in the group has finished.
+- **`remove()`**, which removes every annotation in the group.
+- **`annotations`**, the annotations it was built from. The group snapshots the array it is handed, so mutating that array afterwards does not change the group.
+
+An annotation's own [`delay`](#delay) adds to the slot the group gives it.
 
 ## Styling
 
-The injected SVG carries the class `notatio-annotation`, and the stroke animation uses the keyframe `notatio-dash`.
+The injected SVG carries the class `notatio-annotation`, the group inside it carries `notatio-layer`, and the stroke animation uses the keyframes `notatio-dash` and `notatio-dash-reverse`.
+
+`class` adds your own class to the SVG, which is the way to reach an annotation from a stylesheet rather than imperatively:
+
+```javascript
+annotate(element, { type: 'underline', class: 'brand-underline' });
+```
+
+```css
+@media (prefers-color-scheme: dark) {
+  .brand-underline path {
+    stroke: #f9a8d4;
+  }
+}
+```
+
+Because it is set when the SVG is created, a rule written this way applies to the very first paint.
 
 ## Notes and caveats
 

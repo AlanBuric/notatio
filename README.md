@@ -2,7 +2,7 @@
 
 Create and animate hand-drawn annotations on any HTML element.
 
-Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight, strike through, cross off, bracket or squiggle anything already on the page. It has no runtime dependencies and ships as an ES module with TypeScript types.
+Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight, strike through, cross off, bracket or squiggle anything already on the page. Annotations follow the text, in horizontal and vertical writing modes alike. It has no runtime dependencies and ships as an ES module with TypeScript types.
 
 ## Installation
 
@@ -59,6 +59,18 @@ annotate(element, {
   color: '#1e293b',
   showOnVisible: { threshold: 0.5, repeat: true },
 });
+```
+
+### Vertical text
+
+Annotations read the element's `writing-mode`, so nothing extra is needed for vertical text. This underline runs down the column, on its left.
+
+```html
+<p id="tategaki" style="writing-mode: vertical-rl">縦書きのテキスト</p>
+```
+
+```javascript
+annotate(document.querySelector('#tategaki'), { type: 'underline' }).show();
 ```
 
 ### Annotation groups

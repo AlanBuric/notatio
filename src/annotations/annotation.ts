@@ -1,14 +1,15 @@
 import { randomSeed } from 'roughjs/bin/math';
 import {
-  ANNOTATION_CLASS,
   DEFAULT_ANIMATION_DURATION,
   DEFAULT_ANIMATION_EASING,
+  LAYER_CLASS,
   PATH_LENGTH_PROPERTY,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
 } from '../constants.js';
 import { ensureKeyframes } from '../keyframes.js';
 import { resolveAnimation } from '../animation.js';
+import { readWritingMode } from '../frame.js';
 import { renderAnnotation } from '../render.js';
 import type {
   AnnotationOptions,
@@ -17,11 +18,14 @@ import type {
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
+  RoughAnnotationType,
   VisibilityOptions,
+  WritingMode,
 } from '../types.js';
 import {
   DEFERRED_OPTIONS,
   REDRAWN_OPTIONS,
+  annotationClassName,
   isSameRect,
   resolveVisibility,
   settled,
@@ -29,30 +33,40 @@ import {
   type AnnotationState,
 } from './utils.js';
 
+/** Where the element is, and which way its text runs, as one reading. */
+interface Measurement {
+  rects: Rectangle[];
+  mode: WritingMode;
+}
+
 class RoughAnnotationImpl implements RoughAnnotation {
   static #dirtyAnnotations = new Set<RoughAnnotationImpl>();
   static #flushScheduled = false;
 
+  /** Defined by the accessors installed in the static block below. */
+  declare seed: number;
+
   #state: AnnotationState = 'unattached';
   #config: ResolvedAnnotationConfig;
   #element: HTMLElement;
-  #seed = randomSeed();
   #svg?: SVGSVGElement;
+  #layer?: SVGGElement;
   #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
   #visibility?: VisibilityOptions;
   #visibilityObserver?: IntersectionObserver;
   #refreshQueued = false;
   #animationDelay = 0;
-  #hideTimer?: number;
-  #hideResolve?: () => void;
+  /** Bumped whenever the drawing is replaced, so a pending hide knows it is stale. */
+  #generation = 0;
   #multilineWarned = false;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
+    const cloned: AnnotationOptions & { type: RoughAnnotationType } = structuredClone(cloneable);
 
     this.#element = element;
-    this.#config = structuredClone(cloneable);
+    this.#config = { ...cloned, seed: cloned.seed ?? randomSeed() };
     this.#visibility = resolveVisibility(showOnVisible);
     this.#attach();
   }
@@ -80,6 +94,29 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     REDRAWN_OPTIONS.forEach((key) => define(key, true));
     DEFERRED_OPTIONS.forEach((key) => define(key, false));
+  }
+
+  /**
+   * Geometry is measured against this element, so a transform set on it is
+   * undone by the next redraw. Transform `layer` instead.
+   */
+  get svg(): SVGSVGElement | undefined {
+    return this.#svg;
+  }
+
+  get layer(): SVGGElement | undefined {
+    return this.#layer;
+  }
+
+  get class() {
+    return this.#config.class;
+  }
+
+  set class(value) {
+    if (this.#config.class === value) return;
+
+    this.#config.class = value;
+    this.#svg?.setAttribute('class', annotationClassName(value));
   }
 
   get zIndex() {
@@ -118,7 +155,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const reshowing = this.#state === 'showing';
 
     this.#clear();
-    this.#render(this.#svg, reshowing);
+    this.#render(reshowing);
 
     return settled(this.#svg);
   }
@@ -131,10 +168,19 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return Promise.resolve();
   }
 
+  pause(): void {
+    this.#svg?.getAnimations({ subtree: true }).forEach((animation) => animation.pause());
+  }
+
+  resume(): void {
+    this.#svg?.getAnimations({ subtree: true }).forEach((animation) => animation.play());
+  }
+
   remove(): void {
     this.#clear();
     this.#svg?.remove();
     this.#svg = undefined;
+    this.#layer = undefined;
     this.#state = 'unattached';
     this.#detachListeners();
     this.#disconnectVisibility();
@@ -145,17 +191,10 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#resizeObserver?.unobserve(this.#element);
   }
 
-  /** Drops the drawing immediately, cancelling any hide animation in flight. */
+  /** Drops the drawing immediately, stranding any hide animation in flight. */
   #clear(): void {
-    if (this.#hideTimer !== undefined) {
-      clearTimeout(this.#hideTimer);
-      this.#hideTimer = undefined;
-    }
-
-    this.#hideResolve?.();
-    this.#hideResolve = undefined;
-
-    this.#svg?.replaceChildren();
+    this.#generation++;
+    this.#layer?.replaceChildren();
     this.#state = 'not-showing';
   }
 
@@ -167,13 +206,14 @@ class RoughAnnotationImpl implements RoughAnnotation {
    * Retreats each stroke in the reverse of the order it was drawn. Paths stay in
    * the DOM until the animation ends, but the state flips immediately.
    */
-  #animateHide(): Promise<void> {
-    const paths = [...(this.#svg?.querySelectorAll('path') ?? [])];
+  async #animateHide(): Promise<void> {
+    const svg = this.#svg;
+    const paths = [...(svg?.querySelectorAll('path') ?? [])];
 
-    if (!paths.length) {
+    if (!svg || !paths.length) {
       this.#clear();
 
-      return Promise.resolve();
+      return;
     }
 
     const duration = this.#config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
@@ -188,31 +228,37 @@ class RoughAnnotationImpl implements RoughAnnotation {
       return path.getTotalLength();
     });
     const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+    const generation = ++this.#generation;
 
     this.#state = 'not-showing';
 
     /* `animation: none` needs a frame to take effect before restarting. */
-    requestAnimationFrame(() => {
-      paths.reduceRight((delay, path, index) => {
-        const length = lengths[index];
-        const segment = totalLength ? duration * (length / totalLength) : 0;
-        const { style } = path;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
 
-        style.strokeDashoffset = '0';
-        style.strokeDasharray = `${length}`;
-        style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
-        style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ${easing} ${delay}ms forwards`;
+    if (this.#generation !== generation) return;
 
-        return delay + segment;
-      }, this.#animationDelay);
-    });
+    paths.reduceRight((delay, path, index) => {
+      const length = lengths[index];
+      const segment = totalLength ? duration * (length / totalLength) : 0;
+      const { style } = path;
 
-    /* Resolved by clear(), whether the timer fires or a redraw cancels it. */
-    const finished = new Promise<void>((resolve) => (this.#hideResolve = resolve));
+      style.strokeDashoffset = '0';
+      style.strokeDasharray = `${length}`;
+      style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
+      style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ${easing} ${delay}ms forwards`;
 
-    this.#hideTimer = window.setTimeout(() => this.#clear(), duration + this.#animationDelay);
+      return delay + segment;
+    }, this.#startDelay());
 
-    return finished;
+    await settled(svg);
+
+    /* A redraw during the retreat has already replaced what this would clear. */
+    if (this.#generation === generation) this.#clear();
+  }
+
+  /** Where this annotation's animation starts: its group slot, plus its own delay. */
+  #startDelay(): number {
+    return this.#animationDelay + (this.#config.delay ?? 0);
   }
 
   #attach(): void {
@@ -221,10 +267,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
     ensureKeyframes();
 
     const svg = document.createElementNS(SVG_NS, 'svg');
+    const layer = document.createElementNS(SVG_NS, 'g');
 
-    svg.setAttribute('class', ANNOTATION_CLASS);
+    svg.setAttribute('class', annotationClassName(this.#config.class));
     /* Annotations are decorative, so keep them out of the accessibility tree. */
     svg.setAttribute('aria-hidden', 'true');
+    layer.setAttribute('class', LAYER_CLASS);
+    svg.appendChild(layer);
     Object.assign(svg.style, {
       /* Left at its static position so it moves with the element in flow. */
       position: 'absolute',
@@ -241,6 +290,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#element.insertAdjacentElement(prepend ? 'beforebegin' : 'afterend', svg);
     this.#svg = svg;
+    this.#layer = layer;
     this.#state = 'not-showing';
 
     if (prepend && window.getComputedStyle(this.#element).position === 'static') {
@@ -301,24 +351,22 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
   /** Measures the whole batch, then writes only what actually moved. */
   static flush(annotations: RoughAnnotationImpl[]): void {
-    const stale: { annotation: RoughAnnotationImpl; rects: Rectangle[] }[] = [];
+    const stale: { annotation: RoughAnnotationImpl; measurement: Measurement }[] = [];
 
     annotations.forEach((annotation) => {
       if (annotation.#state !== 'showing') return;
 
-      const rects = annotation.#rects();
+      const measurement = annotation.#measure();
 
-      if (annotation.#rectsDiffer(rects)) stale.push({ annotation, rects });
+      if (annotation.#rectsDiffer(measurement.rects)) stale.push({ annotation, measurement });
     });
 
-    stale.forEach(({ annotation, rects }) => annotation.#redraw(rects));
+    stale.forEach(({ annotation, measurement }) => annotation.#redraw(measurement));
   }
 
-  #redraw(rects: Rectangle[]): void {
-    if (!this.#svg) return;
-
+  #redraw(measurement: Measurement): void {
     this.#clear();
-    this.#render(this.#svg, true, rects);
+    this.#render(true, measurement);
   }
 
   #attachListeners(): void {
@@ -354,17 +402,23 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
   }
 
-  #render(svg: SVGSVGElement, ensureNoAnimation: boolean, measured?: Rectangle[]): void {
+  #render(ensureNoAnimation: boolean, measured?: Measurement): void {
+    const layer = this.#layer;
+
+    if (!layer) return;
+
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
-    const rects = measured ?? this.#rects();
-    const totalWidth = rects.reduce((sum, rect) => sum + rect.width, 0);
+    const { rects, mode } = measured ?? this.#measure();
+    /* Each line is drawn for as long as it is, along whichever way the text runs. */
+    const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
+    const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
-    let delay = 0;
+    let delay = this.#startDelay();
 
     rects.forEach((rect) => {
-      const duration = totalDuration * (rect.width / totalWidth);
+      const duration = total ? totalDuration * (runLength(rect) / total) : 0;
 
-      renderAnnotation(svg, rect, config, delay + this.#animationDelay, duration, this.#seed);
+      renderAnnotation(layer, rect, mode, config, delay, duration);
       delay += duration;
     });
 
@@ -372,16 +426,19 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#state = 'showing';
   }
 
-  #rects(): Rectangle[] {
+  #measure(): Measurement {
     const svg = this.#svg;
 
-    if (!svg) return [];
+    if (!svg) return { rects: [], mode: 'horizontal-tb' };
 
     const bounds = this.#config.multiline
       ? this.#multilineRects()
       : [this.#element.getBoundingClientRect()];
 
-    return bounds.map((bound) => toSvgRect(svg, bound));
+    return {
+      rects: bounds.map((bound) => toSvgRect(svg, bound)),
+      mode: readWritingMode(this.#element),
+    };
   }
 
   #multilineRects(): DOMRect[] {
@@ -405,7 +462,7 @@ export function annotate(element: HTMLElement, config: RoughAnnotationConfig): R
 }
 
 async function runAll(
-  annotations: RoughAnnotation[],
+  annotations: readonly RoughAnnotation[],
   run: (annotation: RoughAnnotation) => Promise<void>,
 ) {
   await Promise.all(annotations.map(run));
@@ -422,7 +479,9 @@ export function annotationGroup(annotations: RoughAnnotation[]): RoughAnnotation
   const group = [...annotations];
 
   return {
+    annotations: group,
     show: () => runAll(group, (annotation) => annotation.show()),
     hide: () => runAll(group, (annotation) => annotation.hide()),
+    remove: () => group.forEach((annotation) => annotation.remove()),
   };
 }

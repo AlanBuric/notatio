@@ -225,17 +225,17 @@ describe('padding', () => {
   });
 });
 
-describe('rtl', () => {
-  it('draws the first stroke right to left', () => {
-    const ltr = mountElement();
+describe('reverse', () => {
+  it('draws the first stroke against the text flow', () => {
+    const forwards = mountElement();
 
-    annotate(ltr, { type: 'underline', animate: false }).show();
+    annotate(forwards, { type: 'underline', animate: false }).show();
 
-    const rtl = mountElement();
+    const backwards = mountElement();
 
-    annotate(rtl, { type: 'underline', rtl: true, animate: false }).show();
+    annotate(backwards, { type: 'underline', reverse: true, animate: false }).show();
 
-    expect(startX(pathsFor(rtl)[0]!)).toBeGreaterThan(startX(pathsFor(ltr)[0]!));
+    expect(startX(pathsFor(backwards)[0]!)).toBeGreaterThan(startX(pathsFor(forwards)[0]!));
   });
 });
 

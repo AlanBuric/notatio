@@ -1,3 +1,4 @@
+import { ANNOTATION_CLASS } from '../constants.js';
 import type { Rectangle, ShowOnVisibleOption, VisibilityOptions } from '../types.js';
 
 export type AnnotationState = 'unattached' | 'not-showing' | 'showing';
@@ -9,15 +10,28 @@ export const REDRAWN_OPTIONS = [
   'padding',
   'iterations',
   'multiline',
-  'rtl',
+  'reverse',
+  'position',
   'brackets',
   'amplitude',
   'frequency',
   'roughness',
+  'maxRandomnessOffset',
+  'bowing',
+  'curveFitting',
+  'curveTightness',
+  'curveStepCount',
+  'preserveVertices',
+  'seed',
 ] as const;
 
 /** Read at the next `show()` or `hide()`, so setting one changes nothing now. */
-export const DEFERRED_OPTIONS = ['animate', 'animationDuration', 'animationEasing'] as const;
+export const DEFERRED_OPTIONS = [
+  'animate',
+  'animationDuration',
+  'animationEasing',
+  'delay',
+] as const;
 
 /** Cancelled animations reject, and a redraw cancels routinely, so treat that as done. */
 export async function settled(svg: SVGSVGElement): Promise<void> {
@@ -34,6 +48,11 @@ export function resolveVisibility(
   if (!option) return undefined;
 
   return option === true ? {} : option;
+}
+
+/** The library's own class, plus whatever the caller asked to add. */
+export function annotationClassName(extra: string | undefined): string {
+  return extra ? `${ANNOTATION_CLASS} ${extra}` : ANNOTATION_CLASS;
 }
 
 function sameRounded(a: number, b: number): boolean {

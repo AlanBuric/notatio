@@ -24,11 +24,21 @@ const VALUES = {
   observeResize: false,
   iterations: 5,
   strokeWidth: 9,
-  rtl: true,
+  reverse: true,
+  position: 'over',
   brackets: 'left',
   amplitude: 6,
   frequency: 7,
+  class: 'custom',
+  delay: 45,
   roughness: 4,
+  maxRandomnessOffset: 8,
+  bowing: 2,
+  curveFitting: 0.5,
+  curveTightness: 0.25,
+  curveStepCount: 11,
+  preserveVertices: true,
+  seed: 12345,
 } as const satisfies Required<AnnotationOptions>;
 
 const KEYS = Object.keys(VALUES) as (keyof typeof VALUES)[];
@@ -122,7 +132,7 @@ describe('redrawing on set', () => {
     expect(pathsFor(element)).toHaveLength(0);
   });
 
-  it.each(['animate', 'animationDuration', 'animationEasing'] as const)(
+  it.each(['animate', 'animationDuration', 'animationEasing', 'delay'] as const)(
     'does not redraw when %s changes',
     async (key) => {
       const element = mountElement();

@@ -2,6 +2,8 @@ export const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export const ANNOTATION_CLASS = 'notatio-annotation';
 
+export const LAYER_CLASS = 'notatio-layer';
+
 export const KEYFRAME_NAME = 'notatio-dash';
 
 export const REVERSE_KEYFRAME_NAME = 'notatio-dash-reverse';
@@ -39,5 +41,8 @@ export const DEFAULT_FREQUENCY = 5;
  * without the path data growing with no visible gain.
  */
 export const WAVE_RESOLUTION = 8;
+
+/** Segments per wave for the angular variant: baseline, crest, baseline, trough. */
+export const ZIGZAG_RESOLUTION = 4;
 
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
