@@ -1,10 +1,12 @@
 {
   "name": "notatio",
   "version": "1.0.0",
-  "description": "Create and animate hand-drawn annotations on any HTML element",
+  "description": "Animated hand-drawn annotations for the web — underline, highlight, circle or strike through any HTML element. A modern rough-notation fork: zero dependencies, 5.5 kB, TypeScript-first.",
   "type": "module",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
+  "unpkg": "./dist/index.js",
+  "jsdelivr": "./dist/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,11 +15,12 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=20.19"
+    "node": ">=20"
   },
   "packageManager": "pnpm@11.21.0",
   "scripts": {
@@ -36,20 +39,30 @@
     "url": "git+https://github.com/AlanBuric/notatio.git"
   },
   "keywords": [
+    "animation",
     "annotate",
     "annotation",
     "hand-drawn",
     "highlight",
+    "highlighter",
     "rough",
+    "rough-notation",
+    "roughjs",
     "sketchy",
+    "strike-through",
     "svg",
-    "underline"
+    "text-highlighting",
+    "typescript",
+    "underline",
+    "vertical-text",
+    "web-annotation"
   ],
   "author": "Alan Burić",
-  "contributors": [
-    "Preet Shihn"
-  ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "bugs": {
     "url": "https://github.com/AlanBuric/notatio/issues"
   },
