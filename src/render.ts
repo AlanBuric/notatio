@@ -32,11 +32,6 @@ import type {
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
-/**
- * The config doubles as the RoughJS override object: every option the stroke
- * renderers read is spelled the same in both, and the keys RoughJS does not
- * know it ignores, so nothing has to be picked out by hand.
- */
 function getOptions(
   type: RoughOptionsType,
   overrides: RoughStrokeOptions,
