@@ -39,9 +39,9 @@
     "url": "git+https://github.com/AlanBuric/notatio.git"
   },
   "keywords": [
-    "animation",
     "annotate",
     "annotation",
+    "circle",
     "hand-drawn",
     "highlight",
     "highlighter",
@@ -49,13 +49,10 @@
     "rough-notation",
     "roughjs",
     "sketchy",
-    "strike-through",
+    "strikethrough",
     "svg",
-    "text-highlighting",
-    "typescript",
     "underline",
-    "vertical-text",
-    "web-annotation"
+    "vertical-text"
   ],
   "author": "Alan Burić",
   "license": "MIT",

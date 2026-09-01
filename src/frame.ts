@@ -3,13 +3,11 @@ import type { FullPadding, Rectangle, WritingMode } from './types.js';
 
 /**
  * An element's box in writing-mode-relative terms. `inline` runs along the text
- * flow, `block` runs across it, and both are measured from their start edge, so
- * a planner that draws in this space is correct in every writing mode.
+ * flow and `block` across it, both measured from their start edge, so anything
+ * drawn in this space is correct in every writing mode.
  */
 export interface Frame {
-  /** Extent along the inline axis: the element's width under horizontal text. */
   inlineSize: number;
-  /** Extent along the block axis: the element's height under horizontal text. */
   blockSize: number;
   /** Padding on the block-start side, which `position: 'over'` sits beyond. */
   overPadding: number;
@@ -18,11 +16,8 @@ export interface Frame {
   point(inline: number, block: number): Point;
 }
 
-/**
- * Resolves a computed `writing-mode` to the three cases that differ
- * geometrically. The legacy `tb-rl` aliases and the `sideways-*` values map onto
- * whichever of the two vertical modes shares their block direction.
- */
+/* The legacy `tb-rl` aliases and the `sideways-*` values map onto whichever of
+   the two vertical modes shares their block direction. */
 export function readWritingMode(element: HTMLElement): WritingMode {
   const { writingMode } = window.getComputedStyle(element);
 
@@ -46,8 +41,8 @@ export function createFrame(rect: Rectangle, padding: FullPadding, mode: Writing
     };
   }
 
-  /* Vertical text flows downward, so the inline axis is y either way. What the
-     two modes disagree on is which side the block axis starts from. */
+  /* Vertical text flows downward either way, so the inline axis is y. The two
+     modes differ only in which side the block axis starts from. */
   const rightToLeft = mode === 'vertical-rl';
 
   return {

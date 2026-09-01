@@ -85,11 +85,11 @@ describe('underline side', () => {
   });
 });
 
-describe('strike-through', () => {
+describe('strikethrough', () => {
   it('runs down the middle of a vertical column', () => {
     const element = mountText('vertical-rl');
 
-    annotate(element, { type: 'strike-through', animate: false, iterations: 1 }).show();
+    annotate(element, { type: 'strikethrough', animate: false, iterations: 1 }).show();
 
     const box = elementBox(element);
     const { left, right, top, bottom } = bounds(pathsFor(element));

@@ -11,10 +11,7 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia(REDUCED_MOTION_QUERY).matches;
 }
 
-/**
- * Drawing is animated by default, removal is not. A reduced-motion preference
- * overrides both, so callers cannot opt back into motion the user declined.
- */
+/* Checked before the option, so no config can opt back into motion the user declined. */
 export function resolveAnimation(animate: AnimateOption | undefined): ResolvedAnimation {
   if (prefersReducedMotion()) return { onShow: false, onHide: false };
 

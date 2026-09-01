@@ -33,7 +33,7 @@ export const DEFERRED_OPTIONS = [
   'delay',
 ] as const;
 
-/** Cancelled animations reject, and a redraw cancels routinely, so treat that as done. */
+/* Cancelled animations reject, and a redraw cancels routinely, so treat that as done. */
 export async function settled(svg: SVGSVGElement): Promise<void> {
   const animations = svg.getAnimations({ subtree: true });
 
@@ -50,7 +50,6 @@ export function resolveVisibility(
   return option === true ? {} : option;
 }
 
-/** The library's own class, plus whatever the caller asked to add. */
 export function annotationClassName(extra: string | undefined): string {
   return extra ? `${ANNOTATION_CLASS} ${extra}` : ANNOTATION_CLASS;
 }
@@ -68,10 +67,8 @@ export function isSameRect(a: Rectangle, b: Rectangle): boolean {
   );
 }
 
-/**
- * Element bounds in the SVG's user space. Going through the screen CTM rather
- * than subtracting rects keeps annotations correct under a scaled ancestor.
- */
+/* Going through the screen CTM rather than subtracting rects keeps annotations
+   correct under a scaled ancestor. */
 export function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rectangle {
   const ctm = svg.getScreenCTM();
 

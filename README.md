@@ -9,28 +9,19 @@ Create and animate hand-drawn annotations on any HTML element.
 
 Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight, strike through, cross off, bracket or squiggle anything already on the page. Annotations follow the text, in horizontal and vertical writing modes alike. It has no runtime dependencies and ships as an ES module with TypeScript types, at 6 kB gzipped.
 
-It is a maintained fork of [rough-notation](https://github.com/rough-stuff/rough-notation), whose last release was 0.5.1. If you are coming from there:
-
-- Annotations stay correct under a `transform: scale()` ancestor, and follow their element when it moves rather than only when it resizes.
-- Writing modes are understood, so vertical text is annotated along the text rather than across it.
-- `show()` and `hide()` return promises, every option is settable, and the config is a discriminated union that rejects options the chosen type does not read.
-- Smaller, with no runtime dependency on RoughJS: only the stroke renderers are bundled.
-
-The [changelog](CHANGELOG.md) lists every difference, including the upstream issues and pull requests that were folded in.
-
 ## Annotation types
 
-| Type             | Draws                                                    |
-| ---------------- | -------------------------------------------------------- |
-| `underline`      | A sketchy line alongside the element.                    |
-| `box`            | A box around the element.                                |
-| `circle`         | A circle around the element.                             |
-| `highlight`      | A highlighter effect behind the element.                 |
-| `strike-through` | Lines through the middle of the element.                 |
-| `crossed-off`    | An X across the element.                                 |
-| `bracket`        | A bracket beside the element, usually a paragraph.       |
-| `wavy`           | An underline along a sine wave, for a spellchecker look. |
-| `zigzag`         | The same wave, with sharp corners instead of curves.     |
+| Type            | Draws                                                    |
+| --------------- | -------------------------------------------------------- |
+| `underline`     | A sketchy line alongside the element.                    |
+| `box`           | A box around the element.                                |
+| `circle`        | A circle around the element.                             |
+| `highlight`     | A highlighter effect behind the element.                 |
+| `strikethrough` | Lines through the middle of the element.                 |
+| `crossed-off`   | An X across the element.                                 |
+| `bracket`       | A bracket beside the element, usually a paragraph.       |
+| `wavy`          | An underline along a sine wave, for a spellchecker look. |
+| `zigzag`        | The same wave, with sharp corners instead of curves.     |
 
 ## Installation
 
@@ -153,22 +144,12 @@ function Highlighted({ children }) {
 
 ## Accessibility
 
-Annotations are decoration, and Notatio treats them as such:
+An annotation is an absolutely positioned `<svg>` inserted next to the element, carrying `aria-hidden="true"` and `pointer-events: none`, so it is out of the accessibility tree and never intercepts clicks, hover or selection. The annotated element itself is left alone, except by `highlight`, which sets `position: relative` on it when it is otherwise `static`. Animation is skipped whenever `prefers-reduced-motion: reduce` is set, whatever the config says.
 
-- The annotation SVG carries `aria-hidden="true"`, so its strokes are not announced.
-- It is `pointer-events: none`, so it never intercepts clicks, hover or selection.
-- Animation is skipped when the user has `prefers-reduced-motion: reduce` set. This is checked before the `animate` option is read, so no configuration can draw motion the user has declined.
-- Annotating does not change the element's text. Only `highlight` touches the element at all, setting `position: relative` when it is otherwise `static`.
+Two things are yours to do:
 
-Two things are left to you:
-
-**An annotation that carries meaning needs that meaning somewhere else.** A strike-through that means "completed", or a wavy underline that means "misspelled", is invisible to a screen reader by design, because announcing every decorative underline would be worse. Put the meaning in the text, or on the annotated element:
-
-```html
-<span aria-label="Misspelled: recieve">recieve</span>
-```
-
-**Check the contrast of a highlight.** It paints behind the text, so a dark highlight under dark text fails WCAG contrast no matter what the library does.
+- **Put the meaning somewhere a screen reader can read it.** A strikethrough that means "completed" or a wavy underline that means "misspelled" is decoration to assistive technology, so the meaning has to live in the text or in an `aria-label` on the element.
+- **Check the contrast of a highlight.** It paints behind the text, so a dark highlight under dark text fails WCAG contrast no matter what the library does.
 
 ## Browser support
 
@@ -176,7 +157,9 @@ Notatio targets ES2022 and uses `ResizeObserver`, `IntersectionObserver`, `Eleme
 
 ## Documentation
 
-The [API reference](docs/API.md) covers every annotation type, all configuration options, writing modes, the annotation and group objects, accessibility and styling hooks.
+The [reference](docs/REFERENCE.md) covers every annotation type, all configuration options, writing modes, the annotation and group objects, accessibility and styling hooks.
+
+Coming from rough-notation? See [migrating](docs/MIGRATING.md).
 
 ## Contributing
 

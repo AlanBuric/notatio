@@ -18,7 +18,7 @@ const ALL_TYPES: RoughAnnotationType[] = [
   'box',
   'circle',
   'highlight',
-  'strike-through',
+  'strikethrough',
   'crossed-off',
   'bracket',
   'wavy',
@@ -40,7 +40,7 @@ describe('annotation types', () => {
   /* Counts differ by type because roughjs splits a shape at every move command. */
   it.each([
     { type: 'underline', perIteration: 1 },
-    { type: 'strike-through', perIteration: 1 },
+    { type: 'strikethrough', perIteration: 1 },
     { type: 'highlight', perIteration: 1 },
     { type: 'circle', perIteration: 1 },
     { type: 'box', perIteration: 4 },

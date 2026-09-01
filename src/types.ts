@@ -3,7 +3,7 @@ export type RoughAnnotationType =
   | 'box'
   | 'circle'
   | 'highlight'
-  | 'strike-through'
+  | 'strikethrough'
   | 'crossed-off'
   | 'bracket'
   | 'wavy'
@@ -11,11 +11,7 @@ export type RoughAnnotationType =
 
 export type BracketType = 'left' | 'right' | 'top' | 'bottom';
 
-/**
- * Which side of the text a stroke sits on, named in the writing mode's block
- * axis. Under horizontal text `under` is below and `over` is above; under
- * `vertical-rl` they are the left and right sides instead.
- */
+/** Named on the block axis, so `under` is below horizontal text and left of a `vertical-rl` column. */
 export type AnnotationPosition = 'under' | 'over' | 'both';
 
 /** The three cases a computed `writing-mode` reduces to geometrically. */
@@ -42,28 +38,18 @@ export interface AnimationOptions {
   hideEasing?: string;
 }
 
-/** `true` animates the drawing only. The object form controls each direction. */
 export type AnimateOption = boolean | AnimationOptions;
 
 export interface VisibilityOptions extends IntersectionObserverInit {
-  /**
-   * Hides the annotation again when the element leaves, and redraws it when it
-   * comes back. Defaults to `false`, which draws once and stops observing.
-   */
+  /** Hide again when the element leaves, and redraw when it returns. Defaults to `false`. */
   repeat?: boolean;
 }
 
 export type ShowOnVisibleOption = boolean | VisibilityOptions;
 
-/**
- * The RoughJS parameters that reach the stroke renderers. RoughJS accepts more
- * than this, but the rest only affect fills, which annotations never draw.
- */
+/** The RoughJS parameters that reach the stroke renderers. The rest only affect fills. */
 export interface RoughStrokeOptions {
-  /**
-   * How far strokes wander from a straight/geometric path. Defaults to 1.5,
-   * or 3 for `highlight`. 0 draws exactly on the shape, with no wobble.
-   */
+  /** How far strokes wander off the ideal path. Defaults to 1.5, or 3 for `highlight`. */
   roughness?: number;
   /** Ceiling on a single point's random displacement. Defaults to 2. */
   maxRandomnessOffset?: number;
@@ -77,15 +63,10 @@ export interface RoughStrokeOptions {
   curveStepCount?: number;
   /** Pins path endpoints in place instead of jittering them. Defaults to `false`. */
   preserveVertices?: boolean;
-  /**
-   * Chooses the random variation. The same seed and geometry always draw the
-   * same strokes. Assigned randomly when omitted, and readable afterwards from
-   * the annotation, so a variation you like can be pinned.
-   */
+  /** Chooses the random variation. Assigned randomly when omitted, and readable afterwards. */
   seed?: number;
 }
 
-/** Options every annotation type reads. */
 export interface CommonAnnotationOptions extends RoughStrokeOptions {
   /** Defaults to `true`, which animates the drawing but not the removal. */
   animate?: AnimateOption;
@@ -107,52 +88,40 @@ export interface CommonAnnotationOptions extends RoughStrokeOptions {
   zIndex?: number;
   /** Redraw on element and window resize. Defaults to `true`. */
   observeResize?: boolean;
-  /**
-   * Calls `show()` the first time the element scrolls into view. Unset by
-   * default, leaving the caller to decide when to draw.
-   */
+  /** Calls `show()` the first time the element scrolls into view. */
   showOnVisible?: ShowOnVisibleOption;
 }
 
 /** Marks options a given type does not read, so passing one is a type error. */
 type Unsupported<Keys extends string> = Partial<Record<Keys, never>>;
 
-/** Number of strokes drawn. Defaults to 2. */
 interface Iterated {
+  /** Number of strokes drawn. Defaults to 2. */
   iterations?: number;
 }
 
-/** Defaults to 2. */
 interface Stroked {
+  /** Defaults to 2. */
   strokeWidth?: number;
 }
 
-/** Draws the first stroke against the text flow, right to left in Latin text. */
 interface Directional {
+  /** Draws the first stroke against the text flow. */
   reverse?: boolean;
 }
 
-/** Which side of the text the stroke runs along. Defaults to `under`. */
 interface Positioned {
+  /** Which side of the text the stroke runs along. Defaults to `under`. */
   position?: AnnotationPosition;
 }
 
-/** Shape of the wave, for the types drawn as one. */
 interface Waved {
-  /**
-   * Peak distance from the baseline, in pixels. Defaults to 3. A negative value
-   * mirrors the wave, starting it on the other side of the baseline.
-   */
+  /** Peak distance from the baseline, in pixels. Defaults to 3. A negative value mirrors the wave. */
   amplitude?: number;
-  /**
-   * Complete waves per 100px of text, so the wavelength stays the same under
-   * short and long text. Defaults to 5. Rounded to a whole number of waves
-   * across the element, so the stroke starts and ends on the baseline.
-   */
+  /** Complete waves per 100px of text. Defaults to 5, rounded to whole waves across the element. */
   frequency?: number;
 }
 
-/** Options only the wave types read. */
 type UnwavedKeys = 'amplitude' | 'frequency';
 
 type UnderlineAnnotationConfig = CommonAnnotationOptions &
@@ -170,7 +139,7 @@ type StrikeAnnotationConfig = CommonAnnotationOptions &
   Stroked &
   Directional &
   Unsupported<'brackets' | 'position' | UnwavedKeys> & {
-    type: 'strike-through' | 'crossed-off';
+    type: 'strikethrough' | 'crossed-off';
   };
 
 type ShapeAnnotationConfig = CommonAnnotationOptions &
@@ -217,9 +186,8 @@ export type RoughAnnotationConfig =
   | WaveAnnotationConfig;
 
 /**
- * The config options as plain optional properties. The annotation object
- * exposes them as settable regardless of type, since a value the type ignores
- * is harmless once the annotation exists.
+ * The config options as plain optional properties. The annotation exposes them
+ * all as settable, since a value its type ignores is harmless.
  */
 export interface AnnotationOptions
   extends
@@ -232,22 +200,11 @@ export interface AnnotationOptions
   brackets?: BracketType | BracketType[];
 }
 
-/**
- * A single annotation. Setting any option that changes the drawing redraws a
- * visible annotation; the animation options apply from the next `show()` or
- * `hide()`.
- */
 export interface RoughAnnotation extends AnnotationOptions {
   /** Always a number once the annotation exists, even when the config omitted it. */
   seed: number;
-  /**
-   * The annotation's SVG, or `undefined` once removed. Geometry is measured
-   * against this element, so a transform set on it is undone by the next
-   * redraw; transform `layer` instead.
-   */
+  /** The injected SVG, or `undefined` once removed. */
   readonly svg: SVGSVGElement | undefined;
-  /** The group the strokes are drawn into. Safe to transform. */
-  readonly layer: SVGGElement | undefined;
   isShowing(): boolean;
   /** Resolves once the drawing animation has finished, or immediately if there is none. */
   show(): Promise<void>;
@@ -264,11 +221,8 @@ export interface RoughAnnotation extends AnnotationOptions {
 /** Annotations animated in sequence. */
 export interface RoughAnnotationGroup {
   readonly annotations: readonly RoughAnnotation[];
-  /** Resolves once every annotation in the group has finished drawing. */
   show(): Promise<void>;
-  /** Resolves once every annotation in the group is gone. */
   hide(): Promise<void>;
-  /** Removes every annotation in the group. */
   remove(): void;
 }
 

@@ -18,45 +18,20 @@ describe('svg', () => {
     annotation.remove();
 
     expect(annotation.svg).toBeUndefined();
-    expect(annotation.layer).toBeUndefined();
-  });
-});
-
-describe('layer', () => {
-  it('is a group inside the svg', () => {
-    const annotation = annotate(mountElement(), { type: 'underline' });
-
-    expect(annotation.layer?.parentNode).toBe(annotation.svg);
-    expect(annotation.layer?.getAttribute('class')).toBe('notatio-layer');
   });
 
-  it('holds the strokes, leaving the svg root with just the group', () => {
+  it('holds the strokes', () => {
     const element = mountElement();
     const annotation = annotate(element, { type: 'underline', animate: false });
 
     annotation.show();
 
-    expect(annotation.layer!.querySelectorAll('path').length).toBeGreaterThan(0);
-    expect(annotation.svg!.children).toHaveLength(1);
+    expect(annotation.svg!.querySelectorAll('path').length).toBeGreaterThan(0);
   });
 
-  it('survives the redraw that a changed option triggers', async () => {
-    const element = mountElement();
-    const annotation = annotate(element, { type: 'underline', animate: false });
-
-    annotation.show();
-    annotation.layer!.setAttribute('transform', 'translate(12, 34)');
-
-    annotation.color = 'red';
-    await flushMicrotasks();
-
-    expect(annotation.layer!.getAttribute('transform')).toBe('translate(12, 34)');
-    expect(pathsFor(element)[0]!.getAttribute('stroke')).toBe('red');
-  });
-
-  /* The documented reason to transform the layer: geometry is measured against
-     the root, so a transform there is compensated away on the next redraw. */
-  it('is the only one of the two that moves the drawing', async () => {
+  /* Geometry is measured against the SVG, so a transform on it is folded into
+     the next measurement and the drawing stays put. */
+  it('compensates for a transform set on it', async () => {
     const element = mountElement();
     const annotation = annotate(element, { type: 'underline', animate: false, iterations: 1 });
 

@@ -1,10 +1,10 @@
-# API reference
+# Reference
 
 The full option list and behaviour of every export. See the [README](../README.md) for a quick start.
 
 ## Contents
 
-- [API reference](#api-reference)
+- [Reference](#reference)
   - [Contents](#contents)
   - [annotate](#annotate)
   - [Configuration](#configuration)
@@ -77,7 +77,7 @@ Options a type does not read are a type error in TypeScript, so `strokeWidth` on
 - **box**: a box around the element.
 - **circle**: a circle around the element.
 - **highlight**: a highlighter effect behind the element.
-- **strike-through**: lines through the middle of the element.
+- **strikethrough**: lines through the middle of the element.
 - **crossed-off**: an X across the element.
 - **bracket**: a bracket beside the element, usually a paragraph of text.
 - **wavy**: an underline drawn along a sine wave, for a spellchecker look.
@@ -182,7 +182,7 @@ It is assigned randomly when the config omits one, and readable from the annotat
 const annotation = annotate(element, { type: 'circle' });
 
 annotation.show();
-console.log(annotation.seed); // 482913 — paste it into the config to keep this one
+console.log(annotation.seed);
 ```
 
 The rest of the stroke options are RoughJS parameters, passed through to the renderer:
@@ -213,7 +213,7 @@ Under `horizontal-tb` an underline runs left to right below the text. Under `ver
 annotate(element, { type: 'underline' });
 ```
 
-This applies throughout: `strike-through` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those reads the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
+This applies throughout: `strikethrough` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those reads the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
 
 ## The annotation object
 
@@ -224,7 +224,7 @@ This applies throughout: `strike-through` runs down the middle of a vertical col
 - **`hide()`** removes the drawing, immediately unless `animate.onHide` is set, in which case the strokes retreat the way they were drawn and are removed when the animation ends. Returns a promise that resolves once the annotation is gone. `isShowing()` reports `false` as soon as `hide()` is called. Calling `show()` during the animation cancels it and redraws.
 - **`pause()`** and **`resume()`** hold and release an animation in progress. See [pausing an animation](#pausing-an-animation).
 - **`remove()`** unlinks the annotation from the element.
-- **`svg`** and **`layer`** the drawn elements. See [reaching the SVG](#reaching-the-svg).
+- **`svg`** the injected SVG. See [reaching the SVG](#reaching-the-svg).
 - **`seed`** the variation in use, readable and settable. See [seed](#seed-and-stroke-options).
 
 ### Changing options after creation
@@ -280,18 +280,15 @@ This covers the retreat on `hide()` as well, since the teardown follows the anim
 
 ### Reaching the SVG
 
-`annotation.svg` is the injected `<svg>`, and `annotation.layer` is the `<g>` inside it that holds the strokes. Both are `undefined` after `remove()`.
-
-Use `layer` for anything visual: transforms, filters, opacity.
+`annotation.svg` is the injected `<svg>`, and is `undefined` after `remove()`. Use it for anything visual the config does not cover: filters, opacity, a class of your own.
 
 ```javascript
-annotation.layer.style.transform = 'rotate(-2deg)';
 annotation.svg.style.opacity = '0.6';
 ```
 
-Opacity is worth setting on one of the two rather than on individual strokes: overlapping passes would otherwise darken where they cross, while opacity on a parent composites the whole annotation once.
+Opacity belongs on the SVG rather than on individual strokes: overlapping passes would otherwise darken where they cross, while opacity on the root composites the whole annotation once.
 
-The reason to prefer `layer` for transforms is that the element's geometry is measured against `svg`. A transform set on the root is included in that measurement, so the next redraw compensates for it and the annotation snaps back onto the element. `layer` sits below the measurement and composes cleanly.
+One thing it is not for is a CSS transform. The element's geometry is measured against the SVG, so a transform on it is folded into that measurement and the next redraw compensates it away. Transform a wrapper around the annotated element instead.
 
 ## annotationGroup
 
@@ -326,7 +323,7 @@ Annotations are decoration, and are treated as such:
 
 Two things the library cannot do for you.
 
-**An annotation that carries meaning needs that meaning somewhere else.** A `strike-through` that means "completed", or a `wavy` underline that means "misspelled", reaches assistive technology as nothing at all. That is the right default, since announcing every decorative underline would be noise, but it means the meaning has to live in the text or on the annotated element:
+**An annotation that carries meaning needs that meaning somewhere else.** A `strikethrough` that means "completed", or a `wavy` underline that means "misspelled", reaches assistive technology as nothing at all. That is the right default, since announcing every decorative underline would be noise, but it means the meaning has to live in the text or on the annotated element:
 
 ```html
 <span aria-label="Misspelled: recieve">recieve</span>
@@ -340,7 +337,7 @@ annotate(element, { type: 'wavy', color: 'red' });
 
 ## Styling
 
-The injected SVG carries the class `notatio-annotation`, the group inside it carries `notatio-layer`, and the stroke animation uses the keyframes `notatio-dash` and `notatio-dash-reverse`.
+The injected SVG carries the class `notatio-annotation`, and the stroke animation uses the keyframes `notatio-dash` and `notatio-dash-reverse`.
 
 `class` adds your own class to the SVG, which is the way to reach an annotation from a stylesheet rather than imperatively:
 

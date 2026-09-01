@@ -2,7 +2,6 @@ import { randomSeed } from 'roughjs/bin/math';
 import {
   DEFAULT_ANIMATION_DURATION,
   DEFAULT_ANIMATION_EASING,
-  LAYER_CLASS,
   PATH_LENGTH_PROPERTY,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
@@ -33,32 +32,31 @@ import {
   type AnnotationState,
 } from './utils.js';
 
-/** Where the element is, and which way its text runs, as one reading. */
 interface Measurement {
   rects: Rectangle[];
   mode: WritingMode;
 }
 
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve));
+}
+
 class RoughAnnotationImpl implements RoughAnnotation {
   static #dirtyAnnotations = new Set<RoughAnnotationImpl>();
   static #flushScheduled = false;
-
-  /** Defined by the accessors installed in the static block below. */
   declare seed: number;
 
   #state: AnnotationState = 'unattached';
   #config: ResolvedAnnotationConfig;
   #element: HTMLElement;
   #svg?: SVGSVGElement;
-  #layer?: SVGGElement;
   #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
   #visibility?: VisibilityOptions;
   #visibilityObserver?: IntersectionObserver;
   #refreshQueued = false;
   #animationDelay = 0;
-  /** Bumped whenever the drawing is replaced, so a pending hide knows it is stale. */
-  #generation = 0;
+  #drawing = 0;
   #multilineWarned = false;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
@@ -71,7 +69,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#attach();
   }
 
-  /** Lets `annotationGroup` stagger annotations without exposing the field. */
   static setGroupDelay(annotation: RoughAnnotation, delay: number): void {
     (annotation as RoughAnnotationImpl).#animationDelay = delay;
   }
@@ -96,16 +93,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     DEFERRED_OPTIONS.forEach((key) => define(key, false));
   }
 
-  /**
-   * Geometry is measured against this element, so a transform set on it is
-   * undone by the next redraw. Transform `layer` instead.
-   */
   get svg(): SVGSVGElement | undefined {
     return this.#svg;
-  }
-
-  get layer(): SVGGElement | undefined {
-    return this.#layer;
   }
 
   get class() {
@@ -151,7 +140,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
   show(): Promise<void> {
     if (this.#state === 'unattached' || !this.#svg) return Promise.resolve();
 
-    /* Re-showing skips the animation so a visible annotation does not flicker. */
     const reshowing = this.#state === 'showing';
 
     this.#clear();
@@ -180,7 +168,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#clear();
     this.#svg?.remove();
     this.#svg = undefined;
-    this.#layer = undefined;
     this.#state = 'unattached';
     this.#detachListeners();
     this.#disconnectVisibility();
@@ -191,10 +178,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#resizeObserver?.unobserve(this.#element);
   }
 
-  /** Drops the drawing immediately, stranding any hide animation in flight. */
   #clear(): void {
-    this.#generation++;
-    this.#layer?.replaceChildren();
+    this.#drawing++;
+    this.#svg?.replaceChildren();
     this.#state = 'not-showing';
   }
 
@@ -202,10 +188,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return resolveAnimation(this.#config.animate).onHide;
   }
 
-  /**
-   * Retreats each stroke in the reverse of the order it was drawn. Paths stay in
-   * the DOM until the animation ends, but the state flips immediately.
-   */
   async #animateHide(): Promise<void> {
     const svg = this.#svg;
     const paths = [...(svg?.querySelectorAll('path') ?? [])];
@@ -222,20 +204,20 @@ class RoughAnnotationImpl implements RoughAnnotation {
       this.#config.animationEasing ??
       DEFAULT_ANIMATION_EASING;
     const lengths = paths.map((path) => {
-      /* Frees stroke-dashoffset from the forwards-filled show animation. */
       path.style.animation = 'none';
 
       return path.getTotalLength();
     });
     const totalLength = lengths.reduce((sum, length) => sum + length, 0);
-    const generation = ++this.#generation;
+    const drawing = ++this.#drawing;
 
     this.#state = 'not-showing';
 
-    /* `animation: none` needs a frame to take effect before restarting. */
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    /* `animation: none` only takes effect on the next frame, so restarting the
+       animation before then would be ignored. */
+    await nextFrame();
 
-    if (this.#generation !== generation) return;
+    if (this.#drawing !== drawing) return;
 
     paths.reduceRight((delay, path, index) => {
       const length = lengths[index];
@@ -252,11 +234,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     await settled(svg);
 
-    /* A redraw during the retreat has already replaced what this would clear. */
-    if (this.#generation === generation) this.#clear();
+    if (this.#drawing === drawing) this.#clear();
   }
 
-  /** Where this annotation's animation starts: its group slot, plus its own delay. */
   #startDelay(): number {
     return this.#animationDelay + (this.#config.delay ?? 0);
   }
@@ -267,15 +247,10 @@ class RoughAnnotationImpl implements RoughAnnotation {
     ensureKeyframes();
 
     const svg = document.createElementNS(SVG_NS, 'svg');
-    const layer = document.createElementNS(SVG_NS, 'g');
 
     svg.setAttribute('class', annotationClassName(this.#config.class));
-    /* Annotations are decorative, so keep them out of the accessibility tree. */
     svg.setAttribute('aria-hidden', 'true');
-    layer.setAttribute('class', LAYER_CLASS);
-    svg.appendChild(layer);
     Object.assign(svg.style, {
-      /* Left at its static position so it moves with the element in flow. */
       position: 'absolute',
       overflow: 'visible',
       pointerEvents: 'none',
@@ -285,15 +260,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     if (this.#config.zIndex !== undefined) svg.style.zIndex = `${this.#config.zIndex}`;
 
-    /* A highlight paints behind its element, everything else in front. */
-    const prepend = this.#config.type === 'highlight';
+    const behindElement = this.#config.type === 'highlight';
 
-    this.#element.insertAdjacentElement(prepend ? 'beforebegin' : 'afterend', svg);
+    this.#element.insertAdjacentElement(behindElement ? 'beforebegin' : 'afterend', svg);
     this.#svg = svg;
-    this.#layer = layer;
     this.#state = 'not-showing';
 
-    if (prepend && window.getComputedStyle(this.#element).position === 'static') {
+    if (behindElement && window.getComputedStyle(this.#element).position === 'static') {
       this.#element.style.position = 'relative';
     }
 
@@ -307,12 +280,11 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const { repeat, ...init } = this.#visibility;
 
     this.#visibilityObserver = new IntersectionObserver((entries) => {
-      /* Only the last of a batch describes where the element ended up. */
-      const entry = entries.at(-1);
+      const latest = entries.at(-1);
 
-      if (!entry) return;
+      if (!latest) return;
 
-      if (entry.isIntersecting) {
+      if (latest.isIntersecting) {
         this.show();
 
         if (!repeat) this.#disconnectVisibility();
@@ -349,7 +321,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
   }
 
-  /** Measures the whole batch, then writes only what actually moved. */
   static flush(annotations: RoughAnnotationImpl[]): void {
     const stale: { annotation: RoughAnnotationImpl; measurement: Measurement }[] = [];
 
@@ -397,19 +368,17 @@ class RoughAnnotationImpl implements RoughAnnotation {
     queueMicrotask(() => {
       this.#refreshQueued = false;
 
-      /* Not awaited: a later change must not queue behind this redraw. */
       if (this.isShowing()) this.show();
     });
   }
 
   #render(ensureNoAnimation: boolean, measured?: Measurement): void {
-    const layer = this.#layer;
+    const svg = this.#svg;
 
-    if (!layer) return;
+    if (!svg) return;
 
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
     const { rects, mode } = measured ?? this.#measure();
-    /* Each line is drawn for as long as it is, along whichever way the text runs. */
     const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
     const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
@@ -418,7 +387,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     rects.forEach((rect) => {
       const duration = total ? totalDuration * (runLength(rect) / total) : 0;
 
-      renderAnnotation(layer, rect, mode, config, delay, duration);
+      renderAnnotation(svg, rect, mode, config, delay, duration);
       delay += duration;
     });
 

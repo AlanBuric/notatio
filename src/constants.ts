@@ -2,8 +2,6 @@ export const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export const ANNOTATION_CLASS = 'notatio-annotation';
 
-export const LAYER_CLASS = 'notatio-layer';
-
 export const KEYFRAME_NAME = 'notatio-dash';
 
 export const REVERSE_KEYFRAME_NAME = 'notatio-dash-reverse';
@@ -25,7 +23,6 @@ export const DEFAULT_COLOR = 'currentColor';
 
 export const DEFAULT_ROUGHNESS = 1.5;
 
-/** Highlights use a rougher default since the stroke is thick enough to hide it. */
 export const DEFAULT_HIGHLIGHT_ROUGHNESS = 3;
 
 /** Fraction of the element height a highlight stroke covers. */
@@ -36,13 +33,10 @@ export const DEFAULT_AMPLITUDE = 3;
 /** Complete waves per 100px of width. */
 export const DEFAULT_FREQUENCY = 5;
 
-/**
- * Points sampled per wave. Enough for the curve fit to keep a crest round
- * without the path data growing with no visible gain.
- */
+/** Points sampled per wave, enough for the curve fit to keep a crest round. */
 export const WAVE_RESOLUTION = 8;
 
-/** Segments per wave for the angular variant: baseline, crest, baseline, trough. */
+/** Segments per wave: baseline, crest, baseline, trough. */
 export const ZIGZAG_RESOLUTION = 4;
 
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';

@@ -58,7 +58,6 @@ function getOptions(
     roughness: type === 'highlight' ? DEFAULT_HIGHLIGHT_ROUGHNESS : DEFAULT_ROUGHNESS,
     ...overrides,
     seed,
-    /* Derived from the shape being drawn, so it is not the caller's to set. */
     disableMultiStroke: type !== 'double',
   };
 }
@@ -77,7 +76,6 @@ export function parsePadding(config: Pick<ResolvedAnnotationConfig, 'padding'>):
   return [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING];
 }
 
-/** Strokes back and forth between two points. `reverse` flips the first pass. */
 function alternatingLines(
   from: Point,
   to: Point,
@@ -91,7 +89,6 @@ function alternatingLines(
   });
 }
 
-/** Retraces the same points, turning around on every other pass. */
 function alternatingStrokes(
   points: Point[],
   iterations: number,
@@ -105,8 +102,8 @@ function alternatingStrokes(
   );
 }
 
-/* Rounded to whole waves so the stroke starts and ends on the baseline, which
-   leaves the wavelength slightly off the requested frequency. */
+/* Whole waves only, so the stroke starts and ends on the baseline. This leaves
+   the drawn wavelength slightly off the requested frequency. */
 function waveCount(inlineSize: number, frequency: number): number {
   return Math.max(Math.round((inlineSize * frequency) / 100), 1);
 }
@@ -125,7 +122,6 @@ function sinePoints(frame: Frame, block: number, amplitude: number, frequency: n
   });
 }
 
-/** The same wave as `sinePoints`, sampled only where it crosses and peaks. */
 function zigzagPoints(frame: Frame, block: number, amplitude: number, frequency: number): Point[] {
   const waves = waveCount(frame.inlineSize, frequency);
   const steps = waves * ZIGZAG_RESOLUTION;
@@ -136,11 +132,8 @@ function zigzagPoints(frame: Frame, block: number, amplitude: number, frequency:
   );
 }
 
-/**
- * Joins a shape's segment ops into one stroke. RoughJS starts every segment of
- * a `linearPath` with its own move, which `opsToPath` would split into separate
- * paths; a wave wants a pen that never lifts, and one path to animate.
- */
+/* RoughJS starts every `linearPath` segment with its own move, which
+   `opsToPath` would split into a separate path each. A wave wants one path. */
 function joinOps({ ops, ...rest }: OpSet): OpSet {
   return {
     ...rest,
@@ -188,7 +181,6 @@ function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding)
   }
 }
 
-/** Everything a planner needs, resolved from the config. */
 interface StrokeContext {
   rect: Rectangle;
   frame: Frame;
@@ -207,7 +199,7 @@ interface StrokeContext {
 
 interface StrokePlan {
   ops: OpSet[];
-  /** Set when the type derives its own width rather than taking the configured one. */
+  /** Set when the type derives its own width instead of taking the configured one. */
   strokeWidth?: number;
 }
 
@@ -215,7 +207,6 @@ function repeat(count: number, draw: () => OpSet): OpSet[] {
   return Array.from({ length: Math.max(count, 0) }, draw);
 }
 
-/** Just outside the text on the side, or sides, that `position` asks for. */
 function resolveBlocks(frame: Frame, position: AnnotationPosition | undefined): number[] {
   const over = -frame.overPadding;
   const under = frame.blockSize + frame.underPadding;
@@ -226,7 +217,6 @@ function resolveBlocks(frame: Frame, position: AnnotationPosition | undefined): 
   return [under];
 }
 
-/** A stroke running the length of the inline axis at each block offset. */
 function inlineStrokes(context: StrokeContext, options = context.options): OpSet[] {
   const { frame, iterations, reverse, blocks } = context;
 
@@ -241,7 +231,6 @@ function inlineStrokes(context: StrokeContext, options = context.options): OpSet
   );
 }
 
-/** Shared by both wave types, which differ only in how they sample and draw. */
 function wavedStrokes(
   context: StrokeContext,
   sample: (frame: Frame, block: number, amplitude: number, frequency: number) => Point[],
@@ -254,7 +243,6 @@ function wavedStrokes(
   );
 }
 
-/** Outer box of the annotation, the element rect grown by its padding. */
 function paddedBox({ rect, padding }: StrokeContext) {
   return {
     x: rect.x - padding[3],
@@ -264,7 +252,6 @@ function paddedBox({ rect, padding }: StrokeContext) {
   };
 }
 
-/** Halfway across the text, whichever way the text runs. */
 function through(context: StrokeContext): StrokeContext {
   return { ...context, blocks: [context.frame.blockSize / 2] };
 }
@@ -274,7 +261,7 @@ type Planner = (context: StrokeContext) => StrokePlan;
 const PLANNERS: Record<RoughAnnotationType, Planner> = {
   underline: (context) => ({ ops: inlineStrokes(context) }),
 
-  'strike-through': (context) => ({ ops: inlineStrokes(through(context)) }),
+  strikethrough: (context) => ({ ops: inlineStrokes(through(context)) }),
 
   highlight: (context) => ({
     ops: inlineStrokes(through(context), getOptions('highlight', context.overrides, context.seed)),
@@ -334,7 +321,7 @@ const PLANNERS: Record<RoughAnnotationType, Planner> = {
 };
 
 export function renderAnnotation(
-  layer: SVGGElement,
+  target: SVGSVGElement,
   rect: Rectangle,
   mode: WritingMode,
   config: ResolvedAnnotationConfig,
@@ -370,7 +357,7 @@ export function renderAnnotation(
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
     path.setAttribute('stroke-width', `${strokeWidth}`);
-    layer.appendChild(path);
+    target.appendChild(path);
 
     return path;
   });
@@ -394,7 +381,7 @@ export function renderAnnotation(
   });
 }
 
-/** @internal Exported for testing. Not part of the package entry point. */
+/** @internal Exported for testing. */
 export function opsToPath(opList: OpSet[]): string[] {
   const paths: string[] = [];
 

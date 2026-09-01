@@ -10,13 +10,14 @@ First release under the name Notatio, forked from rough-notation 0.5.1. It does 
 - The config is a discriminated union on `type`. Passing an option the chosen type does not read is a compile error rather than being silently ignored: `iterations` on `bracket`, `strokeWidth` on `highlight`, `brackets` on any other type, `reverse` on `box` or `circle`, `position` on anything but a line type. The annotation object returned by `annotate()` keeps every option settable, since a value the type ignores is harmless once the annotation exists.
 - `show()` and `hide()` return `Promise<void>` rather than `void`. Existing calls that ignore the return value keep working.
 - ESM only. The CommonJS and IIFE builds are removed, along with the `RoughNotation` global. Use `<script type="module">` for CDN usage.
-- The annotation CSS class is now `notatio-annotation`, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`. Strokes are drawn into a `notatio-layer` group inside the SVG rather than directly into its root.
+- The annotation CSS class is now `notatio-annotation`, previously `rough-annotation`, and the keyframe is `notatio-dash`, previously `rough-notation-dash`.
+- `strike-through` is renamed `strikethrough`.
 - `rtl` is renamed `reverse`. It reverses the stroke direction along the text, which is right-to-left only when the text runs that way, and reads wrongly under a vertical writing mode.
 - Requires a browser supporting ES2022.
 
 ### Added
 
-- Writing-mode awareness. Annotations read the element's computed `writing-mode` and draw along the text rather than along the screen, so an underline on a `vertical-rl` column runs top to bottom on its left, `strike-through` runs down the middle, `highlight` takes its thickness from the column's width, and each stroke reads the padding of the side it actually sits on. Nothing has to be configured, and `sideways-rl` and `sideways-lr` follow whichever vertical mode shares their block direction.
+- Writing-mode awareness. Annotations read the element's computed `writing-mode` and draw along the text rather than along the screen, so an underline on a `vertical-rl` column runs top to bottom on its left, `strikethrough` runs down the middle, `highlight` takes its thickness from the column's width, and each stroke reads the padding of the side it actually sits on. Nothing has to be configured, and `sideways-rl` and `sideways-lr` follow whichever vertical mode shares their block direction.
 - `wavy`, an underline drawn along a sine wave, shaped by `amplitude` and `frequency`. `frequency` counts complete waves per 100px of text, so the wavelength holds steady across elements of different widths, and is rounded to a whole number of waves so the stroke starts and ends on the baseline. A negative `amplitude` mirrors the wave.
 - `zigzag`, the same wave sampled only where it crosses and peaks, joined with straight strokes. Drawn as a single continuous path per pass rather than one path per segment, so it animates as one stroke.
 - `position` puts a line type `under` the text, `over` it, or on `both` sides. The names are logical, so under `vertical-rl` they are the left and right of the column, and each side reads its own padding.
@@ -24,7 +25,7 @@ First release under the name Notatio, forked from rough-notation 0.5.1. It does 
 - The RoughJS stroke parameters are configurable: `maxRandomnessOffset`, `bowing`, `curveFitting`, `curveTightness`, `curveStepCount` and `preserveVertices`, alongside the existing `roughness`. These are the options that actually reach the stroke renderers; the rest of the RoughJS option set only affects fills, which annotations never draw, so exposing it would advertise options that silently do nothing.
 - `delay` holds an annotation back before it draws, on top of any slot it gets from a group.
 - `class` adds a class to the annotation SVG, so an annotation can be reached from a stylesheet. Being set when the SVG is created, it applies to the first paint.
-- `annotation.svg` and `annotation.layer` expose the injected SVG and the group holding the strokes. `layer` is the one to transform: geometry is measured against `svg`, so a transform there is compensated away by the next redraw.
+- `annotation.svg` exposes the injected SVG, for filters, opacity or a class of your own. It is not a transform target: geometry is measured against it, so a transform there is compensated away by the next redraw.
 - `pause()` and `resume()` hold and release an animation in progress, including the retreat on `hide()`.
 - `annotationGroup()` exposes `remove()` and the `annotations` it was built from.
 - `showOnVisible` draws the annotation the first time the element scrolls into view, using an `IntersectionObserver`. `true` uses the platform defaults; the object form takes `root`, `rootMargin` and `threshold`, plus `repeat` to hide the annotation again when the element leaves and redraw it when it returns. Without `repeat` the observer is dropped after the first draw.
