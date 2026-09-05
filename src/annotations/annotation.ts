@@ -5,11 +5,11 @@ import {
   PATH_LENGTH_PROPERTY,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
-} from '../constants.js';
-import { ensureKeyframes } from '../keyframes.js';
-import { resolveAnimation } from '../animation.js';
-import { readWritingMode } from '../frame.js';
-import { renderAnnotation } from '../render.js';
+} from '@/constants.js';
+import { ensureKeyframes } from '@/keyframes.js';
+import { resolveAnimation } from '@/animation.js';
+import { readWritingMode } from '@/frame.js';
+import { renderAnnotation } from '@/render.js';
 import type {
   AnnotationOptions,
   Rectangle,
@@ -20,7 +20,7 @@ import type {
   RoughAnnotationType,
   VisibilityOptions,
   WritingMode,
-} from '../types.js';
+} from '@/types.js';
 import {
   DEFERRED_OPTIONS,
   REDRAWN_OPTIONS,

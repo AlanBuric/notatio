@@ -55,4 +55,4 @@ First release under the name Notatio, forked from rough-notation 0.5.1. It does 
 - Resize redraws are batched into an animation frame instead of waiting out a fixed 400ms debounce. Every annotation in a batch is measured before any is redrawn, so a batch cannot interleave layout reads with writes, and an annotation whose rect did not actually change is skipped ([rough-notation PR #89](https://github.com/rough-stuff/rough-notation/pull/89)).
 - Build moves from tsc plus Rollup to Vite, with declarations from vite-plugin-dts.
 - tslint is replaced by ESLint and Prettier.
-- Test suite added, running under Node and real Chromium.
+- Test suite added, running under Node and Chromium.

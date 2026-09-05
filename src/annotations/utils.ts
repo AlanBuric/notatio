@@ -1,5 +1,5 @@
-import { ANNOTATION_CLASS } from '../constants.js';
-import type { Rectangle, ShowOnVisibleOption, VisibilityOptions } from '../types.js';
+import { ANNOTATION_CLASS } from '@/constants.js';
+import type { Rectangle, ShowOnVisibleOption, VisibilityOptions } from '@/types.js';
 
 export type AnnotationState = 'unattached' | 'not-showing' | 'showing';
 
