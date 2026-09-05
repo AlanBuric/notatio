@@ -159,8 +159,6 @@ Notatio targets ES2022 and uses `ResizeObserver`, `IntersectionObserver`, `Eleme
 
 The [reference](docs/REFERENCE.md) covers every annotation type, all configuration options, writing modes, the annotation and group objects, accessibility and styling hooks.
 
-Coming from rough-notation? See [migrating](docs/MIGRATING.md).
-
 ## Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
