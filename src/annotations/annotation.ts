@@ -2,6 +2,8 @@ import { randomSeed } from 'roughjs/bin/math';
 import {
   DEFAULT_ANIMATION_DURATION,
   DEFAULT_ANIMATION_EASING,
+  DEFAULT_DELAY,
+  DEFAULT_MULTILINE,
   PATH_LENGTH_PROPERTY,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
@@ -238,7 +240,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #startDelay(): number {
-    return this.#animationDelay + (this.#config.delay ?? 0);
+    return this.#animationDelay + (this.#config.delay ?? DEFAULT_DELAY);
   }
 
   #attach(): void {
@@ -402,7 +404,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return { rects: [], mode: 'horizontal-tb', reversedFlow: false };
 
     const bounds =
-      (this.#config.multiline ?? true)
+      (this.#config.multiline ?? DEFAULT_MULTILINE)
         ? this.#multilineRects()
         : [this.#element.getBoundingClientRect()];
     const style = window.getComputedStyle(this.#element);

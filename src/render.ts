@@ -4,6 +4,7 @@ import { curve, ellipse, line, linearPath, rectangle } from 'roughjs/bin/rendere
 import {
   DEFAULT_AMPLITUDE,
   DEFAULT_ANIMATION_EASING,
+  DEFAULT_BRACKET_SIDE,
   DEFAULT_COLOR,
   DEFAULT_FREQUENCY,
   DEFAULT_HIGHLIGHT_ROUGHNESS,
@@ -338,7 +339,9 @@ export function renderAnnotation(
     padding,
     iterations: config.iterations ?? DEFAULT_ITERATIONS,
     reverse: (config.reverse ?? reversedFlow) ? 1 : 0,
-    brackets: Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'],
+    brackets: Array.isArray(config.brackets)
+      ? config.brackets
+      : [config.brackets ?? DEFAULT_BRACKET_SIDE],
     amplitude: config.amplitude ?? DEFAULT_AMPLITUDE,
     frequency: config.frequency ?? DEFAULT_FREQUENCY,
     blocks: resolveBlocks(frame, config.position),

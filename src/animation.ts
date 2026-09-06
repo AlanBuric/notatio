@@ -1,4 +1,8 @@
-import { REDUCED_MOTION_QUERY } from './constants.js';
+import {
+  DEFAULT_ANIMATE_ON_HIDE,
+  DEFAULT_ANIMATE_ON_SHOW,
+  REDUCED_MOTION_QUERY,
+} from './constants.js';
 import type { AnimateOption } from './types.js';
 
 interface ResolvedAnimation {
@@ -15,11 +19,11 @@ function prefersReducedMotion(): boolean {
 export function resolveAnimation(animate: AnimateOption | undefined): ResolvedAnimation {
   if (prefersReducedMotion()) return { onShow: false, onHide: false };
 
-  if (typeof animate === 'boolean') return { onShow: animate, onHide: false };
+  if (typeof animate === 'boolean') return { onShow: animate, onHide: DEFAULT_ANIMATE_ON_HIDE };
 
   return {
-    onShow: animate?.onShow ?? true,
-    onHide: animate?.onHide ?? false,
+    onShow: animate?.onShow ?? DEFAULT_ANIMATE_ON_SHOW,
+    onHide: animate?.onHide ?? DEFAULT_ANIMATE_ON_HIDE,
     hideEasing: animate?.hideEasing,
   };
 }

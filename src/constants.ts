@@ -1,3 +1,5 @@
+import type { BracketType } from './types.js';
+
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export const ANNOTATION_CLASS = 'notatio-annotation';
@@ -13,11 +15,21 @@ export const DEFAULT_ANIMATION_DURATION = 800;
 
 export const DEFAULT_ANIMATION_EASING = 'ease-out';
 
+export const DEFAULT_ANIMATE_ON_SHOW = true;
+
+export const DEFAULT_ANIMATE_ON_HIDE = false;
+
+export const DEFAULT_DELAY = 0;
+
 export const DEFAULT_ITERATIONS = 2;
 
 export const DEFAULT_STROKE_WIDTH = 2;
 
 export const DEFAULT_PADDING = 5;
+
+export const DEFAULT_MULTILINE = true;
+
+export const DEFAULT_BRACKET_SIDE: BracketType = 'right';
 
 export const DEFAULT_COLOR = 'currentColor';
 
