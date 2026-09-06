@@ -94,6 +94,35 @@ describe('strokeWidth', () => {
   });
 });
 
+describe('roughness', () => {
+  it('wobbles off the straight baseline by default', () => {
+    const element = mountElement();
+
+    annotate(element, { type: 'underline', animate: false }).show();
+    expect(pathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+  });
+
+  it('draws an exact line when set to 0', () => {
+    const element = mountElement();
+
+    annotate(element, { type: 'underline', roughness: 0, animate: false }).show();
+    expect(pathsFor(element)[0]!.getBBox().height).toBeCloseTo(0, 5);
+  });
+
+  it('re-renders when roughness is set after showing', async () => {
+    const element = mountElement();
+    const annotation = annotate(element, { type: 'underline', roughness: 0 });
+
+    annotation.show();
+
+    annotation.roughness = 5;
+    await flushMicrotasks();
+
+    expect(annotation.roughness).toBe(5);
+    expect(pathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+  });
+});
+
 describe('animation', () => {
   it('animates by default', () => {
     const element = mountElement();
@@ -196,17 +225,17 @@ describe('padding', () => {
   });
 });
 
-describe('rtl', () => {
-  it('draws the first stroke right to left', () => {
-    const ltr = mountElement();
+describe('reverse', () => {
+  it('draws the first stroke against the text flow', () => {
+    const forwards = mountElement();
 
-    annotate(ltr, { type: 'underline', animate: false }).show();
+    annotate(forwards, { type: 'underline', animate: false }).show();
 
-    const rtl = mountElement();
+    const backwards = mountElement();
 
-    annotate(rtl, { type: 'underline', rtl: true, animate: false }).show();
+    annotate(backwards, { type: 'underline', reverse: true, animate: false }).show();
 
-    expect(startX(pathsFor(rtl)[0]!)).toBeGreaterThan(startX(pathsFor(ltr)[0]!));
+    expect(startX(pathsFor(backwards)[0]!)).toBeGreaterThan(startX(pathsFor(forwards)[0]!));
   });
 });
 
@@ -228,6 +257,23 @@ describe('multiline', () => {
     expect(pathsFor(span)).toHaveLength(lines);
   });
 
+  it('annotates each visual line by default', () => {
+    const container = mountContainer();
+
+    container.style.width = '120px';
+
+    const span = document.createElement('span');
+
+    span.textContent = 'this sentence is long enough to wrap onto several lines';
+    container.appendChild(span);
+
+    const lines = span.getClientRects().length;
+    expect(lines).toBeGreaterThan(1);
+
+    annotate(span, { type: 'underline', iterations: 1 }).show();
+    expect(pathsFor(span)).toHaveLength(lines);
+  });
+
   it('annotates the bounding box as one when multiline is off', () => {
     const container = mountContainer();
 
@@ -238,7 +284,7 @@ describe('multiline', () => {
     span.textContent = 'this sentence is long enough to wrap onto several lines';
     container.appendChild(span);
 
-    annotate(span, { type: 'underline', iterations: 1 }).show();
+    annotate(span, { type: 'underline', multiline: false, iterations: 1 }).show();
     expect(pathsFor(span)).toHaveLength(1);
   });
 });

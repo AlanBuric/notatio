@@ -3,12 +3,19 @@ export type RoughAnnotationType =
   | 'box'
   | 'circle'
   | 'highlight'
-  | 'strike-through'
+  | 'strikethrough'
   | 'crossed-off'
   | 'bracket'
-  | 'wavy';
+  | 'wavy'
+  | 'zigzag';
 
 export type BracketType = 'left' | 'right' | 'top' | 'bottom';
+
+/** Named on the block axis, so `under` is below horizontal text and left of a `vertical-rl` column. */
+export type AnnotationPosition = 'under' | 'over' | 'both';
+
+/** The three cases a computed `writing-mode` reduces to geometrically. */
+export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 
 /** `[top, right, bottom, left]`, following the CSS shorthand order. */
 export type FullPadding = [number, number, number, number];
@@ -27,160 +34,200 @@ export interface AnimationOptions {
   onShow?: boolean;
   /** Retreat the strokes on `hide()`. Defaults to `false`. */
   onHide?: boolean;
+  /** Overrides `animationEasing` for the retreat on `hide()`. */
+  hideEasing?: string;
 }
 
-/** `true` animates the drawing only. The object form controls each direction. */
 export type AnimateOption = boolean | AnimationOptions;
 
 export interface VisibilityOptions extends IntersectionObserverInit {
-  /**
-   * Hides the annotation again when the element leaves, and redraws it when it
-   * comes back. Defaults to `false`, which draws once and stops observing.
-   */
+  /** Hide again when the element leaves, and redraw when it returns. Defaults to `false`. */
   repeat?: boolean;
 }
 
 export type ShowOnVisibleOption = boolean | VisibilityOptions;
 
-/** Options every annotation type reads. */
-export interface CommonAnnotationOptions {
+/** The RoughJS parameters that reach the stroke renderers. The rest only affect fills. */
+export interface RoughStrokeOptions {
+  /** How far strokes wander off the ideal path. Defaults to 1.5, or 3 for `highlight`. */
+  roughness?: number;
+  /** Ceiling on a single point's random displacement. Defaults to 2. */
+  maxRandomnessOffset?: number;
+  /** How far a straight line bends on its way across. Defaults to 1. */
+  bowing?: number;
+  /** How closely an ellipse follows its ideal curve. Defaults to 0.95. */
+  curveFitting?: number;
+  /** Slack in the curve through a wave's points. Defaults to 0. */
+  curveTightness?: number;
+  /** Points sampled around an ellipse. Defaults to 9. */
+  curveStepCount?: number;
+  /** Pins path endpoints in place instead of jittering them. Defaults to `false`. */
+  preserveVertices?: boolean;
+  /** Chooses the random variation. Assigned randomly when omitted, and readable afterwards. */
+  seed?: number;
+}
+
+export interface CommonAnnotationOptions extends RoughStrokeOptions {
   /** Defaults to `true`, which animates the drawing but not the removal. */
   animate?: AnimateOption;
   /** Milliseconds. Defaults to 800. */
   animationDuration?: number;
+  /** Any valid CSS `animation-timing-function` value. Defaults to `ease-out`. */
+  animationEasing?: string;
+  /** Milliseconds to wait before drawing, on top of any group delay. Defaults to 0. */
+  delay?: number;
   /** Defaults to `currentColor`. */
   color?: string;
   /** Defaults to 5px on every side. Ignored by types that fill the element box. */
   padding?: RoughPadding;
-  /** Annotates each wrapped line of inline text separately. */
+  /** Annotates each wrapped line of inline text separately. Defaults to `true`. */
   multiline?: boolean;
+  /** Added to the annotation SVG alongside `notatio-annotation`. */
+  class?: string;
   /** `z-index` of the annotation SVG. Unset by default. */
   zIndex?: number;
-  /** Applied to the element's `color` while the annotation is showing. */
-  textColor?: string;
   /** Redraw on element and window resize. Defaults to `true`. */
   observeResize?: boolean;
-  /**
-   * Calls `show()` the first time the element scrolls into view. Unset by
-   * default, leaving the caller to decide when to draw.
-   */
+  /** Calls `show()` the first time the element scrolls into view. */
   showOnVisible?: ShowOnVisibleOption;
 }
 
 /** Marks options a given type does not read, so passing one is a type error. */
 type Unsupported<Keys extends string> = Partial<Record<Keys, never>>;
 
-/** Number of strokes drawn. Defaults to 2. */
 interface Iterated {
+  /** Number of strokes drawn. Defaults to 2. */
   iterations?: number;
 }
 
-/** Defaults to 2. */
 interface Stroked {
+  /** Defaults to 2. */
   strokeWidth?: number;
 }
 
-/** Draws the first stroke right to left. */
 interface Directional {
-  rtl?: boolean;
+  /** Draws the first stroke against the text flow. */
+  reverse?: boolean;
 }
 
-/** Shape of the wave, for the types drawn as one. */
+interface Positioned {
+  /** Which side of the text the stroke runs along. Defaults to `under`. */
+  position?: AnnotationPosition;
+}
+
 interface Waved {
-  /** Peak distance from the baseline, in pixels. Defaults to 3. */
+  /** Peak distance from the baseline, in pixels. Defaults to 3. A negative value mirrors the wave. */
   amplitude?: number;
-  /**
-   * Complete waves per 100px of width, so the wavelength stays the same under
-   * short and long text. Defaults to 5. Rounded to a whole number of waves
-   * across the element, so the stroke starts and ends on the baseline.
-   */
+  /** Complete waves per 100px of text. Defaults to 5, rounded to whole waves across the element. */
   frequency?: number;
 }
 
-/** Options only the wave types read. */
 type UnwavedKeys = 'amplitude' | 'frequency';
 
-type StrokeAnnotationConfig = CommonAnnotationOptions &
+type UnderlineAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
   Directional &
+  Positioned &
   Unsupported<'brackets' | UnwavedKeys> & {
-    type: 'underline' | 'strike-through' | 'crossed-off';
+    type: 'underline';
+  };
+
+/** Both are drawn across the text itself, so there is no side to choose. */
+type StrikeAnnotationConfig = CommonAnnotationOptions &
+  Iterated &
+  Stroked &
+  Directional &
+  Unsupported<'brackets' | 'position' | UnwavedKeys> & {
+    type: 'strikethrough' | 'crossed-off';
   };
 
 type ShapeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
-  Unsupported<'brackets' | 'rtl' | UnwavedKeys> & {
+  Unsupported<'brackets' | 'reverse' | 'position' | UnwavedKeys> & {
     type: 'box' | 'circle';
   };
 
-/** `strokeWidth` is derived from the element height, so it cannot be set. */
+/** `strokeWidth` is derived from the element size, so it cannot be set. */
 type HighlightAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Directional &
-  Unsupported<'brackets' | 'strokeWidth' | UnwavedKeys> & {
+  Unsupported<'brackets' | 'strokeWidth' | 'position' | UnwavedKeys> & {
     type: 'highlight';
   };
 
 /** Draws one bracket per side, so `iterations` does not apply. */
 type BracketAnnotationConfig = CommonAnnotationOptions &
   Stroked &
-  Unsupported<'iterations' | 'rtl' | UnwavedKeys> & {
+  Unsupported<'iterations' | 'reverse' | 'position' | UnwavedKeys> & {
     type: 'bracket';
     /** Sides to bracket. Defaults to `right`. */
     brackets?: BracketType | BracketType[];
   };
 
-/** A wavy underline, drawn like `underline` but along a sine wave. */
-type WavyAnnotationConfig = CommonAnnotationOptions &
+/** Drawn like an underline, but along a wave: `wavy` curved, `zigzag` angular. */
+type WaveAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
   Directional &
+  Positioned &
   Waved &
   Unsupported<'brackets'> & {
-    type: 'wavy';
+    type: 'wavy' | 'zigzag';
   };
 
 export type RoughAnnotationConfig =
-  | StrokeAnnotationConfig
+  | UnderlineAnnotationConfig
+  | StrikeAnnotationConfig
   | ShapeAnnotationConfig
   | HighlightAnnotationConfig
   | BracketAnnotationConfig
-  | WavyAnnotationConfig;
+  | WaveAnnotationConfig;
 
 /**
- * The config options as plain optional properties. The annotation object
- * exposes them as settable regardless of type, since a value the type ignores
- * is harmless once the annotation exists.
+ * The config options as plain optional properties. The annotation exposes them
+ * all as settable, since a value its type ignores is harmless.
  */
 export interface AnnotationOptions
-  extends Omit<CommonAnnotationOptions, 'showOnVisible'>, Iterated, Stroked, Directional, Waved {
+  extends
+    Omit<CommonAnnotationOptions, 'showOnVisible'>,
+    Iterated,
+    Stroked,
+    Directional,
+    Positioned,
+    Waved {
   brackets?: BracketType | BracketType[];
 }
 
-/**
- * A single annotation. Setting any option that changes the drawing redraws a
- * visible annotation; `animate` and `animationDuration` apply from the next
- * `show()` or `hide()`.
- */
 export interface RoughAnnotation extends AnnotationOptions {
+  /** Always a number once the annotation exists, even when the config omitted it. */
+  seed: number;
+  /** The injected SVG, or `undefined` once removed. */
+  readonly svg: SVGSVGElement | undefined;
   isShowing(): boolean;
   /** Resolves once the drawing animation has finished, or immediately if there is none. */
   show(): Promise<void>;
   /** Resolves once the annotation is gone, after the reverse animation if one runs. */
   hide(): Promise<void>;
+  /** Holds any animation in progress where it is. */
+  pause(): void;
+  /** Runs a paused animation on from where it stopped. */
+  resume(): void;
   /** Unlinks the annotation from its element. */
   remove(): void;
 }
 
 /** Annotations animated in sequence. */
 export interface RoughAnnotationGroup {
-  /** Resolves once every annotation in the group has finished drawing. */
+  readonly annotations: readonly RoughAnnotation[];
   show(): Promise<void>;
-  /** Resolves once every annotation in the group is gone. */
   hide(): Promise<void>;
+  remove(): void;
 }
 
 /** @internal Flat shape used inside the library, where the discriminant is settled. */
-export type ResolvedAnnotationConfig = AnnotationOptions & { type: RoughAnnotationType };
+export type ResolvedAnnotationConfig = AnnotationOptions & {
+  type: RoughAnnotationType;
+  seed: number;
+};

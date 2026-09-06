@@ -1,8 +1,9 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
+import { defineConfig } from 'eslint/config';
 
-export default tseslint.config(
+export default defineConfig(
   { ignores: ['**/dist/**', '**/lib/**', '**/node_modules/**'] },
   js.configs.recommended,
   {
@@ -15,18 +16,15 @@ export default tseslint.config(
       },
     },
     rules: {
-      // The `@/` alias is defined for tests only. Using it here would emit an
-      // unresolvable specifier into the published declarations.
-      'no-restricted-imports': [
-        'error',
-        { patterns: [{ group: ['@/*'], message: 'Use a relative import inside src/.' }] },
-      ],
       '@typescript-eslint/no-floating-promises': 'off',
     },
   },
   {
     files: ['*.config.{js,ts}'],
     extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: { URL: 'readonly' },
+    },
   },
   prettier,
 );

@@ -1,9 +1,11 @@
 export { annotate, annotationGroup } from './annotations/annotation.js';
 
 export type {
+  AnimateOption,
+  AnimationOptions,
+  AnnotationPosition,
   BracketType,
   FullPadding,
-  Rectangle,
   RoughAnnotation,
   RoughAnnotationConfig,
   AnnotationOptions,
@@ -11,6 +13,8 @@ export type {
   RoughAnnotationGroup,
   RoughAnnotationType,
   RoughPadding,
+  RoughStrokeOptions,
   ShowOnVisibleOption,
   VisibilityOptions,
+  WritingMode,
 } from './types.js';
