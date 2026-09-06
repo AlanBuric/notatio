@@ -97,7 +97,12 @@ describe('redrawing on set', () => {
     span.textContent = 'this sentence is long enough to wrap onto several lines';
     container.appendChild(span);
 
-    const annotation = annotate(span, { type: 'underline', animate: false, iterations: 1 });
+    const annotation = annotate(span, {
+      type: 'underline',
+      animate: false,
+      iterations: 1,
+      multiline: false,
+    });
 
     annotation.show();
     expect(pathsFor(span)).toHaveLength(1);

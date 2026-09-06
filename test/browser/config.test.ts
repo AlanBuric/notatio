@@ -257,6 +257,23 @@ describe('multiline', () => {
     expect(pathsFor(span)).toHaveLength(lines);
   });
 
+  it('annotates each visual line by default', () => {
+    const container = mountContainer();
+
+    container.style.width = '120px';
+
+    const span = document.createElement('span');
+
+    span.textContent = 'this sentence is long enough to wrap onto several lines';
+    container.appendChild(span);
+
+    const lines = span.getClientRects().length;
+    expect(lines).toBeGreaterThan(1);
+
+    annotate(span, { type: 'underline', iterations: 1 }).show();
+    expect(pathsFor(span)).toHaveLength(lines);
+  });
+
   it('annotates the bounding box as one when multiline is off', () => {
     const container = mountContainer();
 
@@ -267,7 +284,7 @@ describe('multiline', () => {
     span.textContent = 'this sentence is long enough to wrap onto several lines';
     container.appendChild(span);
 
-    annotate(span, { type: 'underline', iterations: 1 }).show();
+    annotate(span, { type: 'underline', multiline: false, iterations: 1 }).show();
     expect(pathsFor(span)).toHaveLength(1);
   });
 });

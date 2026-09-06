@@ -129,3 +129,62 @@ describe('padding', () => {
     expect(near - far).toBeGreaterThan(30);
   });
 });
+
+describe('reading direction', () => {
+  function mountDirected(direction: 'ltr' | 'rtl', mode: Mode = 'horizontal-tb'): HTMLElement {
+    const container = mountContainer();
+    const element = document.createElement('div');
+
+    element.style.cssText = `writing-mode:${mode};direction:${direction};width:180px;height:180px;`;
+    element.textContent = 'annotate me';
+    container.appendChild(element);
+
+    return element;
+  }
+
+  /** Where the first stroke begins, in the coordinate space the strokes share with `elementBox`. */
+  function sweepStart(element: HTMLElement): DOMPoint {
+    return pathsFor(element)[0]!.getPointAtLength(0);
+  }
+
+  it('sweeps the underline from the left for left-to-right text', () => {
+    const element = mountDirected('ltr');
+
+    annotate(element, UNDERLINE).show();
+
+    const box = elementBox(element);
+
+    expect(sweepStart(element).x).toBeLessThan(box.x + box.width / 2);
+  });
+
+  it('sweeps the underline from the right for right-to-left text', () => {
+    const element = mountDirected('rtl');
+
+    annotate(element, UNDERLINE).show();
+
+    const box = elementBox(element);
+
+    expect(sweepStart(element).x).toBeGreaterThan(box.x + box.width / 2);
+  });
+
+  it('lets an explicit reverse override the reading direction', () => {
+    const element = mountDirected('rtl');
+
+    annotate(element, { ...UNDERLINE, reverse: false }).show();
+
+    const box = elementBox(element);
+
+    expect(sweepStart(element).x).toBeLessThan(box.x + box.width / 2);
+  });
+
+  /* Vertical text flows top to bottom whatever `direction` is set to. */
+  it('ignores direction under vertical writing modes', () => {
+    const element = mountDirected('rtl', 'vertical-rl');
+
+    annotate(element, UNDERLINE).show();
+
+    const box = elementBox(element);
+
+    expect(sweepStart(element).y).toBeLessThan(box.y + box.height / 2);
+  });
+});

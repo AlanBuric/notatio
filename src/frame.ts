@@ -16,16 +16,27 @@ export interface Frame {
   point(inline: number, block: number): Point;
 }
 
-/* The legacy `tb-rl` aliases and the `sideways-*` values map onto whichever of
-   the two vertical modes shares their block direction. */
-export function readWritingMode(element: HTMLElement): WritingMode {
-  const { writingMode } = window.getComputedStyle(element);
+/*
+ * The legacy `tb-rl` aliases and the `sideways-*` values map onto whichever of
+ * the two vertical modes shares their block direction.
+ */
+export function readWritingMode(style: CSSStyleDeclaration): WritingMode {
+  const { writingMode } = style;
 
   if (writingMode.startsWith('horizontal') || writingMode === 'lr-tb' || writingMode === 'rl-tb') {
     return 'horizontal-tb';
   }
 
   return writingMode.endsWith('lr') ? 'vertical-lr' : 'vertical-rl';
+}
+
+/**
+ * Horizontal right-to-left text reads against the frame's inline axis, so its
+ * strokes should sweep from the end by default. The vertical modes flow top to
+ * bottom regardless of `direction`, so only `horizontal-tb` is affected.
+ */
+export function readReversedFlow(style: CSSStyleDeclaration, mode: WritingMode): boolean {
+  return mode === 'horizontal-tb' && style.direction === 'rtl';
 }
 
 export function createFrame(rect: Rectangle, padding: FullPadding, mode: WritingMode): Frame {
@@ -41,8 +52,10 @@ export function createFrame(rect: Rectangle, padding: FullPadding, mode: Writing
     };
   }
 
-  /* Vertical text flows downward either way, so the inline axis is y. The two
-     modes differ only in which side the block axis starts from. */
+  /*
+   * Vertical text flows downward either way, so the inline axis is y. The two
+   * modes differ only in which side the block axis starts from.
+   */
   const rightToLeft = mode === 'vertical-rl';
 
   return {

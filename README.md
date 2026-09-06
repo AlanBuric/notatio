@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/npm/l/notatio)](LICENSE)
 [![CI](https://github.com/AlanBuric/notatio/actions/workflows/ci.yml/badge.svg)](https://github.com/AlanBuric/notatio/actions/workflows/ci.yml)
 
-Create and animate hand-drawn annotations on any HTML element.
+Create and animate hand-drawn annotations on any HTML element the way you'd mark up paper.
 
 Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight, strike through, cross off, bracket or squiggle anything already on the page. Annotations follow the text, in horizontal and vertical writing modes alike. It has no runtime dependencies and ships as an ES module with TypeScript types, at 6 kB gzipped.
 
@@ -17,11 +17,11 @@ Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight
 | `box`           | A box around the element.                                |
 | `circle`        | A circle around the element.                             |
 | `highlight`     | A highlighter effect behind the element.                 |
-| `strikethrough` | Lines through the middle of the element.                 |
+| `strikethrough` | A line through the middle of the element.                |
 | `crossed-off`   | An X across the element.                                 |
 | `bracket`       | A bracket beside the element, usually a paragraph.       |
 | `wavy`          | An underline along a sine wave, for a spellchecker look. |
-| `zigzag`        | The same wave, with sharp corners instead of curves.     |
+| `zigzag`        | Wavy, but with sharp corners instead of curves.          |
 
 ## Installation
 
@@ -82,7 +82,7 @@ annotate(element, {
 
 ### Vertical text
 
-Annotations read the element's `writing-mode`, so nothing extra is needed for vertical text. This underline runs down the column, on its left.
+Annotations adapt to the element's `writing-mode`. In this example, the underline runs down the column, on its left side.
 
 ```html
 <p id="tategaki" style="writing-mode: vertical-rl">縦書きのテキスト</p>
@@ -121,7 +121,7 @@ await annotationGroup([heading, note, typo]).show();
 
 ### With a framework
 
-Notatio is framework agnostic: it takes an element and draws beside it. The only thing to get right is calling `remove()` when the component goes away.
+Notatio is framework agnostic: it takes an element and draws beside it. You only need to call `remove()` when the component umounts.
 
 ```jsx
 import { useEffect, useRef } from 'react';
@@ -144,16 +144,16 @@ function Highlighted({ children }) {
 
 ## Accessibility
 
-An annotation is an absolutely positioned `<svg>` inserted next to the element, carrying `aria-hidden="true"` and `pointer-events: none`, so it is out of the accessibility tree and never intercepts clicks, hover or selection. The annotated element itself is left alone, except by `highlight`, which sets `position: relative` on it when it is otherwise `static`. Animation is skipped whenever `prefers-reduced-motion: reduce` is set, whatever the config says.
+An annotation is an absolutely positioned `<svg>` inserted next to the element, carrying `aria-hidden="true"` and `pointer-events: none`, so it is out of the accessibility tree and never intercepts clicks, hover or selection. The annotated element itself is left alone, except by `highlight`, which sets `position: relative` on it when it is otherwise `static`. Animations are disabled whenever `prefers-reduced-motion: reduce` is set.
 
-Two things are yours to do:
+You have two responsibilities for accessibility:
 
 - **Put the meaning somewhere a screen reader can read it.** A strikethrough that means "completed" or a wavy underline that means "misspelled" is decoration to assistive technology, so the meaning has to live in the text or in an `aria-label` on the element.
-- **Check the contrast of a highlight.** It paints behind the text, so a dark highlight under dark text fails WCAG contrast no matter what the library does.
+- **Ensure the WCAG contrast of a highlight.** It paints behind the text, so a dark highlight under dark text fails the WCAG contrast guideline.
 
 ## Browser support
 
-Notatio targets ES2022 and uses `ResizeObserver`, `IntersectionObserver`, `Element.getAnimations()` and `structuredClone()`. That puts the floor at roughly Chrome 98, Firefox 94 and Safari 15.4, all from early 2022.
+Notatio targets ES2022 and uses `ResizeObserver`, `IntersectionObserver`, `Element.getAnimations()` and `structuredClone()`.
 
 ## Documentation
 
@@ -170,4 +170,4 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Credits
 
 Notatio is a fork of [rough-notation](https://github.com/rough-stuff/rough-notation) by [Preet Shihn](https://github.com/pshihn), who also wrote [RoughJS](https://roughjs.com), which does the drawing.
-A couple of open issues and pull requests were also applied from the source repository.
+A couple of open issues and pull requests from the source repository were also applied for new features, improvements and optimizations.

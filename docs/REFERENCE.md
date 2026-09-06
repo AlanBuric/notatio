@@ -55,11 +55,11 @@ annotation.show();
 | `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation. See [padding](#padding).           |
 | `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.      |
 | `position`          | `'under' \| 'over' \| 'both'`  | `'under'`      | Which side of the text a line sits on. See [position](#position).              |
-| `reverse`           | `boolean`                      | `false`        | Draw the first stroke against the text flow. Not `box`, `circle` or `bracket`. |
+| `reverse`           | `boolean`                      | `direction`    | Draw the first stroke against the text flow. Not `box`, `circle` or `bracket`. |
 | `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                                |
 | `amplitude`         | `number`                       | `3`            | Wave types only. Peak distance from the baseline, in pixels.                   |
 | `frequency`         | `number`                       | `5`            | Wave types only. Complete waves per 100px of text.                             |
-| `multiline`         | `boolean`                      | `false`        | Annotate each wrapped line of inline text separately.                          |
+| `multiline`         | `boolean`                      | `true`         | Annotate each wrapped line of inline text separately.                          |
 | `class`             | `string`                       | unset          | Added to the annotation SVG alongside `notatio-annotation`.                    |
 | `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                               |
 | `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                           |
@@ -214,6 +214,8 @@ annotate(element, { type: 'underline' });
 ```
 
 This applies throughout: `strikethrough` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those reads the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
+
+Horizontal `direction: rtl` text is read the same way, but only the sweep is affected: the drawn annotation is identical, and its strokes are drawn from the reading start unless `reverse` is set explicitly. `direction` is ignored under the vertical modes, which flow top to bottom either way.
 
 ## The annotation object
 

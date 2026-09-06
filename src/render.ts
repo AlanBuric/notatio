@@ -327,6 +327,7 @@ export function renderAnnotation(
   config: ResolvedAnnotationConfig,
   animationDelay: number,
   animationDuration: number,
+  reversedFlow: boolean,
 ) {
   const { onShow } = resolveAnimation(config.animate);
   const padding = parsePadding(config);
@@ -336,7 +337,7 @@ export function renderAnnotation(
     frame,
     padding,
     iterations: config.iterations ?? DEFAULT_ITERATIONS,
-    reverse: config.reverse ? 1 : 0,
+    reverse: (config.reverse ?? reversedFlow) ? 1 : 0,
     brackets: Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'],
     amplitude: config.amplitude ?? DEFAULT_AMPLITUDE,
     frequency: config.frequency ?? DEFAULT_FREQUENCY,

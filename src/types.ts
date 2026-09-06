@@ -80,7 +80,7 @@ export interface CommonAnnotationOptions extends RoughStrokeOptions {
   color?: string;
   /** Defaults to 5px on every side. Ignored by types that fill the element box. */
   padding?: RoughPadding;
-  /** Annotates each wrapped line of inline text separately. */
+  /** Annotates each wrapped line of inline text separately. Defaults to `true`. */
   multiline?: boolean;
   /** Added to the annotation SVG alongside `notatio-annotation`. */
   class?: string;

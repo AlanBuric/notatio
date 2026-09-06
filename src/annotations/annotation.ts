@@ -8,7 +8,7 @@ import {
 } from '@/constants.js';
 import { ensureKeyframes } from '@/keyframes.js';
 import { resolveAnimation } from '@/animation.js';
-import { readWritingMode } from '@/frame.js';
+import { readReversedFlow, readWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render.js';
 import type {
   AnnotationOptions,
@@ -35,10 +35,11 @@ import {
 interface Measurement {
   rects: Rectangle[];
   mode: WritingMode;
+  reversedFlow: boolean;
 }
 
 function nextFrame(): Promise<void> {
-  return new Promise((resolve) => requestAnimationFrame(() => resolve));
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
 class RoughAnnotationImpl implements RoughAnnotation {
@@ -194,7 +195,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     if (!svg || !paths.length) {
       this.#clear();
-
       return;
     }
 
@@ -378,16 +378,17 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return;
 
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
-    const { rects, mode } = measured ?? this.#measure();
+    const { rects, mode, reversedFlow } = measured ?? this.#measure();
     const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
     const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
+
     let delay = this.#startDelay();
 
     rects.forEach((rect) => {
       const duration = total ? totalDuration * (runLength(rect) / total) : 0;
 
-      renderAnnotation(svg, rect, mode, config, delay, duration);
+      renderAnnotation(svg, rect, mode, config, delay, duration, reversedFlow);
       delay += duration;
     });
 
@@ -398,15 +399,19 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #measure(): Measurement {
     const svg = this.#svg;
 
-    if (!svg) return { rects: [], mode: 'horizontal-tb' };
+    if (!svg) return { rects: [], mode: 'horizontal-tb', reversedFlow: false };
 
-    const bounds = this.#config.multiline
-      ? this.#multilineRects()
-      : [this.#element.getBoundingClientRect()];
+    const bounds =
+      (this.#config.multiline ?? true)
+        ? this.#multilineRects()
+        : [this.#element.getBoundingClientRect()];
+    const style = window.getComputedStyle(this.#element);
+    const mode = readWritingMode(style);
 
     return {
       rects: bounds.map((bound) => toSvgRect(svg, bound)),
-      mode: readWritingMode(this.#element),
+      mode,
+      reversedFlow: readReversedFlow(style, mode),
     };
   }
 
