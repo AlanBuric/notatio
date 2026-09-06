@@ -11,7 +11,7 @@ import {
 import { ensureKeyframes } from '@/keyframes.js';
 import { resolveAnimation } from '@/animation.js';
 import { readReversedFlow, readWritingMode } from '@/frame.js';
-import { renderAnnotation } from '@/render.js';
+import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
   Rectangle,

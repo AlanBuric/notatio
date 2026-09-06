@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { opsToPath } from '@/render.js';
+import { opsToPath } from '@/render/index.js';
 import type { OpSet } from 'roughjs/bin/core';
 
 function opSet(ops: OpSet['ops']): OpSet {
