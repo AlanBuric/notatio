@@ -66,6 +66,20 @@ export function svgFor(element: HTMLElement): SVGSVGElement | null {
   return null;
 }
 
+/**
+ * The annotated element's box in the coordinate space its strokes are drawn in,
+ * so a stroke's `getBBox()` can be compared against where the text actually is.
+ */
+export function elementBox(element: HTMLElement): DOMRect {
+  const svg = svgFor(element)!;
+  const inverse = svg.getScreenCTM()!.inverse();
+  const bounds = element.getBoundingClientRect();
+  const start = new DOMPoint(bounds.x, bounds.y).matrixTransform(inverse);
+  const end = new DOMPoint(bounds.right, bounds.bottom).matrixTransform(inverse);
+
+  return new DOMRect(start.x, start.y, end.x - start.x, end.y - start.y);
+}
+
 /** The rendered <path> elements for an annotation. */
 export function pathsFor(element: HTMLElement): SVGPathElement[] {
   return [...(svgFor(element)?.querySelectorAll('path') ?? [])];

@@ -26,7 +26,7 @@ Once ready, fork the repository, write your changes in a branch, and open a pull
 - [ ] Add test coverage for your change. Bug fixes should especially have at least one test that fails without the fix for reproducibility and proof.
 - [ ] `pnpm test`, `pnpm typecheck` and `pnpm lint` are required to pass.
 - [ ] Run `pnpm format` if you already haven't formatted your changes through your IDE.
-- [ ] Update the [API reference](docs/API.md) and the [changelog](CHANGELOG.md) if the change is visible to users.
+- [ ] Update the [API reference](docs/REFERENCE.md) and the [changelog](CHANGELOG.md) if the change is visible to users.
 - [ ] Write commit messages in the [Conventional Commits](https://www.conventionalcommits.org) style, as the existing history does; at least the pull request title, if anything.
 
 By contributing, you agree that your contributions are licensed under the [MIT License](LICENSE).

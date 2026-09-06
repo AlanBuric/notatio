@@ -4,6 +4,7 @@ import { curve, ellipse, line, linearPath, rectangle } from 'roughjs/bin/rendere
 import {
   DEFAULT_AMPLITUDE,
   DEFAULT_ANIMATION_EASING,
+  DEFAULT_BRACKET_SIDE,
   DEFAULT_COLOR,
   DEFAULT_FREQUENCY,
   DEFAULT_HIGHLIGHT_ROUGHNESS,
@@ -15,19 +16,28 @@ import {
   KEYFRAME_NAME,
   SVG_NS,
   WAVE_RESOLUTION,
+  ZIGZAG_RESOLUTION,
 } from './constants.js';
 import { resolveAnimation } from './animation.js';
+import { createFrame, type Frame } from './frame.js';
 import type {
+  AnnotationPosition,
   BracketType,
   FullPadding,
   Rectangle,
   ResolvedAnnotationConfig,
   RoughAnnotationType,
+  RoughStrokeOptions,
+  WritingMode,
 } from './types.js';
 
 type RoughOptionsType = 'highlight' | 'single' | 'double';
 
-function getOptions(type: RoughOptionsType, seed: number, roughness?: number): ResolvedOptions {
+function getOptions(
+  type: RoughOptionsType,
+  overrides: RoughStrokeOptions,
+  seed: number,
+): ResolvedOptions {
   return {
     maxRandomnessOffset: 2,
     bowing: 1,
@@ -46,10 +56,10 @@ function getOptions(type: RoughOptionsType, seed: number, roughness?: number): R
     disableMultiStrokeFill: false,
     preserveVertices: false,
     fillShapeRoughnessGain: 0.8,
-    roughness:
-      roughness ?? (type === 'highlight' ? DEFAULT_HIGHLIGHT_ROUGHNESS : DEFAULT_ROUGHNESS),
-    disableMultiStroke: type !== 'double',
+    roughness: type === 'highlight' ? DEFAULT_HIGHLIGHT_ROUGHNESS : DEFAULT_ROUGHNESS,
+    ...overrides,
     seed,
+    disableMultiStroke: type !== 'double',
   };
 }
 
@@ -67,47 +77,71 @@ export function parsePadding(config: Pick<ResolvedAnnotationConfig, 'padding'>):
   return [DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING, DEFAULT_PADDING];
 }
 
-/** Strokes back and forth between two points. `rtl` flips the starting direction. */
 function alternatingLines(
   from: Point,
   to: Point,
   iterations: number,
-  rtl: number,
+  reverse: number,
   options: ResolvedOptions,
 ): OpSet[] {
   return Array.from({ length: Math.max(iterations, 0) }, (_, index) => {
-    const [[x1, y1], [x2, y2]] = (index + rtl) % 2 ? [to, from] : [from, to];
+    const [[x1, y1], [x2, y2]] = (index + reverse) % 2 ? [to, from] : [from, to];
     return line(x1, y1, x2, y2, options);
   });
 }
 
-/* Rounded to whole waves so the stroke starts and ends on the baseline, which
-   leaves the wavelength slightly off the requested frequency. */
-function wavePoints(rect: Rectangle, y: number, amplitude: number, frequency: number): Point[] {
-  const waves = Math.max(Math.round((rect.width * frequency) / 100), 1);
+function alternatingStrokes(
+  points: Point[],
+  iterations: number,
+  reverse: number,
+  draw: (points: Point[]) => OpSet,
+): OpSet[] {
+  let reversed: Point[] | undefined;
+
+  return Array.from({ length: Math.max(iterations, 0) }, (_, index) =>
+    draw((index + reverse) % 2 ? (reversed ??= [...points].reverse()) : points),
+  );
+}
+
+/* Whole waves only, so the stroke starts and ends on the baseline. This leaves
+   the drawn wavelength slightly off the requested frequency. */
+function waveCount(inlineSize: number, frequency: number): number {
+  return Math.max(Math.round((inlineSize * frequency) / 100), 1);
+}
+
+function sinePoints(frame: Frame, block: number, amplitude: number, frequency: number): Point[] {
+  const waves = waveCount(frame.inlineSize, frequency);
   const steps = waves * WAVE_RESOLUTION;
 
   return Array.from({ length: steps + 1 }, (_, index) => {
     const progress = index / steps;
 
-    return [
-      rect.x + rect.width * progress,
-      y + amplitude * Math.sin(progress * waves * 2 * Math.PI),
-    ];
+    return frame.point(
+      frame.inlineSize * progress,
+      block + amplitude * Math.sin(progress * waves * 2 * Math.PI),
+    );
   });
 }
 
-function alternatingCurves(
-  points: Point[],
-  iterations: number,
-  rtl: number,
-  options: ResolvedOptions,
-): OpSet[] {
-  let reversed: Point[] | undefined;
+function zigzagPoints(frame: Frame, block: number, amplitude: number, frequency: number): Point[] {
+  const waves = waveCount(frame.inlineSize, frequency);
+  const steps = waves * ZIGZAG_RESOLUTION;
+  const offsets = [0, amplitude, 0, -amplitude];
 
-  return Array.from({ length: Math.max(iterations, 0) }, (_, index) =>
-    curve((index + rtl) % 2 ? (reversed ??= [...points].reverse()) : points, options),
+  return Array.from({ length: steps + 1 }, (_, index) =>
+    frame.point((frame.inlineSize * index) / steps, block + offsets[index % ZIGZAG_RESOLUTION]),
   );
+}
+
+/* RoughJS starts every `linearPath` segment with its own move, which
+   `opsToPath` would split into a separate path each. A wave wants one path. */
+function joinOps({ ops, ...rest }: OpSet): OpSet {
+  return {
+    ...rest,
+    ops: ops.map((op, index) =>
+      index && op.op === 'move' ? { op: 'lineTo' as const, data: op.data } : op,
+    ),
+  };
 }
 
 function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding): Point[] {
@@ -148,23 +182,25 @@ function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding)
   }
 }
 
-/** Everything a planner needs, resolved from the config. */
 interface StrokeContext {
   rect: Rectangle;
+  frame: Frame;
   padding: FullPadding;
   iterations: number;
-  rtl: number;
+  reverse: number;
   brackets: BracketType[];
   amplitude: number;
   frequency: number;
+  /** Block offsets the inline strokes run along, one per side drawn. */
+  blocks: number[];
   options: ResolvedOptions;
+  overrides: RoughStrokeOptions;
   seed: number;
-  roughness?: number;
 }
 
 interface StrokePlan {
   ops: OpSet[];
-  /** Set when the type derives its own width rather than taking the configured one. */
+  /** Set when the type derives its own width instead of taking the configured one. */
   strokeWidth?: number;
 }
 
@@ -172,11 +208,42 @@ function repeat(count: number, draw: () => OpSet): OpSet[] {
   return Array.from({ length: Math.max(count, 0) }, draw);
 }
 
-function horizontal({ rect, iterations, rtl, options }: StrokeContext, y: number): OpSet[] {
-  return alternatingLines([rect.x, y], [rect.x + rect.width, y], iterations, rtl, options);
+function resolveBlocks(frame: Frame, position: AnnotationPosition | undefined): number[] {
+  const over = -frame.overPadding;
+  const under = frame.blockSize + frame.underPadding;
+
+  if (position === 'over') return [over];
+  if (position === 'both') return [over, under];
+
+  return [under];
 }
 
-/** Outer box of the annotation, the element rect grown by its padding. */
+function inlineStrokes(context: StrokeContext, options = context.options): OpSet[] {
+  const { frame, iterations, reverse, blocks } = context;
+
+  return blocks.flatMap((block) =>
+    alternatingLines(
+      frame.point(0, block),
+      frame.point(frame.inlineSize, block),
+      iterations,
+      reverse,
+      options,
+    ),
+  );
+}
+
+function wavedStrokes(
+  context: StrokeContext,
+  sample: (frame: Frame, block: number, amplitude: number, frequency: number) => Point[],
+  draw: (points: Point[]) => OpSet,
+): OpSet[] {
+  const { frame, amplitude, frequency, iterations, reverse, blocks } = context;
+
+  return blocks.flatMap((block) =>
+    alternatingStrokes(sample(frame, block, amplitude, frequency), iterations, reverse, draw),
+  );
+}
+
 function paddedBox({ rect, padding }: StrokeContext) {
   return {
     x: rect.x - padding[3],
@@ -186,33 +253,30 @@ function paddedBox({ rect, padding }: StrokeContext) {
   };
 }
 
+function through(context: StrokeContext): StrokeContext {
+  return { ...context, blocks: [context.frame.blockSize / 2] };
+}
+
 type Planner = (context: StrokeContext) => StrokePlan;
 
 const PLANNERS: Record<RoughAnnotationType, Planner> = {
-  underline: (context) => ({
-    ops: horizontal(context, context.rect.y + context.rect.height + context.padding[2]),
-  }),
+  underline: (context) => ({ ops: inlineStrokes(context) }),
 
-  'strike-through': (context) => ({
-    ops: horizontal(context, context.rect.y + context.rect.height / 2),
-  }),
+  strikethrough: (context) => ({ ops: inlineStrokes(through(context)) }),
 
   highlight: (context) => ({
-    ops: horizontal(
-      { ...context, options: getOptions('highlight', context.seed, context.roughness) },
-      context.rect.y + context.rect.height / 2,
-    ),
-    strokeWidth: context.rect.height * HIGHLIGHT_HEIGHT_RATIO,
+    ops: inlineStrokes(through(context), getOptions('highlight', context.overrides, context.seed)),
+    strokeWidth: context.frame.blockSize * HIGHLIGHT_HEIGHT_RATIO,
   }),
 
-  'crossed-off'({ rect, iterations, rtl, options }) {
+  'crossed-off'({ rect, iterations, reverse, options }) {
     const right = rect.x + rect.width;
     const bottom = rect.y + rect.height;
 
     return {
       ops: [
-        ...alternatingLines([rect.x, rect.y], [right, bottom], iterations, rtl, options),
-        ...alternatingLines([right, rect.y], [rect.x, bottom], iterations, rtl, options),
+        ...alternatingLines([rect.x, rect.y], [right, bottom], iterations, reverse, options),
+        ...alternatingLines([right, rect.y], [rect.x, bottom], iterations, reverse, options),
       ],
     };
   },
@@ -230,7 +294,7 @@ const PLANNERS: Record<RoughAnnotationType, Planner> = {
     const centreX = x + width / 2;
     const centreY = y + height / 2;
     const doubleStrokes = Math.floor(context.iterations / 2);
-    const doubleOptions = getOptions('double', context.seed, context.roughness);
+    const doubleOptions = getOptions('double', context.overrides, context.seed);
 
     return {
       ops: [
@@ -246,36 +310,44 @@ const PLANNERS: Record<RoughAnnotationType, Planner> = {
     ops: brackets.map((side) => linearPath(bracketPoints(side, rect, padding), false, options)),
   }),
 
-  wavy: ({ rect, padding, amplitude, frequency, iterations, rtl, options }) => ({
-    ops: alternatingCurves(
-      wavePoints(rect, rect.y + rect.height + padding[2], amplitude, frequency),
-      iterations,
-      rtl,
-      options,
+  wavy: (context) => ({
+    ops: wavedStrokes(context, sinePoints, (points) => curve(points, context.options)),
+  }),
+
+  zigzag: (context) => ({
+    ops: wavedStrokes(context, zigzagPoints, (points) =>
+      joinOps(linearPath(points, false, context.options)),
     ),
   }),
 };
 
 export function renderAnnotation(
-  svg: SVGSVGElement,
+  target: SVGSVGElement,
   rect: Rectangle,
+  mode: WritingMode,
   config: ResolvedAnnotationConfig,
-  animationGroupDelay: number,
+  animationDelay: number,
   animationDuration: number,
-  seed: number,
+  reversedFlow: boolean,
 ) {
   const { onShow } = resolveAnimation(config.animate);
+  const padding = parsePadding(config);
+  const frame = createFrame(rect, padding, mode);
   const plan = PLANNERS[config.type]({
     rect,
-    padding: parsePadding(config),
+    frame,
+    padding,
     iterations: config.iterations ?? DEFAULT_ITERATIONS,
-    rtl: config.rtl ? 1 : 0,
-    brackets: Array.isArray(config.brackets) ? config.brackets : [config.brackets ?? 'right'],
+    reverse: (config.reverse ?? reversedFlow) ? 1 : 0,
+    brackets: Array.isArray(config.brackets)
+      ? config.brackets
+      : [config.brackets ?? DEFAULT_BRACKET_SIDE],
     amplitude: config.amplitude ?? DEFAULT_AMPLITUDE,
     frequency: config.frequency ?? DEFAULT_FREQUENCY,
-    options: getOptions('single', seed, config.roughness),
-    seed,
-    roughness: config.roughness,
+    blocks: resolveBlocks(frame, config.position),
+    options: getOptions('single', config, config.seed),
+    overrides: config,
+    seed: config.seed,
   });
 
   if (!plan.ops.length) return;
@@ -289,7 +361,7 @@ export function renderAnnotation(
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
     path.setAttribute('stroke-width', `${strokeWidth}`);
-    svg.appendChild(path);
+    target.appendChild(path);
 
     return path;
   });
@@ -299,7 +371,7 @@ export function renderAnnotation(
   const lengths = paths.map((path) => path.getTotalLength());
   const totalLength = lengths.reduce((sum, length) => sum + length, 0);
   const easing = config.animationEasing ?? DEFAULT_ANIMATION_EASING;
-  let delay = animationGroupDelay;
+  let delay = animationDelay;
 
   paths.forEach((path, index) => {
     const length = lengths[index];
@@ -313,7 +385,7 @@ export function renderAnnotation(
   });
 }
 
-/** @internal Exported for testing. Not part of the package entry point. */
+/** @internal Exported for testing. */
 export function opsToPath(opList: OpSet[]): string[] {
   const paths: string[] = [];
 

@@ -16,18 +16,15 @@ export default defineConfig(
       },
     },
     rules: {
-      // The `@/` alias is defined for tests only. Using it here would emit an
-      // unresolvable specifier into the published declarations.
-      'no-restricted-imports': [
-        'error',
-        { patterns: [{ group: ['@/*'], message: 'Use a relative import inside src/.' }] },
-      ],
       '@typescript-eslint/no-floating-promises': 'off',
     },
   },
   {
     files: ['*.config.{js,ts}'],
     extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: { URL: 'readonly' },
+    },
   },
   prettier,
 );

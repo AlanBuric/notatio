@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate, annotationGroup } from '@/index.js';
-import { cleanup, mountElement, pathsFor } from './helpers.js';
+import { cleanup, mountElement, pathsFor, svgFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -114,6 +114,39 @@ describe('annotationGroup', () => {
     expect(() => {
       group.show();
       group.hide();
+      group.remove();
     }).not.toThrow();
+  });
+
+  it('exposes the annotations it was built from', () => {
+    const first = annotate(mountElement(), { type: 'underline' });
+    const second = annotate(mountElement(), { type: 'box' });
+
+    expect(annotationGroup([first, second]).annotations).toEqual([first, second]);
+  });
+
+  it('exposes the snapshot, not the array it was handed', () => {
+    const annotations = [annotate(mountElement(), { type: 'underline' })];
+    const group = annotationGroup(annotations);
+
+    annotations.push(annotate(mountElement(), { type: 'box' }));
+
+    expect(group.annotations).toHaveLength(1);
+  });
+
+  it('removes every annotation in the group', () => {
+    const a = mountElement();
+    const b = mountElement();
+    const group = annotationGroup([
+      annotate(a, { type: 'underline' }),
+      annotate(b, { type: 'box' }),
+    ]);
+
+    group.show();
+    group.remove();
+
+    expect(svgFor(a)).toBeNull();
+    expect(svgFor(b)).toBeNull();
+    group.annotations.forEach((annotation) => expect(annotation.svg).toBeUndefined());
   });
 });
