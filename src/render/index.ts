@@ -10,13 +10,13 @@ import {
   DEFAULT_STROKE_WIDTH,
   KEYFRAME_NAME,
   SVG_NS,
-} from './constants.js';
-import { resolveAnimation } from './animation.js';
-import { createFrame } from './frame.js';
-import { resolveBlocks } from './render/geometry.js';
-import { PLANNERS } from './render/planners.js';
-import { getOptions } from './render/rough-options.js';
-import type { FullPadding, Rectangle, ResolvedAnnotationConfig, WritingMode } from './types.js';
+} from '@/constants.js';
+import { resolveAnimation } from '@/animation.js';
+import { createFrame } from '@/frame.js';
+import type { FullPadding, Rectangle, ResolvedAnnotationConfig, WritingMode } from '@/types.js';
+import { resolveBlocks } from './geometry.js';
+import { PLANNERS } from './planners.js';
+import { getOptions } from './rough-options.js';
 
 /** @internal Exported for testing. */
 export function parsePadding(config: Pick<ResolvedAnnotationConfig, 'padding'>): FullPadding {

@@ -1,4 +1,4 @@
-export { annotate, annotationGroup } from './annotations/annotation.js';
+export { annotate, annotationGroup } from './annotations/index.js';
 
 export type {
   AnimateOption,
