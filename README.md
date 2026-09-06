@@ -7,7 +7,7 @@
 
 Create and animate hand-drawn annotations on any HTML element the way you'd mark up paper.
 
-Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight, strike through, cross off, bracket or squiggle anything already on the page. Annotations follow the text, in horizontal and vertical writing modes alike. It has no runtime dependencies and ships as an ES module with TypeScript types, at 6 kB gzipped.
+Notatio uses [RoughJS](https://roughjs.com) to underline, box, circle, highlight, strike through, cross off, bracket or squiggle anything already on the page. Annotations follow the text, in horizontal and vertical writing modes alike. It has no runtime dependencies and ships as an ES module with TypeScript types.
 
 ## Annotation types
 
