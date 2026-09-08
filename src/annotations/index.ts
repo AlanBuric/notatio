@@ -10,7 +10,7 @@ import {
 } from '@/constants.js';
 import { ensureKeyframes } from '@/keyframes.js';
 import { resolveAnimation } from '@/animation.js';
-import { readReversedFlow, readWritingMode } from '@/frame.js';
+import { isReversedFlow, readWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
@@ -37,7 +37,7 @@ import {
 interface Measurement {
   rects: Rectangle[];
   mode: WritingMode;
-  reversedFlow: boolean;
+  isReversedFlow: boolean;
 }
 
 function nextFrame(): Promise<void> {
@@ -60,7 +60,6 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #refreshQueued = false;
   #animationDelay = 0;
   #drawing = 0;
-  #multilineWarned = false;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
@@ -380,7 +379,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return;
 
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
-    const { rects, mode, reversedFlow } = measured ?? this.#measure();
+    const { rects, mode, isReversedFlow: reversedFlow } = measured ?? this.#measure();
     const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
     const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
@@ -401,11 +400,11 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #measure(): Measurement {
     const svg = this.#svg;
 
-    if (!svg) return { rects: [], mode: 'horizontal-tb', reversedFlow: false };
+    if (!svg) return { rects: [], mode: 'horizontal-tb', isReversedFlow: false };
 
     const bounds =
       (this.#config.multiline ?? DEFAULT_MULTILINE)
-        ? this.#multilineRects()
+        ? [...this.#element.getClientRects()]
         : [this.#element.getBoundingClientRect()];
     const style = window.getComputedStyle(this.#element);
     const mode = readWritingMode(style);
@@ -413,23 +412,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return {
       rects: bounds.map((bound) => toSvgRect(svg, bound)),
       mode,
-      reversedFlow: readReversedFlow(style, mode),
+      isReversedFlow: isReversedFlow(style, mode),
     };
-  }
-
-  #multilineRects(): DOMRect[] {
-    if (!this.#multilineWarned) {
-      this.#multilineWarned = true;
-
-      if (window.getComputedStyle(this.#element).display !== 'inline') {
-        console.warn(
-          '[notatio] `multiline: true` requires the annotated element to have `display: inline` for correct behavior.',
-          this.#element,
-        );
-      }
-    }
-
-    return [...this.#element.getClientRects()];
   }
 }
 

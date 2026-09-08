@@ -35,7 +35,7 @@ export function readWritingMode(style: CSSStyleDeclaration): WritingMode {
  * strokes should sweep from the end by default. The vertical modes flow top to
  * bottom regardless of `direction`, so only `horizontal-tb` is affected.
  */
-export function readReversedFlow(style: CSSStyleDeclaration, mode: WritingMode): boolean {
+export function isReversedFlow(style: CSSStyleDeclaration, mode: WritingMode): boolean {
   return mode === 'horizontal-tb' && style.direction === 'rtl';
 }
 

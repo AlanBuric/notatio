@@ -1,4 +1,4 @@
-import type { OpSet } from 'roughjs/bin/core';
+import { SVGNS, type OpSet } from 'roughjs/bin/core';
 import {
   DEFAULT_AMPLITUDE,
   DEFAULT_ANIMATION_EASING,
@@ -9,12 +9,11 @@ import {
   DEFAULT_PADDING,
   DEFAULT_STROKE_WIDTH,
   KEYFRAME_NAME,
-  SVG_NS,
 } from '@/constants.js';
 import { resolveAnimation } from '@/animation.js';
 import { createFrame } from '@/frame.js';
 import type { FullPadding, Rectangle, ResolvedAnnotationConfig, WritingMode } from '@/types.js';
-import { resolveBlocks } from './geometry.js';
+import { getBlocks } from './geometry.js';
 import { PLANNERS } from './planners.js';
 import { getOptions } from './rough-options.js';
 
@@ -55,7 +54,7 @@ export function renderAnnotation(
       : [config.brackets ?? DEFAULT_BRACKET_SIDE],
     amplitude: config.amplitude ?? DEFAULT_AMPLITUDE,
     frequency: config.frequency ?? DEFAULT_FREQUENCY,
-    blocks: resolveBlocks(frame, config.position),
+    blocks: getBlocks(frame, config.position),
     options: getOptions('single', config, config.seed),
     overrides: config,
     seed: config.seed,
@@ -66,7 +65,7 @@ export function renderAnnotation(
   const strokeWidth = plan.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
 
   const paths = opsToPath(plan.ops).map((d) => {
-    const path = document.createElementNS(SVG_NS, 'path');
+    const path = document.createElementNS(SVGNS, 'path');
 
     path.setAttribute('d', d);
     path.setAttribute('fill', 'none');
