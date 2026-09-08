@@ -1,4 +1,4 @@
-import { SVGNS, type OpSet } from 'roughjs/bin/core';
+import { type OpSet } from 'roughjs/bin/core';
 import {
   DEFAULT_AMPLITUDE,
   DEFAULT_ANIMATION_EASING,
@@ -9,6 +9,7 @@ import {
   DEFAULT_PADDING,
   DEFAULT_STROKE_WIDTH,
   KEYFRAME_NAME,
+  SVG_NS,
 } from '@/constants.js';
 import { resolveAnimation } from '@/animation.js';
 import { createFrame } from '@/frame.js';
@@ -65,7 +66,7 @@ export function renderAnnotation(
   const strokeWidth = plan.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
 
   const paths = opsToPath(plan.ops).map((d) => {
-    const path = document.createElementNS(SVGNS, 'path');
+    const path = document.createElementNS(SVG_NS, 'path');
 
     path.setAttribute('d', d);
     path.setAttribute('fill', 'none');
