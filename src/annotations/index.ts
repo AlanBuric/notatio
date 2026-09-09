@@ -15,7 +15,7 @@ import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
   Rectangle,
-  ResolvedAnnotationConfig,
+  InternalAnnotationConfig,
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
@@ -28,7 +28,7 @@ import {
   REDRAWN_OPTIONS,
   annotationClassName,
   isSameRect,
-  resolveVisibility,
+  getVisibility,
   settled,
   toSvgRect,
   type AnnotationState,
@@ -50,12 +50,11 @@ class RoughAnnotationImpl implements RoughAnnotation {
   declare seed: number;
 
   #state: AnnotationState = 'unattached';
-  #config: ResolvedAnnotationConfig;
+  #config: InternalAnnotationConfig;
   #element: HTMLElement;
   #svg?: SVGSVGElement;
   #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
-  #visibility?: VisibilityOptions;
   #visibilityObserver?: IntersectionObserver;
   #refreshQueued = false;
   #animationDelay = 0;
@@ -67,8 +66,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#element = element;
     this.#config = { ...cloned, seed: cloned.seed ?? randomSeed() };
-    this.#visibility = resolveVisibility(showOnVisible);
-    this.#attach();
+    this.#attach(getVisibility(showOnVisible));
   }
 
   static setGroupDelay(annotation: RoughAnnotation, delay: number): void {
@@ -242,7 +240,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return this.#animationDelay + (this.#config.delay ?? DEFAULT_DELAY);
   }
 
-  #attach(): void {
+  #attach(visibility?: VisibilityOptions): void {
     if (this.#state !== 'unattached' || !this.#element.parentElement) return;
 
     ensureKeyframes();
@@ -272,13 +270,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
 
     this.#attachListeners();
-    this.#observeVisibility();
+    this.#observeVisibility(visibility);
   }
 
-  #observeVisibility(): void {
-    if (!this.#visibility) return;
+  #observeVisibility(visibility?: VisibilityOptions): void {
+    if (!visibility) return;
 
-    const { repeat, ...init } = this.#visibility;
+    const { repeat, ...init } = visibility;
 
     this.#visibilityObserver = new IntersectionObserver((entries) => {
       const latest = entries.at(-1);

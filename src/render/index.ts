@@ -13,13 +13,13 @@ import {
 } from '@/constants.js';
 import { getAnimation } from '@/animation.js';
 import { getFrame } from '@/frame.js';
-import type { FullPadding, Rectangle, ResolvedAnnotationConfig, WritingMode } from '@/types.js';
+import type { FullPadding, Rectangle, InternalAnnotationConfig, WritingMode } from '@/types.js';
 import { getBlocks } from './geometry.js';
 import { PLANNERS } from './planners.js';
 import { getOptions } from './rough-options.js';
 
 /** @internal Exported for testing. */
-export function parsePadding(config: Pick<ResolvedAnnotationConfig, 'padding'>): FullPadding {
+export function parsePadding(config: Pick<InternalAnnotationConfig, 'padding'>): FullPadding {
   const { padding } = config;
 
   if (typeof padding === 'number') return [padding, padding, padding, padding];
@@ -36,7 +36,7 @@ export function renderAnnotation(
   target: SVGSVGElement,
   rect: Rectangle,
   mode: WritingMode,
-  config: ResolvedAnnotationConfig,
+  config: InternalAnnotationConfig,
   animationDelay: number,
   animationDuration: number,
   reversedFlow: boolean,

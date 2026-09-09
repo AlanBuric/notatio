@@ -42,7 +42,7 @@ export async function settled(svg: SVGSVGElement): Promise<void> {
   }
 }
 
-export function resolveVisibility(
+export function getVisibility(
   option: ShowOnVisibleOption | undefined,
 ): VisibilityOptions | undefined {
   if (!option) return undefined;
