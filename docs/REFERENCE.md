@@ -69,7 +69,7 @@ annotation.show();
 
 Plus the rest of the [stroke options](#seed-and-stroke-options), which tune how RoughJS draws.
 
-Options a type does not read are a type error in TypeScript, so `strokeWidth` on a `highlight` or `amplitude` on a `box` is caught at compile time.
+Options a type does not support are a type error in TypeScript, so `strokeWidth` on a `highlight` or `amplitude` on a `box` is caught at compile time.
 
 ### type
 
@@ -116,7 +116,7 @@ annotate(element, { type: 'underline', delay: 400 });
 
 A single number applies to every side. An array follows CSS shorthand order, so `[top, right, bottom, left]`, `[top, right, bottom]`, or `[block, inline]`.
 
-Padding is named physically, but read logically: an underline sits beyond the padding on whichever side is the block-end for the element's [writing mode](#writing-modes), which is `bottom` for horizontal text and `left` under `vertical-rl`.
+Padding is named physically, but applied logically: an underline sits beyond the padding on whichever side is the block-end for the element's [writing mode](#writing-modes), which is `bottom` for horizontal text and `left` under `vertical-rl`.
 
 ### position
 
@@ -127,7 +127,7 @@ annotate(element, { type: 'underline', position: 'over' });
 annotate(element, { type: 'wavy', position: 'both' });
 ```
 
-`under` is the default and puts the stroke below horizontal text. `over` puts it above. `both` draws one of each, doubling the stroke count. Each side reads its own padding.
+`under` is the default and puts the stroke below horizontal text. `over` puts it above. `both` draws one of each, doubling the stroke count. Each side uses its own padding.
 
 The names are logical rather than physical, so they follow the text: under `vertical-rl`, `under` is the left of the column and `over` is the right. See [writing modes](#writing-modes).
 
@@ -201,7 +201,7 @@ These are the RoughJS options that reach the stroke renderers. RoughJS accepts m
 
 ## Writing modes
 
-Annotations read the element's computed `writing-mode` and draw along the text rather than along the screen. Nothing has to be configured for this.
+An annotation is drawn along the text rather than along the screen, in the element's computed `writing-mode`. Nothing has to be configured for this.
 
 Under `horizontal-tb` an underline runs left to right below the text. Under `vertical-rl` the same annotation runs top to bottom, to the left of the column; under `vertical-lr` it runs to the right. `sideways-rl` and `sideways-lr` follow whichever of the two shares their block direction.
 
@@ -213,9 +213,9 @@ Under `horizontal-tb` an underline runs left to right below the text. Under `ver
 annotate(element, { type: 'underline' });
 ```
 
-This applies throughout: `strikethrough` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those reads the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
+This applies throughout: `strikethrough` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those uses the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
 
-Horizontal `direction: rtl` text is read the same way, but only the sweep is affected: the drawn annotation is identical, and its strokes are drawn from the reading start unless `reverse` is set explicitly. `direction` is ignored under the vertical modes, which flow top to bottom either way.
+Horizontal `direction: rtl` text works the same way, but only the sweep is affected: the drawn annotation is identical, and its strokes begin at the start of the reading direction unless `reverse` is set explicitly. The vertical modes normally flow top to bottom, but `direction: rtl` reverses that to bottom to top, as does `sideways-lr`; setting both cancels out. `reverse` still overrides whatever the writing mode implies.
 
 ## The annotation object
 
@@ -320,7 +320,7 @@ Annotations are decoration, and are treated as such:
 
 - The annotation SVG carries `aria-hidden="true"`, keeping its strokes out of the accessibility tree.
 - It is `pointer-events: none`, so it never intercepts clicks, hover or text selection.
-- Animation is skipped when `prefers-reduced-motion: reduce` is set. This is checked before `animate` is read, so no configuration can draw motion the user has declined.
+- Animation is skipped when `prefers-reduced-motion: reduce` is set. This is checked before `animate` is applied, so no configuration can draw motion the user has declined.
 - Annotating never changes the element's text content. Only `highlight` touches the element at all, setting `position: relative` when it is otherwise `static`, because it paints behind the element rather than in front.
 
 Two things the library cannot do for you.

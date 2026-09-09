@@ -42,7 +42,7 @@ export async function settled(svg: SVGSVGElement): Promise<void> {
   }
 }
 
-export function resolveVisibility(
+export function getVisibility(
   option: ShowOnVisibleOption | undefined,
 ): VisibilityOptions | undefined {
   if (!option) return undefined;
@@ -54,26 +54,27 @@ export function annotationClassName(extra: string | undefined): string {
   return extra ? `${ANNOTATION_CLASS} ${extra}` : ANNOTATION_CLASS;
 }
 
-function sameRounded(a: number, b: number): boolean {
+function equalsRounded(a: number, b: number): boolean {
   return Math.round(a) === Math.round(b);
 }
 
 export function isSameRect(a: Rectangle, b: Rectangle): boolean {
   return (
-    sameRounded(a.x, b.x) &&
-    sameRounded(a.y, b.y) &&
-    sameRounded(a.width, b.width) &&
-    sameRounded(a.height, b.height)
+    equalsRounded(a.x, b.x) &&
+    equalsRounded(a.y, b.y) &&
+    equalsRounded(a.width, b.width) &&
+    equalsRounded(a.height, b.height)
   );
 }
 
-/* Going through the screen CTM rather than subtracting rects keeps annotations
-   correct under a scaled ancestor. */
+/*
+ * Going through the screen CTM rather than subtracting rects keeps annotations correct under a
+ * scaled ancestor.
+ */
 export function toSvgRect(svg: SVGSVGElement, bounds: DOMRect): Rectangle {
-  const ctm = svg.getScreenCTM();
+  const inverse = svg.getScreenCTM()?.inverse();
 
-  if (ctm) {
-    const inverse = ctm.inverse();
+  if (inverse) {
     const start = new DOMPoint(bounds.x, bounds.y).matrixTransform(inverse);
     const end = new DOMPoint(bounds.right, bounds.bottom).matrixTransform(inverse);
 

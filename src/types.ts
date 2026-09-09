@@ -227,7 +227,7 @@ export interface RoughAnnotationGroup {
 }
 
 /** @internal Flat shape used inside the library, where the discriminant is settled. */
-export type ResolvedAnnotationConfig = AnnotationOptions & {
+export type InternalAnnotationConfig = AnnotationOptions & {
   type: RoughAnnotationType;
   seed: number;
 };

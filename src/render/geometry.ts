@@ -35,8 +35,10 @@ export function getAlternatingStrokes(
   );
 }
 
-/* Whole waves only, so the stroke starts and ends on the baseline. This leaves
-   the drawn wavelength slightly off the requested frequency. */
+/*
+ * Whole waves only, so the stroke starts and ends on the baseline. This leaves the drawn wavelength
+ * slightly off the requested frequency.
+ */
 function getWaveCount(inlineSize: number, frequency: number): number {
   return Math.max(Math.round((inlineSize * frequency) / 100), 1);
 }
@@ -75,14 +77,14 @@ export function getZigzagPoints(
   );
 }
 
-/* RoughJS starts every `linearPath` segment with its own move, which
-   `opsToPath` would split into a separate path each. A wave wants one path. */
+/*
+ * RoughJS starts every `linearPath` segment with its own move, which `opsToPath` would split into
+ * a separate path each. A wave wants one path.
+ */
 export function joinOps({ ops, ...rest }: OpSet): OpSet {
   return {
     ...rest,
-    ops: ops.map((op, index) =>
-      index && op.op === 'move' ? { op: 'lineTo' as const, data: op.data } : op,
-    ),
+    ops: ops.map((op, index) => (index && op.op === 'move' ? { op: 'lineTo', data: op.data } : op)),
   };
 }
 
