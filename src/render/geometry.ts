@@ -84,9 +84,7 @@ export function getZigzagPoints(
 export function joinOps({ ops, ...rest }: OpSet): OpSet {
   return {
     ...rest,
-    ops: ops.map((op, index) =>
-      index && op.op === 'move' ? { op: 'lineTo' as const, data: op.data } : op,
-    ),
+    ops: ops.map((op, index) => (index && op.op === 'move' ? { op: 'lineTo', data: op.data } : op)),
   };
 }
 
