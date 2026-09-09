@@ -215,7 +215,7 @@ annotate(element, { type: 'underline' });
 
 This applies throughout: `strikethrough` runs down the middle of a vertical column, `highlight` takes its thickness from the column's width instead of its height, [`position`](#position) names sides relative to the text, and each of those reads the padding of the side it actually sits on. `bracket` is the exception, since `brackets: 'left'` names a physical side by design.
 
-Horizontal `direction: rtl` text is read the same way, but only the sweep is affected: the drawn annotation is identical, and its strokes are drawn from the reading start unless `reverse` is set explicitly. `direction` is ignored under the vertical modes, which flow top to bottom either way.
+Horizontal `direction: rtl` text is read the same way, but only the sweep is affected: the drawn annotation is identical, and its strokes are drawn from the reading start unless `reverse` is set explicitly. The vertical modes normally flow top to bottom, but `direction: rtl` reverses that to bottom to top, as does `sideways-lr`; setting both cancels out. `reverse` still overrides whatever the writing mode implies.
 
 ## The annotation object
 

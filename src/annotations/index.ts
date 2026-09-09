@@ -9,8 +9,8 @@ import {
   SVG_NS,
 } from '@/constants.js';
 import { ensureKeyframes } from '@/keyframes.js';
-import { resolveAnimation } from '@/animation.js';
-import { isReversedFlow, readWritingMode } from '@/frame.js';
+import { getAnimation } from '@/animation.js';
+import { isReversedFlow, getWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
@@ -187,7 +187,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #shouldAnimateHide(): boolean {
-    return resolveAnimation(this.#config.animate).onHide;
+    return getAnimation(this.#config.animate).onHide;
   }
 
   async #animateHide(): Promise<void> {
@@ -201,7 +201,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     const duration = this.#config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
     const easing =
-      resolveAnimation(this.#config.animate).hideEasing ??
+      getAnimation(this.#config.animate).hideEasing ??
       this.#config.animationEasing ??
       DEFAULT_ANIMATION_EASING;
     const lengths = paths.map((path) => {
@@ -407,12 +407,12 @@ class RoughAnnotationImpl implements RoughAnnotation {
         ? [...this.#element.getClientRects()]
         : [this.#element.getBoundingClientRect()];
     const style = window.getComputedStyle(this.#element);
-    const mode = readWritingMode(style);
+    const mode = getWritingMode(style);
 
     return {
       rects: bounds.map((bound) => toSvgRect(svg, bound)),
       mode,
-      isReversedFlow: isReversedFlow(style, mode),
+      isReversedFlow: isReversedFlow(style),
     };
   }
 }

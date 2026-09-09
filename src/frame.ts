@@ -15,7 +15,7 @@ export interface Frame {
   point(inline: number, block: number): Point;
 }
 
-export function readWritingMode(style: CSSStyleDeclaration): WritingMode {
+export function getWritingMode(style: CSSStyleDeclaration): WritingMode {
   const { writingMode } = style;
 
   if (writingMode.startsWith('horizontal') || writingMode === 'lr-tb' || writingMode === 'rl-tb') {
@@ -25,16 +25,14 @@ export function readWritingMode(style: CSSStyleDeclaration): WritingMode {
   return writingMode.endsWith('lr') ? 'vertical-lr' : 'vertical-rl';
 }
 
-/**
- * RTL horizontal text reads against the inline axis, so strokes sweep from the
- * end. Vertical modes flow top to bottom regardless of `direction`, so only
- * `horizontal-tb` is affected.
- */
-export function isReversedFlow(style: CSSStyleDeclaration, mode: WritingMode): boolean {
-  return mode === 'horizontal-tb' && style.direction === 'rtl';
+export function isReversedFlow(style: CSSStyleDeclaration): boolean {
+  const rtl = style.direction === 'rtl';
+  const bottomToTop = style.writingMode === 'sideways-lr';
+
+  return rtl !== bottomToTop;
 }
 
-export function createFrame(rect: Rectangle, padding: FullPadding, mode: WritingMode): Frame {
+export function getFrame(rect: Rectangle, padding: FullPadding, mode: WritingMode): Frame {
   const [top, right, bottom, left] = padding;
 
   if (mode === 'horizontal-tb') {
@@ -47,10 +45,6 @@ export function createFrame(rect: Rectangle, padding: FullPadding, mode: Writing
     };
   }
 
-  /*
-   * Vertical text flows downward either way, so the inline axis is y; the modes differ only in
-   * which side the block axis starts from.
-   */
   const rightToLeft = mode === 'vertical-rl';
 
   return {

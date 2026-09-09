@@ -11,8 +11,8 @@ import {
   KEYFRAME_NAME,
   SVG_NS,
 } from '@/constants.js';
-import { resolveAnimation } from '@/animation.js';
-import { createFrame } from '@/frame.js';
+import { getAnimation } from '@/animation.js';
+import { getFrame } from '@/frame.js';
 import type { FullPadding, Rectangle, ResolvedAnnotationConfig, WritingMode } from '@/types.js';
 import { getBlocks } from './geometry.js';
 import { PLANNERS } from './planners.js';
@@ -41,9 +41,9 @@ export function renderAnnotation(
   animationDuration: number,
   reversedFlow: boolean,
 ) {
-  const { onShow } = resolveAnimation(config.animate);
+  const { onShow } = getAnimation(config.animate);
   const padding = parsePadding(config);
-  const frame = createFrame(rect, padding, mode);
+  const frame = getFrame(rect, padding, mode);
   const plan = PLANNERS[config.type]({
     rect,
     frame,
