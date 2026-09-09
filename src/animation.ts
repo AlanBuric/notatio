@@ -15,8 +15,7 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia(REDUCED_MOTION_QUERY).matches;
 }
 
-/* Checked before the option, so no config can opt back into motion the user declined. */
-export function resolveAnimation(animate: AnimateOption | undefined): ResolvedAnimation {
+export function getAnimation(animate: AnimateOption | undefined): ResolvedAnimation {
   if (prefersReducedMotion()) return { onShow: false, onHide: false };
 
   if (typeof animate === 'boolean') return { onShow: animate, onHide: DEFAULT_ANIMATE_ON_HIDE };

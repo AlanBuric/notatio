@@ -9,13 +9,13 @@ import {
   SVG_NS,
 } from '@/constants.js';
 import { ensureKeyframes } from '@/keyframes.js';
-import { resolveAnimation } from '@/animation.js';
-import { readReversedFlow, readWritingMode } from '@/frame.js';
+import { getAnimation } from '@/animation.js';
+import { isReversedFlow, getWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
   Rectangle,
-  ResolvedAnnotationConfig,
+  InternalAnnotationConfig,
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
@@ -28,7 +28,7 @@ import {
   REDRAWN_OPTIONS,
   annotationClassName,
   isSameRect,
-  resolveVisibility,
+  getVisibility,
   settled,
   toSvgRect,
   type AnnotationState,
@@ -37,7 +37,7 @@ import {
 interface Measurement {
   rects: Rectangle[];
   mode: WritingMode;
-  reversedFlow: boolean;
+  isReversedFlow: boolean;
 }
 
 function nextFrame(): Promise<void> {
@@ -50,17 +50,15 @@ class RoughAnnotationImpl implements RoughAnnotation {
   declare seed: number;
 
   #state: AnnotationState = 'unattached';
-  #config: ResolvedAnnotationConfig;
+  #config: InternalAnnotationConfig;
   #element: HTMLElement;
   #svg?: SVGSVGElement;
   #lastSizes: Rectangle[] = [];
   #resizeObserver?: ResizeObserver;
-  #visibility?: VisibilityOptions;
   #visibilityObserver?: IntersectionObserver;
   #refreshQueued = false;
   #animationDelay = 0;
   #drawing = 0;
-  #multilineWarned = false;
 
   constructor(element: HTMLElement, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
@@ -68,8 +66,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#element = element;
     this.#config = { ...cloned, seed: cloned.seed ?? randomSeed() };
-    this.#visibility = resolveVisibility(showOnVisible);
-    this.#attach();
+    this.#attach(getVisibility(showOnVisible));
   }
 
   static setGroupDelay(annotation: RoughAnnotation, delay: number): void {
@@ -188,7 +185,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #shouldAnimateHide(): boolean {
-    return resolveAnimation(this.#config.animate).onHide;
+    return getAnimation(this.#config.animate).onHide;
   }
 
   async #animateHide(): Promise<void> {
@@ -202,7 +199,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     const duration = this.#config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
     const easing =
-      resolveAnimation(this.#config.animate).hideEasing ??
+      getAnimation(this.#config.animate).hideEasing ??
       this.#config.animationEasing ??
       DEFAULT_ANIMATION_EASING;
     const lengths = paths.map((path) => {
@@ -243,7 +240,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     return this.#animationDelay + (this.#config.delay ?? DEFAULT_DELAY);
   }
 
-  #attach(): void {
+  #attach(visibility?: VisibilityOptions): void {
     if (this.#state !== 'unattached' || !this.#element.parentElement) return;
 
     ensureKeyframes();
@@ -256,8 +253,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
       position: 'absolute',
       overflow: 'visible',
       pointerEvents: 'none',
-      width: '100px',
-      height: '100px',
+      width: '90px',
+      height: '90px',
     });
 
     if (this.#config.zIndex !== undefined) svg.style.zIndex = `${this.#config.zIndex}`;
@@ -273,13 +270,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
     }
 
     this.#attachListeners();
-    this.#observeVisibility();
+    this.#observeVisibility(visibility);
   }
 
-  #observeVisibility(): void {
-    if (!this.#visibility) return;
+  #observeVisibility(visibility?: VisibilityOptions): void {
+    if (!visibility) return;
 
-    const { repeat, ...init } = this.#visibility;
+    const { repeat, ...init } = visibility;
 
     this.#visibilityObserver = new IntersectionObserver((entries) => {
       const latest = entries.at(-1);
@@ -380,7 +377,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return;
 
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
-    const { rects, mode, reversedFlow } = measured ?? this.#measure();
+    const { rects, mode, isReversedFlow: reversedFlow } = measured ?? this.#measure();
     const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
     const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
     const totalDuration = config.animationDuration ?? DEFAULT_ANIMATION_DURATION;
@@ -401,35 +398,20 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #measure(): Measurement {
     const svg = this.#svg;
 
-    if (!svg) return { rects: [], mode: 'horizontal-tb', reversedFlow: false };
+    if (!svg) return { rects: [], mode: 'horizontal-tb', isReversedFlow: false };
 
     const bounds =
       (this.#config.multiline ?? DEFAULT_MULTILINE)
-        ? this.#multilineRects()
+        ? [...this.#element.getClientRects()]
         : [this.#element.getBoundingClientRect()];
     const style = window.getComputedStyle(this.#element);
-    const mode = readWritingMode(style);
+    const mode = getWritingMode(style);
 
     return {
       rects: bounds.map((bound) => toSvgRect(svg, bound)),
       mode,
-      reversedFlow: readReversedFlow(style, mode),
+      isReversedFlow: isReversedFlow(style),
     };
-  }
-
-  #multilineRects(): DOMRect[] {
-    if (!this.#multilineWarned) {
-      this.#multilineWarned = true;
-
-      if (window.getComputedStyle(this.#element).display !== 'inline') {
-        console.warn(
-          '[notatio] `multiline: true` requires the annotated element to have `display: inline` for correct behavior.',
-          this.#element,
-        );
-      }
-    }
-
-    return [...this.#element.getClientRects()];
   }
 }
 

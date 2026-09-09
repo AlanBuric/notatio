@@ -11,13 +11,13 @@ import type {
   RoughStrokeOptions,
 } from '@/types.js';
 import {
-  alternatingLines,
-  alternatingStrokes,
-  bracketPoints,
+  getAlternatingLines,
+  getAlternatingStrokes,
+  getBracketPoints,
   joinOps,
   repeat,
-  sinePoints,
-  zigzagPoints,
+  getSinePoints,
+  getZigzagPoints,
 } from './geometry.js';
 import { getOptions } from './rough-options.js';
 
@@ -30,7 +30,6 @@ export interface StrokeContext {
   brackets: BracketType[];
   amplitude: number;
   frequency: number;
-  /** Block offsets the inline strokes run along, one per side drawn. */
   blocks: number[];
   options: ResolvedOptions;
   overrides: RoughStrokeOptions;
@@ -39,15 +38,21 @@ export interface StrokeContext {
 
 export interface StrokePlan {
   ops: OpSet[];
-  /** Set when the type derives its own width instead of taking the configured one. */
   strokeWidth?: number;
 }
 
-function inlineStrokes(context: StrokeContext, options = context.options): OpSet[] {
+export type SampleFunction = (
+  frame: Frame,
+  block: number,
+  amplitude: number,
+  frequency: number,
+) => Point[];
+
+function getInlineStrokes(context: StrokeContext, options = context.options): OpSet[] {
   const { frame, iterations, reverse, blocks } = context;
 
   return blocks.flatMap((block) =>
-    alternatingLines(
+    getAlternatingLines(
       frame.point(0, block),
       frame.point(frame.inlineSize, block),
       iterations,
@@ -57,19 +62,19 @@ function inlineStrokes(context: StrokeContext, options = context.options): OpSet
   );
 }
 
-function wavedStrokes(
+function getWavedStrokes(
   context: StrokeContext,
-  sample: (frame: Frame, block: number, amplitude: number, frequency: number) => Point[],
+  sample: SampleFunction,
   draw: (points: Point[]) => OpSet,
 ): OpSet[] {
   const { frame, amplitude, frequency, iterations, reverse, blocks } = context;
 
   return blocks.flatMap((block) =>
-    alternatingStrokes(sample(frame, block, amplitude, frequency), iterations, reverse, draw),
+    getAlternatingStrokes(sample(frame, block, amplitude, frequency), iterations, reverse, draw),
   );
 }
 
-function paddedBox({ rect, padding }: StrokeContext) {
+function getPaddedBox({ rect, padding }: StrokeContext) {
   return {
     x: rect.x - padding[3],
     y: rect.y - padding[0],
@@ -85,12 +90,15 @@ function through(context: StrokeContext): StrokeContext {
 type Planner = (context: StrokeContext) => StrokePlan;
 
 export const PLANNERS: Record<RoughAnnotationType, Planner> = {
-  underline: (context) => ({ ops: inlineStrokes(context) }),
+  underline: (context) => ({ ops: getInlineStrokes(context) }),
 
-  strikethrough: (context) => ({ ops: inlineStrokes(through(context)) }),
+  strikethrough: (context) => ({ ops: getInlineStrokes(through(context)) }),
 
   highlight: (context) => ({
-    ops: inlineStrokes(through(context), getOptions('highlight', context.overrides, context.seed)),
+    ops: getInlineStrokes(
+      through(context),
+      getOptions('highlight', context.overrides, context.seed),
+    ),
     strokeWidth: context.frame.blockSize * HIGHLIGHT_HEIGHT_RATIO,
   }),
 
@@ -100,14 +108,14 @@ export const PLANNERS: Record<RoughAnnotationType, Planner> = {
 
     return {
       ops: [
-        ...alternatingLines([rect.x, rect.y], [right, bottom], iterations, reverse, options),
-        ...alternatingLines([right, rect.y], [rect.x, bottom], iterations, reverse, options),
+        ...getAlternatingLines([rect.x, rect.y], [right, bottom], iterations, reverse, options),
+        ...getAlternatingLines([right, rect.y], [rect.x, bottom], iterations, reverse, options),
       ],
     };
   },
 
   box(context) {
-    const { x, y, width, height } = paddedBox(context);
+    const { x, y, width, height } = getPaddedBox(context);
 
     return {
       ops: repeat(context.iterations, () => rectangle(x, y, width, height, context.options)),
@@ -115,7 +123,7 @@ export const PLANNERS: Record<RoughAnnotationType, Planner> = {
   },
 
   circle(context) {
-    const { x, y, width, height } = paddedBox(context);
+    const { x, y, width, height } = getPaddedBox(context);
     const centreX = x + width / 2;
     const centreY = y + height / 2;
     const doubleStrokes = Math.floor(context.iterations / 2);
@@ -132,15 +140,15 @@ export const PLANNERS: Record<RoughAnnotationType, Planner> = {
   },
 
   bracket: ({ rect, padding, brackets, options }) => ({
-    ops: brackets.map((side) => linearPath(bracketPoints(side, rect, padding), false, options)),
+    ops: brackets.map((side) => linearPath(getBracketPoints(side, rect, padding), false, options)),
   }),
 
   wavy: (context) => ({
-    ops: wavedStrokes(context, sinePoints, (points) => curve(points, context.options)),
+    ops: getWavedStrokes(context, getSinePoints, (points) => curve(points, context.options)),
   }),
 
   zigzag: (context) => ({
-    ops: wavedStrokes(context, zigzagPoints, (points) =>
+    ops: getWavedStrokes(context, getZigzagPoints, (points) =>
       joinOps(linearPath(points, false, context.options)),
     ),
   }),

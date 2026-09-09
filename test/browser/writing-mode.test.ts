@@ -177,14 +177,23 @@ describe('reading direction', () => {
     expect(sweepStart(element).x).toBeLessThan(box.x + box.width / 2);
   });
 
-  /* Vertical text flows top to bottom whatever `direction` is set to. */
-  it('ignores direction under vertical writing modes', () => {
-    const element = mountDirected('rtl', 'vertical-rl');
+  it('sweeps a vertical stroke from the top by default', () => {
+    const element = mountDirected('ltr', 'vertical-rl');
 
     annotate(element, UNDERLINE).show();
 
     const box = elementBox(element);
 
     expect(sweepStart(element).y).toBeLessThan(box.y + box.height / 2);
+  });
+
+  it('sweeps a vertical stroke from the bottom under rtl', () => {
+    const element = mountDirected('rtl', 'vertical-rl');
+
+    annotate(element, UNDERLINE).show();
+
+    const box = elementBox(element);
+
+    expect(sweepStart(element).y).toBeGreaterThan(box.y + box.height / 2);
   });
 });
