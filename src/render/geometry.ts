@@ -9,7 +9,7 @@ export function repeat(count: number, draw: () => OpSet): OpSet[] {
   return Array.from({ length: Math.max(count, 0) }, draw);
 }
 
-export function alternatingLines(
+export function getAlternatingLines(
   from: Point,
   to: Point,
   iterations: number,
@@ -22,7 +22,7 @@ export function alternatingLines(
   });
 }
 
-export function alternatingStrokes(
+export function getAlternatingStrokes(
   points: Point[],
   iterations: number,
   reverse: number,
@@ -35,19 +35,21 @@ export function alternatingStrokes(
   );
 }
 
-/* Whole waves only, so the stroke starts and ends on the baseline. This leaves
-   the drawn wavelength slightly off the requested frequency. */
-function waveCount(inlineSize: number, frequency: number): number {
+/*
+ * Whole waves only, so the stroke starts and ends on the baseline. This leaves the drawn wavelength
+ * slightly off the requested frequency.
+ */
+function getWaveCount(inlineSize: number, frequency: number): number {
   return Math.max(Math.round((inlineSize * frequency) / 100), 1);
 }
 
-export function sinePoints(
+export function getSinePoints(
   frame: Frame,
   block: number,
   amplitude: number,
   frequency: number,
 ): Point[] {
-  const waves = waveCount(frame.inlineSize, frequency);
+  const waves = getWaveCount(frame.inlineSize, frequency);
   const steps = waves * WAVE_RESOLUTION;
 
   return Array.from({ length: steps + 1 }, (_, index) => {
@@ -60,13 +62,13 @@ export function sinePoints(
   });
 }
 
-export function zigzagPoints(
+export function getZigzagPoints(
   frame: Frame,
   block: number,
   amplitude: number,
   frequency: number,
 ): Point[] {
-  const waves = waveCount(frame.inlineSize, frequency);
+  const waves = getWaveCount(frame.inlineSize, frequency);
   const steps = waves * ZIGZAG_RESOLUTION;
   const offsets = [0, amplitude, 0, -amplitude];
 
@@ -75,8 +77,10 @@ export function zigzagPoints(
   );
 }
 
-/* RoughJS starts every `linearPath` segment with its own move, which
-   `opsToPath` would split into a separate path each. A wave wants one path. */
+/*
+ * RoughJS starts every `linearPath` segment with its own move, which `opsToPath` would split into
+ * a separate path each. A wave wants one path.
+ */
 export function joinOps({ ops, ...rest }: OpSet): OpSet {
   return {
     ...rest,
@@ -86,7 +90,11 @@ export function joinOps({ ops, ...rest }: OpSet): OpSet {
   };
 }
 
-export function bracketPoints(side: BracketType, rect: Rectangle, padding: FullPadding): Point[] {
+export function getBracketPoints(
+  side: BracketType,
+  rect: Rectangle,
+  padding: FullPadding,
+): Point[] {
   const left = rect.x - padding[3] * 2;
   const right = rect.x + rect.width + padding[1] * 2;
   const top = rect.y - padding[0] * 2;
@@ -124,12 +132,16 @@ export function bracketPoints(side: BracketType, rect: Rectangle, padding: FullP
   }
 }
 
-export function resolveBlocks(frame: Frame, position: AnnotationPosition | undefined): number[] {
+export function getBlocks(frame: Frame, position: AnnotationPosition | undefined): number[] {
   const over = -frame.overPadding;
   const under = frame.blockSize + frame.underPadding;
 
-  if (position === 'over') return [over];
-  if (position === 'both') return [over, under];
-
-  return [under];
+  switch (position) {
+    case 'over':
+      return [over];
+    case 'both':
+      return [over, under];
+    default:
+      return [under];
+  }
 }
