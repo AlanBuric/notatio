@@ -14,7 +14,7 @@ import { isReversedFlow, getWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
-  AnnotationSubject,
+  AnnotationTarget,
   Rectangle,
   InternalAnnotationConfig,
   RoughAnnotation,
@@ -34,7 +34,7 @@ import {
   toSvgRect,
   type AnnotationState,
 } from './utils.js';
-import { resolveTarget, type AnnotationTarget } from './targets.js';
+import { mapTarget, type TargetAdapter } from './targets/index.js';
 
 interface Measurement {
   rects: Rectangle[];
@@ -53,16 +53,16 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
   #state: AnnotationState = 'unattached';
   #config: InternalAnnotationConfig;
-  #target: AnnotationTarget;
+  #target: TargetAdapter;
   #svg?: SVGSVGElement;
   #lastSizes: Rectangle[] = [];
-  #reflowDisposer?: () => void;
+  #cleanUpReflow?: () => void;
   #visibilityDisposer?: () => void;
   #refreshQueued = false;
   #animationDelay = 0;
   #drawing = 0;
 
-  constructor(target: AnnotationTarget, config: RoughAnnotationConfig) {
+  constructor(target: TargetAdapter, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
     const cloned: AnnotationOptions & { type: RoughAnnotationType } = structuredClone(cloneable);
 
@@ -178,8 +178,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
   #detachListeners(): void {
     window.removeEventListener('resize', this.#resizeListener);
-    this.#reflowDisposer?.();
-    this.#reflowDisposer = undefined;
+    this.#cleanUpReflow?.();
+    this.#cleanUpReflow = undefined;
   }
 
   #clear(): void {
@@ -337,7 +337,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (this.#config.observeResize === false) return;
 
     window.addEventListener('resize', this.#resizeListener, { passive: true });
-    this.#reflowDisposer = this.#target.observeReflow(this.#resizeListener);
+    this.#cleanUpReflow = this.#target.observeReflow(this.#resizeListener);
   }
 
   #rectsDiffer(rects: Rectangle[]): boolean {
@@ -401,11 +401,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
 }
 
 /** Links an annotation to an element, a text `Range` or `StaticRange`, or a `Selection` snapshot. */
-export function annotate(
-  subject: AnnotationSubject,
-  config: RoughAnnotationConfig,
-): RoughAnnotation {
-  return new RoughAnnotationImpl(resolveTarget(subject), config);
+export function annotate(target: AnnotationTarget, config: RoughAnnotationConfig): RoughAnnotation {
+  return new RoughAnnotationImpl(mapTarget(target), config);
 }
 
 async function runAll(

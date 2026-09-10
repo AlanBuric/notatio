@@ -186,7 +186,7 @@ export type RoughAnnotationConfig =
   | WaveAnnotationConfig;
 
 /** What `annotate` marks up: an element, a text range, or a selection to snapshot. */
-export type AnnotationSubject = HTMLElement | Range | StaticRange | Selection;
+export type AnnotationTarget = HTMLElement | AbstractRange | Selection;
 
 /**
  * The config options as plain optional properties. The annotation exposes them

@@ -4,7 +4,7 @@ export type {
   AnimateOption,
   AnimationOptions,
   AnnotationPosition,
-  AnnotationSubject,
+  AnnotationTarget,
   BracketType,
   FullPadding,
   RoughAnnotation,
