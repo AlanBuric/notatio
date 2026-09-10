@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `annotate` accepts a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a run of text can be
+  annotated without wrapping it in an element of its own. A `StaticRange` is turned into a live range; a `Selection` is
+  snapshotted by cloning its first range. Geometry comes from the range's client rects and writing mode from its
+  nearest element ancestor, which is also where the SVG is inserted. Reflow is tracked with a `ResizeObserver` and a
+  `MutationObserver` on that ancestor, `showOnVisible` is measured against the ancestor's visible area, and a range that
+  collapses because its boundary nodes were replaced clears the annotation.
+
+### Changed
+
+- `highlight` puts back the `position: relative` it sets on an otherwise-`static` element when the annotation is
+  `remove()`d, rather than leaving it behind.
+
 ## 1.0.0
 
 First release under the name Notatio, forked from rough-notation 0.5.1. It does the same job as the fork, but with lots

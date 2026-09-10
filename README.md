@@ -82,6 +82,22 @@ annotate(element, {
 });
 ```
 
+### Annotating part of the text
+
+Pass a `Range` (or a `StaticRange`, or a `Selection`) instead of an element to mark up a run of text in place, without
+wrapping it in an element.
+
+```javascript
+const paragraph = document.querySelector('#note').firstChild;
+const range = new Range();
+range.setStart(paragraph, 0);
+range.setEnd(paragraph, 12);
+
+annotate(range, { type: 'circle', color: 'rebeccapurple' }).show();
+```
+
+See the [reference](docs/REFERENCE.md#range-targets) for the trade-offs against an element target.
+
 ### Vertical text
 
 Annotations adapt to the element's `writing-mode`. In this example, the underline runs down the column, on its left
@@ -151,7 +167,8 @@ function Highlighted({ children }) {
 An annotation is an absolutely positioned `<svg>` inserted next to the element, carrying `aria-hidden="true"` and
 `pointer-events: none`, so it is out of the accessibility tree and never intercepts clicks, hover or selection. The
 annotated element itself is left alone, except by `highlight`, which sets `position: relative` on it when it is
-otherwise `static`. Animations are disabled whenever `prefers-reduced-motion: reduce` is set.
+otherwise `static` and puts it back on `remove()`. Animations are disabled whenever `prefers-reduced-motion: reduce`
+is set.
 
 You have two responsibilities for accessibility:
 
@@ -163,8 +180,8 @@ You have two responsibilities for accessibility:
 
 ## Browser support
 
-Notatio targets ES2022 and uses `ResizeObserver`, `IntersectionObserver`, `Element.getAnimations()` and
-`structuredClone()`.
+Notatio targets ES2022 and uses `ResizeObserver`, `MutationObserver`, `IntersectionObserver`,
+`Element.getAnimations()` and `structuredClone()`.
 
 ## Documentation
 
