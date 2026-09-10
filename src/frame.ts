@@ -1,10 +1,6 @@
 import type { Point } from 'roughjs/bin/geometry';
 import type { FullPadding, Rectangle, WritingMode } from './types.js';
 
-/**
- * An element's box in writing-mode-relative terms: `inline` runs along the text
- * flow, `block` across it, both measured from their start edge.
- */
 export interface Frame {
   inlineSize: number;
   blockSize: number;

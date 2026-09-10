@@ -1,6 +1,6 @@
 # Reference
 
-The full option list and behaviour of every export. See the [README](../README.md) for a quick start.
+The full option list and behaviour of every export. See the [README](../README.md) for a quick start. Or you can just look at what's exposed via `types.ts`.
 
 ## Contents
 
