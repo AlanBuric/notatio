@@ -17,6 +17,7 @@ look at what's exposed via `types.ts`.
     - [showOnVisible](#showonvisible)
     - [wavy and zigzag](#wavy-and-zigzag)
     - [seed and stroke options](#seed-and-stroke-options)
+  - [Range targets](#range-targets)
   - [Writing modes](#writing-modes)
   - [The annotation object](#the-annotation-object)
     - [Changing options after creation](#changing-options-after-creation)
@@ -38,8 +39,9 @@ const annotation = annotate(element, { type: 'underline' });
 annotation.show();
 ```
 
-`annotate(element, config)` links an annotation to an element and returns
-an [annotation object](#the-annotation-object). Nothing is drawn until `show()` is called, unless [
+`annotate(subject, config)` links an annotation to a `subject` and returns
+an [annotation object](#the-annotation-object). The `subject` is usually an element, but a
+[text range](#range-targets) works too. Nothing is drawn until `show()` is called, unless [
 `showOnVisible`](#showonvisible) is set.
 
 ## Configuration
@@ -222,6 +224,35 @@ The rest of the stroke options are RoughJS parameters, passed through to the ren
 These are the RoughJS options that reach the stroke renderers. RoughJS accepts more, but the rest only affect fills,
 which annotations never draw, so they are deliberately not exposed.
 
+## Range targets
+
+`annotate` also takes a `Range`, a `StaticRange`, or a `Selection`, so a run of text can be annotated without wrapping
+it in an element of its own.
+
+```javascript
+const range = new Range();
+range.setStart(node, 10);
+range.setEnd(node, 24);
+
+annotate(range, { type: 'underline' }).show();
+```
+
+A `StaticRange` is turned into a live range internally. A `Selection` is snapshotted at the call: its first range is
+cloned, so a later change to what the user has selected does not move the annotation.
+
+Everything else works as it does for an element: `multiline` annotates each line box of a wrapped range, writing mode
+is read from the range's nearest element ancestor, and that ancestor is where the SVG is inserted and what
+`highlight` positions. Some things a range cannot do that an element can:
+
+- **Reflow tracking is coarser.** A `ResizeObserver` and a `MutationObserver` on the ancestor, plus the window resize,
+  stand in for the `ResizeObserver` an element target puts on the element itself. A change that moves the text without
+  resizing the ancestor or mutating its subtree is not caught; call `show()` again to redraw.
+- **`showOnVisible` follows the ancestor.** Visibility is measured against the visible portion of the ancestor, so a
+  range inside a tall ancestor is only re-checked as that ancestor scrolls through the viewport.
+- **A collapsed range clears the annotation.** If the range's boundary nodes are replaced, for instance by a framework
+  re-render, the range collapses and the annotation removes itself for good. Re-create it, or target a range whose
+  boundary nodes are stable.
+
 ## Writing modes
 
 An annotation is drawn along the text rather than along the screen, in the element's computed `writing-mode`. Nothing
@@ -378,7 +409,8 @@ Annotations are decoration, and are treated as such:
 - Animation is skipped when `prefers-reduced-motion: reduce` is set. This is checked before `animate` is applied, so no
   configuration can draw motion the user has declined.
 - Annotating never changes the element's text content. Only `highlight` touches the element at all, setting
-  `position: relative` when it is otherwise `static`, because it paints behind the element rather than in front.
+  `position: relative` when it is otherwise `static`, because it paints behind the element rather than in front. That
+  is put back on `remove()`.
 
 Two things the library cannot do for you.
 
