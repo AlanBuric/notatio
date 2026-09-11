@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate, annotationGroup } from '@/index.js';
-import { cleanup, flushMicrotasks, mountElement, pathsFor } from './helpers.js';
+import { cleanup, flushMicrotasks, mountElement, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -22,7 +22,7 @@ describe('delay', () => {
 
     annotate(element, { type: 'underline', delay: 250 }).show();
 
-    expect(delayMs(pathsFor(element)[0]!)).toBeCloseTo(250, 0);
+    expect(delayMs(getPathsFor(element)[0]!)).toBeCloseTo(250, 0);
   });
 
   it('is zero by default', () => {
@@ -30,7 +30,7 @@ describe('delay', () => {
 
     annotate(element, { type: 'underline' }).show();
 
-    expect(delayMs(pathsFor(element)[0]!)).toBeCloseTo(0, 0);
+    expect(delayMs(getPathsFor(element)[0]!)).toBeCloseTo(0, 0);
   });
 
   it('adds to the slot an annotation gets in a group', () => {
@@ -42,7 +42,7 @@ describe('delay', () => {
       annotate(second, { type: 'underline', animationDuration: 300, delay: 100 }),
     ]).show();
 
-    expect(delayMs(pathsFor(second)[0]!)).toBeCloseTo(400, 0);
+    expect(delayMs(getPathsFor(second)[0]!)).toBeCloseTo(400, 0);
   });
 
   it('does not redraw a visible annotation when changed', async () => {
@@ -51,12 +51,12 @@ describe('delay', () => {
 
     annotation.show();
 
-    const before = pathsFor(element)[0];
+    const before = getPathsFor(element)[0];
 
     annotation.delay = 500;
     await flushMicrotasks();
 
-    expect(pathsFor(element)[0]).toBe(before);
+    expect(getPathsFor(element)[0]).toBe(before);
   });
 });
 
@@ -96,7 +96,7 @@ describe('pause and resume', () => {
 
     await wait(300);
 
-    const [path] = pathsFor(element);
+    const [path] = getPathsFor(element);
 
     expect(Number(path!.style.strokeDashoffset)).toBeGreaterThan(0);
   });
@@ -118,7 +118,7 @@ describe('pause and resume', () => {
     annotation.pause();
     await wait(300);
 
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
   });
 
   it('lets a suspended hide finish once resumed', async () => {
@@ -139,7 +139,7 @@ describe('pause and resume', () => {
     annotation.resume();
     await hidden;
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('is harmless before anything has been drawn', () => {

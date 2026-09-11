@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
-import { cleanup, flushMicrotasks, mountContainer, mountElement, pathsFor } from './helpers.js';
+import { cleanup, flushMicrotasks, mountContainer, mountElement, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -30,7 +30,7 @@ describe('color', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline' }).show();
-    expect(pathsFor(element)[0]?.getAttribute('stroke')).toBe('currentColor');
+    expect(getPathsFor(element)[0]?.getAttribute('stroke')).toBe('currentColor');
   });
 
   it('applies the configured color to every path', () => {
@@ -38,7 +38,7 @@ describe('color', () => {
 
     annotate(element, { type: 'box', color: 'rgb(0, 128, 0)' }).show();
 
-    const paths = pathsFor(element);
+    const paths = getPathsFor(element);
 
     expect(paths.length).toBeGreaterThan(0);
 
@@ -55,7 +55,7 @@ describe('color', () => {
     await flushMicrotasks();
 
     expect(annotation.color).toBe('blue');
-    expect(pathsFor(element)[0]?.getAttribute('stroke')).toBe('blue');
+    expect(getPathsFor(element)[0]?.getAttribute('stroke')).toBe('blue');
   });
 });
 
@@ -64,14 +64,14 @@ describe('strokeWidth', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline' }).show();
-    expect(pathsFor(element)[0]?.getAttribute('stroke-width')).toBe('2');
+    expect(getPathsFor(element)[0]?.getAttribute('stroke-width')).toBe('2');
   });
 
   it('applies the configured width', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', strokeWidth: 7 }).show();
-    expect(pathsFor(element)[0]?.getAttribute('stroke-width')).toBe('7');
+    expect(getPathsFor(element)[0]?.getAttribute('stroke-width')).toBe('7');
   });
 
   it('honours a zero width', () => {
@@ -79,7 +79,7 @@ describe('strokeWidth', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', strokeWidth: 0 }).show();
-    expect(pathsFor(element)[0]?.getAttribute('stroke-width')).toBe('0');
+    expect(getPathsFor(element)[0]?.getAttribute('stroke-width')).toBe('0');
   });
 
   it('does not accept a width for highlight, deriving it from element height', () => {
@@ -88,7 +88,7 @@ describe('strokeWidth', () => {
     // @ts-expect-error highlight sizes its stroke to the element.
     annotate(element, { type: 'highlight', strokeWidth: 1 }).show();
 
-    const width = parseFloat(pathsFor(element)[0]!.getAttribute('stroke-width')!);
+    const width = parseFloat(getPathsFor(element)[0]!.getAttribute('stroke-width')!);
 
     expect(width).toBeCloseTo(element.getBoundingClientRect().height * 0.95, 1);
   });
@@ -99,14 +99,14 @@ describe('roughness', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', animate: false }).show();
-    expect(pathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+    expect(getPathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
   });
 
   it('draws an exact line when set to 0', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', roughness: 0, animate: false }).show();
-    expect(pathsFor(element)[0]!.getBBox().height).toBeCloseTo(0, 5);
+    expect(getPathsFor(element)[0]!.getBBox().height).toBeCloseTo(0, 5);
   });
 
   it('re-renders when roughness is set after showing', async () => {
@@ -119,7 +119,7 @@ describe('roughness', () => {
     await flushMicrotasks();
 
     expect(annotation.roughness).toBe(5);
-    expect(pathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+    expect(getPathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
   });
 });
 
@@ -129,7 +129,7 @@ describe('animation', () => {
 
     annotate(element, { type: 'underline' }).show();
 
-    const style = pathsFor(element)[0]!.style;
+    const style = getPathsFor(element)[0]!.style;
 
     expect(style.animationName).toBe('notatio-dash');
     expect(durationMs(style.animationDuration)).toBeGreaterThan(0);
@@ -140,7 +140,7 @@ describe('animation', () => {
 
     annotate(element, { type: 'underline', animate: false }).show();
 
-    pathsFor(element).forEach((path) => {
+    getPathsFor(element).forEach((path) => {
       expect(path.style.animationName).toBe('');
       expect(path.style.strokeDasharray).toBe('');
     });
@@ -151,7 +151,7 @@ describe('animation', () => {
 
     annotate(element, { type: 'underline', animationDuration: 1000, iterations: 2 }).show();
 
-    const total = pathsFor(element).reduce(
+    const total = getPathsFor(element).reduce(
       (sum, path) => sum + durationMs(path.style.animationDuration),
       0,
     );
@@ -164,7 +164,9 @@ describe('animation', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', animationDuration: 0 }).show();
-    pathsFor(element).forEach((path) => expect(durationMs(path.style.animationDuration)).toBe(0));
+    getPathsFor(element).forEach((path) =>
+      expect(durationMs(path.style.animationDuration)).toBe(0),
+    );
   });
 
   it('does not animate on re-show, so an already-visible annotation does not flicker', () => {
@@ -174,7 +176,7 @@ describe('animation', () => {
     annotation.show();
     annotation.show();
 
-    pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(''));
+    getPathsFor(element).forEach((path) => expect(path.style.animationName).toBe(''));
   });
 
   it('injects the keyframes rule once', () => {
@@ -195,7 +197,7 @@ describe('animation', () => {
     annotate(element, { type: 'underline' }).show();
 
     expect(keyframeStyles()).toHaveLength(1);
-    expect(pathsFor(element)[0]?.style.animationName).toBe('notatio-dash');
+    expect(getPathsFor(element)[0]?.style.animationName).toBe('notatio-dash');
   });
 });
 
@@ -235,7 +237,7 @@ describe('reverse', () => {
 
     annotate(backwards, { type: 'underline', reverse: true, animate: false }).show();
 
-    expect(startX(pathsFor(backwards)[0]!)).toBeGreaterThan(startX(pathsFor(forwards)[0]!));
+    expect(startX(getPathsFor(backwards)[0]!)).toBeGreaterThan(startX(getPathsFor(forwards)[0]!));
   });
 });
 
@@ -254,7 +256,7 @@ describe('multiline', () => {
     expect(lines).toBeGreaterThan(1);
 
     annotate(span, { type: 'underline', multiline: true, iterations: 1 }).show();
-    expect(pathsFor(span)).toHaveLength(lines);
+    expect(getPathsFor(span)).toHaveLength(lines);
   });
 
   it('annotates each visual line by default', () => {
@@ -271,7 +273,7 @@ describe('multiline', () => {
     expect(lines).toBeGreaterThan(1);
 
     annotate(span, { type: 'underline', iterations: 1 }).show();
-    expect(pathsFor(span)).toHaveLength(lines);
+    expect(getPathsFor(span)).toHaveLength(lines);
   });
 
   it('annotates the bounding box as one when multiline is off', () => {
@@ -285,6 +287,6 @@ describe('multiline', () => {
     container.appendChild(span);
 
     annotate(span, { type: 'underline', multiline: false, iterations: 1 }).show();
-    expect(pathsFor(span)).toHaveLength(1);
+    expect(getPathsFor(span)).toHaveLength(1);
   });
 });

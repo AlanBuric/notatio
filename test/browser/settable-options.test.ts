@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { AnnotationOptions, RoughAnnotation } from '@/types.js';
 import {
-  annotationWidth,
+  getAnnotationWidth,
   cleanup,
   flushMicrotasks,
   mountContainer,
   mountElement,
-  pathsFor,
-  svgFor,
+  getPathsFor,
+  getSvgFor,
 } from './helpers.js';
 
 afterEach(cleanup);
@@ -68,12 +68,12 @@ describe('redrawing on set', () => {
     const annotation = annotate(element, { type: 'bracket', animate: false });
 
     annotation.show();
-    expect(pathsFor(element)).toHaveLength(3);
+    expect(getPathsFor(element)).toHaveLength(3);
 
     annotation.brackets = ['left', 'right'];
     await flushMicrotasks();
 
-    expect(pathsFor(element)).toHaveLength(6);
+    expect(getPathsFor(element)).toHaveLength(6);
   });
 
   it('redraws when iterations change', async () => {
@@ -81,12 +81,12 @@ describe('redrawing on set', () => {
     const annotation = annotate(element, { type: 'underline', animate: false });
 
     annotation.show();
-    expect(pathsFor(element)).toHaveLength(2);
+    expect(getPathsFor(element)).toHaveLength(2);
 
     annotation.iterations = 5;
     await flushMicrotasks();
 
-    expect(pathsFor(element)).toHaveLength(5);
+    expect(getPathsFor(element)).toHaveLength(5);
   });
 
   it('redraws when multiline changes', async () => {
@@ -105,12 +105,12 @@ describe('redrawing on set', () => {
     });
 
     annotation.show();
-    expect(pathsFor(span)).toHaveLength(1);
+    expect(getPathsFor(span)).toHaveLength(1);
 
     annotation.multiline = true;
     await flushMicrotasks();
 
-    expect(pathsFor(span)).toHaveLength(span.getClientRects().length);
+    expect(getPathsFor(span)).toHaveLength(span.getClientRects().length);
   });
 
   it.each(['amplitude', 'frequency'] as const)('redraws when %s changes', async (key) => {
@@ -119,12 +119,12 @@ describe('redrawing on set', () => {
 
     annotation.show();
 
-    const before = pathsFor(element)[0]!.getTotalLength();
+    const before = getPathsFor(element)[0]!.getTotalLength();
 
     annotation[key] = 20;
     await flushMicrotasks();
 
-    expect(pathsFor(element)[0]!.getTotalLength()).toBeGreaterThan(before);
+    expect(getPathsFor(element)[0]!.getTotalLength()).toBeGreaterThan(before);
   });
 
   it('leaves a hidden annotation undrawn', async () => {
@@ -134,7 +134,7 @@ describe('redrawing on set', () => {
     annotation.color = 'red';
     await flushMicrotasks();
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it.each(['animate', 'animationDuration', 'animationEasing', 'delay'] as const)(
@@ -145,12 +145,12 @@ describe('redrawing on set', () => {
 
       annotation.show();
 
-      const before = pathsFor(element)[0];
+      const before = getPathsFor(element)[0];
 
       Object.assign(annotation, { [key]: VALUES[key] });
       await flushMicrotasks();
 
-      expect(pathsFor(element)[0]).toBe(before);
+      expect(getPathsFor(element)[0]).toBe(before);
     },
   );
 
@@ -160,12 +160,12 @@ describe('redrawing on set', () => {
 
     annotation.show();
 
-    const before = pathsFor(element)[0];
+    const before = getPathsFor(element)[0];
 
     annotation.color = 'red';
     await flushMicrotasks();
 
-    expect(pathsFor(element)[0]).toBe(before);
+    expect(getPathsFor(element)[0]).toBe(before);
   });
 });
 
@@ -176,7 +176,7 @@ describe('zIndex after attaching', () => {
 
     annotation.zIndex = 4;
 
-    expect(svgFor(element)?.style.zIndex).toBe('4');
+    expect(getSvgFor(element)?.style.zIndex).toBe('4');
   });
 
   it('clears the style when set back to undefined', () => {
@@ -185,7 +185,7 @@ describe('zIndex after attaching', () => {
 
     annotation.zIndex = undefined;
 
-    expect(svgFor(element)?.style.zIndex).toBe('');
+    expect(getSvgFor(element)?.style.zIndex).toBe('');
   });
 });
 
@@ -217,7 +217,7 @@ describe('observeResize after attaching', () => {
     element.style.width = '300px';
     await settle();
 
-    expect(annotationWidth(element)).toBeLessThan(150);
+    expect(getAnnotationWidth(element)).toBeLessThan(150);
   });
 
   it('starts redrawing when switched on', async () => {
@@ -236,6 +236,6 @@ describe('observeResize after attaching', () => {
     element.style.width = '300px';
     await settle();
 
-    expect(annotationWidth(element)).toBeGreaterThan(250);
+    expect(getAnnotationWidth(element)).toBeGreaterThan(250);
   });
 });

@@ -1,14 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
-import { STROKE_JITTER, cleanup, mountContainer, pathsFor, svgFor } from './helpers.js';
+import { STROKE_JITTER, cleanup, mountContainer, getPathsFor, getSvgFor } from './helpers.js';
 
 afterEach(cleanup);
 
 /** Gap between the top of the drawn strokes and the top of the element. */
 function drift(element: HTMLElement): number {
-  const boxes = pathsFor(element).map((path) => path.getBBox());
+  const boxes = getPathsFor(element).map((path) => path.getBBox());
   const strokeTop = Math.min(...boxes.map((box) => box.y));
-  const elementTop = element.getBoundingClientRect().y - svgFor(element)!.getBoundingClientRect().y;
+  const elementTop =
+    element.getBoundingClientRect().y - getSvgFor(element)!.getBoundingClientRect().y;
 
   return Math.abs(strokeTop - elementTop);
 }
@@ -42,14 +43,14 @@ describe('element repositioning', () => {
       observeResize: false,
     }).show();
 
-    const drawn = pathsFor(element)[0]!.getAttribute('d');
+    const drawn = getPathsFor(element)[0]!.getAttribute('d');
 
     expect(drift(element)).toBeLessThan(STROKE_JITTER);
 
     spacer.style.height = '200px';
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    expect(pathsFor(element)[0]?.getAttribute('d')).toBe(drawn);
+    expect(getPathsFor(element)[0]?.getAttribute('d')).toBe(drawn);
     expect(drift(element)).toBeLessThan(STROKE_JITTER);
   });
 
@@ -66,12 +67,12 @@ describe('element repositioning', () => {
     spacer.style.height = '180px';
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    const strokes = pathsFor(element).map((path) => path.getBBox());
+    const strokes = getPathsFor(element).map((path) => path.getBBox());
     const middle =
       (Math.min(...strokes.map((b) => b.y)) + Math.max(...strokes.map((b) => b.y + b.height))) / 2;
     const elementMiddle =
       element.getBoundingClientRect().y -
-      svgFor(element)!.getBoundingClientRect().y +
+      getSvgFor(element)!.getBoundingClientRect().y +
       element.offsetHeight / 2;
 
     expect(Math.abs(middle - elementMiddle)).toBeLessThan(STROKE_JITTER);

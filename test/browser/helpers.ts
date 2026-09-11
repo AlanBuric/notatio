@@ -10,14 +10,12 @@ const SVG_SELECTOR = 'svg.notatio-annotation';
 export const STROKE_JITTER = 12;
 
 /** Width of an annotation's drawn strokes, in SVG user units. */
-export function annotationWidth(element: HTMLElement): number {
-  const boxes = pathsFor(element).map((path) => path.getBBox());
+export function getAnnotationWidth(element: HTMLElement): number {
+  const boxes = getPathsFor(element).map((path) => path.getBBox());
 
   if (!boxes.length) return 0;
 
-  return (
-    Math.max(...boxes.map((box) => box.x + box.width)) - Math.min(...boxes.map((box) => box.x))
-  );
+  return Math.max(...boxes.map((box) => box.x + box.width)) - Math.min(...boxes.map(({ x }) => x));
 }
 
 /**
@@ -54,7 +52,7 @@ export function mountElement(text = 'annotate me', tag = 'div'): HTMLElement {
 }
 
 /** The annotation SVG associated with an element, if one was attached. */
-export function svgFor(element: HTMLElement): SVGSVGElement | null {
+export function getSvgFor(element: HTMLElement): SVGSVGElement | null {
   const next = element.nextElementSibling;
 
   if (next?.matches(SVG_SELECTOR)) return next as SVGSVGElement;
@@ -70,8 +68,8 @@ export function svgFor(element: HTMLElement): SVGSVGElement | null {
  * The annotated element's box in the coordinate space its strokes are drawn in,
  * so a stroke's `getBBox()` can be compared against where the text actually is.
  */
-export function elementBox(element: HTMLElement): DOMRect {
-  const svg = svgFor(element)!;
+export function getElementBox(element: HTMLElement): DOMRect {
+  const svg = getSvgFor(element)!;
   const inverse = svg.getScreenCTM()!.inverse();
   const bounds = element.getBoundingClientRect();
   const start = new DOMPoint(bounds.x, bounds.y).matrixTransform(inverse);
@@ -81,8 +79,8 @@ export function elementBox(element: HTMLElement): DOMRect {
 }
 
 /** The rendered <path> elements for an annotation. */
-export function pathsFor(element: HTMLElement): SVGPathElement[] {
-  return [...(svgFor(element)?.querySelectorAll('path') ?? [])];
+export function getPathsFor(element: HTMLElement): SVGPathElement[] {
+  return [...(getSvgFor(element)?.querySelectorAll('path') ?? [])];
 }
 
 /** Resolves once the annotation's CSS animations have been applied. */
