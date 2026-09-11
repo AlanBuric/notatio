@@ -15,7 +15,7 @@ import { getAnimation } from '@/animation.js';
 import { getFrame } from '@/frame.js';
 import type { FullPadding, Rectangle, InternalAnnotationConfig, WritingMode } from '@/types.js';
 import { getBlocks } from './geometry.js';
-import { PLANNERS } from './planners.js';
+import { STRATEGIES } from './strategies.js';
 import { getOptions } from './rough-options.js';
 
 /** @internal Exported for testing. */
@@ -44,7 +44,7 @@ export function renderAnnotation(
   const { onShow } = getAnimation(config.animate);
   const padding = parsePadding(config);
   const frame = getFrame(rect, padding, mode);
-  const plan = PLANNERS[config.type]({
+  const strategy = STRATEGIES[config.type]({
     rect,
     frame,
     padding,
@@ -61,11 +61,11 @@ export function renderAnnotation(
     seed: config.seed,
   });
 
-  if (!plan.ops.length) return;
+  if (!strategy.ops.length) return;
 
-  const strokeWidth = plan.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  const strokeWidth = strategy.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
 
-  const paths = opsToPath(plan.ops).map((d) => {
+  const paths = opsToPath(strategy.ops).map((d) => {
     const path = document.createElementNS(SVG_NS, 'path');
 
     path.setAttribute('d', d);
