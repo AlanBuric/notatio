@@ -36,7 +36,7 @@ export interface StrokeContext {
   seed: number;
 }
 
-export interface StrokePlan {
+export interface StrokeResult {
   ops: OpSet[];
   strokeWidth?: number;
 }
@@ -87,9 +87,9 @@ function through(context: StrokeContext): StrokeContext {
   return { ...context, blocks: [context.frame.blockSize / 2] };
 }
 
-type Planner = (context: StrokeContext) => StrokePlan;
+type Strategy = (context: StrokeContext) => StrokeResult;
 
-export const PLANNERS: Record<RoughAnnotationType, Planner> = {
+export const STRATEGIES: Record<RoughAnnotationType, Strategy> = {
   underline: (context) => ({ ops: getInlineStrokes(context) }),
 
   strikethrough: (context) => ({ ops: getInlineStrokes(through(context)) }),
