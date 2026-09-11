@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate, annotationGroup } from '@/index.js';
-import { cleanup, mountElement, pathsFor, svgFor } from './helpers.js';
+import { cleanup, mountElement, getPathsFor, getSvgFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -15,7 +15,7 @@ function delayMs(path: SVGPathElement): number {
 
 /** The delay of the first stroke of an annotation. */
 function firstDelay(element: HTMLElement): number {
-  return delayMs(pathsFor(element)[0]!);
+  return delayMs(getPathsFor(element)[0]!);
 }
 
 describe('annotationGroup', () => {
@@ -29,8 +29,8 @@ describe('annotationGroup', () => {
 
     group.show();
 
-    expect(pathsFor(a).length).toBeGreaterThan(0);
-    expect(pathsFor(b).length).toBeGreaterThan(0);
+    expect(getPathsFor(a).length).toBeGreaterThan(0);
+    expect(getPathsFor(b).length).toBeGreaterThan(0);
   });
 
   it('hides every annotation in the group', () => {
@@ -44,8 +44,8 @@ describe('annotationGroup', () => {
 
     group.hide();
 
-    expect(pathsFor(a)).toHaveLength(0);
-    expect(pathsFor(b)).toHaveLength(0);
+    expect(getPathsFor(a)).toHaveLength(0);
+    expect(getPathsFor(b)).toHaveLength(0);
   });
 
   it('staggers the animations in list order, not DOM order', () => {
@@ -104,8 +104,8 @@ describe('annotationGroup', () => {
     annotations.push(annotate(b, { type: 'underline' }));
     group.show();
 
-    expect(pathsFor(a).length).toBeGreaterThan(0);
-    expect(pathsFor(b)).toHaveLength(0);
+    expect(getPathsFor(a).length).toBeGreaterThan(0);
+    expect(getPathsFor(b)).toHaveLength(0);
   });
 
   it('tolerates an empty group', () => {
@@ -145,8 +145,8 @@ describe('annotationGroup', () => {
     group.show();
     group.remove();
 
-    expect(svgFor(a)).toBeNull();
-    expect(svgFor(b)).toBeNull();
+    expect(getSvgFor(a)).toBeNull();
+    expect(getSvgFor(b)).toBeNull();
     group.annotations.forEach((annotation) => expect(annotation.svg).toBeUndefined());
   });
 });

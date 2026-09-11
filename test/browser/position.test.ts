@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { AnnotationPosition, RoughAnnotationConfig } from '@/types.js';
-import { STROKE_JITTER, cleanup, elementBox, mountContainer, pathsFor } from './helpers.js';
+import { STROKE_JITTER, cleanup, getElementBox, mountContainer, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -19,7 +19,7 @@ function mountText(writingMode = 'horizontal-tb'): HTMLElement {
 const BASE = { type: 'underline', animate: false, iterations: 1, padding: 0 } as const;
 
 function extent(element: HTMLElement) {
-  const boxes = pathsFor(element).map((path) => path.getBBox());
+  const boxes = getPathsFor(element).map((path) => path.getBBox());
 
   return {
     top: Math.min(...boxes.map((box) => box.y)),
@@ -34,7 +34,7 @@ function drawn(config: RoughAnnotationConfig, writingMode?: string) {
 
   annotate(element, config).show();
 
-  return { element, box: elementBox(element), ...extent(element) };
+  return { element, box: getElementBox(element), ...extent(element) };
 }
 
 describe('position', () => {
@@ -58,8 +58,8 @@ describe('position', () => {
   });
 
   it('doubles the stroke count when set to both', () => {
-    const one = pathsFor(drawn({ ...BASE, iterations: 2 }).element).length;
-    const two = pathsFor(drawn({ ...BASE, iterations: 2, position: 'both' }).element).length;
+    const one = getPathsFor(drawn({ ...BASE, iterations: 2 }).element).length;
+    const two = getPathsFor(drawn({ ...BASE, iterations: 2, position: 'both' }).element).length;
 
     expect(two).toBe(one * 2);
   });
@@ -103,8 +103,8 @@ describe('position under vertical writing', () => {
 
 describe('position on wave types', () => {
   it.each(['wavy', 'zigzag'] as const)('%s draws on both sides when asked', (type) => {
-    const single = pathsFor(drawn({ type, animate: false, iterations: 1 }).element).length;
-    const both = pathsFor(
+    const single = getPathsFor(drawn({ type, animate: false, iterations: 1 }).element).length;
+    const both = getPathsFor(
       drawn({ type, animate: false, iterations: 1, position: 'both' }).element,
     ).length;
 

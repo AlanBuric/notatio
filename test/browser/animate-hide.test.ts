@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate, annotationGroup } from '@/index.js';
-import { cleanup, mountElement, pathsFor } from './helpers.js';
+import { cleanup, mountElement, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -22,7 +22,7 @@ describe('animate.onHide', () => {
     annotation.show();
     annotation.hide();
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('keeps the paths in the DOM while the reverse animation plays', async () => {
@@ -36,11 +36,11 @@ describe('animate.onHide', () => {
     annotation.show();
     annotation.hide();
 
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
 
     await nextFrame();
 
-    pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(REVERSE));
+    getPathsFor(element).forEach((path) => expect(path.style.animationName).toBe(REVERSE));
   });
 
   it('reports as hidden straight away, before the animation finishes', () => {
@@ -70,7 +70,7 @@ describe('animate.onHide', () => {
 
     await wait(140);
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('retreats the strokes in the reverse of the drawing order', async () => {
@@ -86,7 +86,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    const delays = pathsFor(element).map((path) => parseFloat(path.style.animationDelay));
+    const delays = getPathsFor(element).map((path) => parseFloat(path.style.animationDelay));
 
     /* The last stroke drawn is the first to retreat, so delays descend. */
     expect(delays).toEqual([...delays].sort((a, b) => b - a));
@@ -104,7 +104,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    const path = pathsFor(element)[0]!;
+    const path = getPathsFor(element)[0]!;
 
     expect(path.style.getPropertyValue('--notatio-path-length')).not.toBe('');
     expect(path.style.strokeDashoffset).toBe('0');
@@ -117,7 +117,7 @@ describe('animate.onHide', () => {
     annotation.show();
     annotation.hide();
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('can animate the hide without animating the show', async () => {
@@ -129,12 +129,12 @@ describe('animate.onHide', () => {
     });
 
     annotation.show();
-    pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(''));
+    getPathsFor(element).forEach((path) => expect(path.style.animationName).toBe(''));
 
     annotation.hide();
     await nextFrame();
 
-    pathsFor(element).forEach((path) => expect(path.style.animationName).toBe(REVERSE));
+    getPathsFor(element).forEach((path) => expect(path.style.animationName).toBe(REVERSE));
   });
 
   it('uses animationEasing for the retreat by default', async () => {
@@ -150,7 +150,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    expect(pathsFor(element)[0]!.style.animationTimingFunction).toBe('linear');
+    expect(getPathsFor(element)[0]!.style.animationTimingFunction).toBe('linear');
   });
 
   it('overrides animationEasing for the retreat when animate.hideEasing is set', async () => {
@@ -166,7 +166,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    expect(pathsFor(element)[0]!.style.animationTimingFunction).toBe('ease-in');
+    expect(getPathsFor(element)[0]!.style.animationTimingFunction).toBe('ease-in');
   });
 
   it('does nothing when hide is called twice', () => {
@@ -197,7 +197,7 @@ describe('animate.onHide interruptions', () => {
     await wait(140);
 
     expect(annotation.isShowing()).toBe(true);
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
   });
 
   it('re-shows in place without animating the previous drawing out', async () => {
@@ -211,16 +211,16 @@ describe('animate.onHide interruptions', () => {
 
     annotation.show();
 
-    const drawn = pathsFor(element).length;
+    const drawn = getPathsFor(element).length;
 
     /* Dropping the old strokes outright, not animating them out. */
     annotation.show();
-    expect(pathsFor(element)).toHaveLength(drawn);
+    expect(getPathsFor(element)).toHaveLength(drawn);
 
     await wait(140);
 
     expect(annotation.isShowing()).toBe(true);
-    expect(pathsFor(element)).toHaveLength(drawn);
+    expect(getPathsFor(element)).toHaveLength(drawn);
   });
 
   it('does not leave the reverse animation applied after re-showing', async () => {
@@ -236,7 +236,7 @@ describe('animate.onHide interruptions', () => {
     await nextFrame();
     annotation.show();
 
-    pathsFor(element).forEach((path) => expect(path.style.animationName).not.toBe(REVERSE));
+    getPathsFor(element).forEach((path) => expect(path.style.animationName).not.toBe(REVERSE));
   });
 
   it('removes cleanly while a hide animation is in flight', async () => {
@@ -270,7 +270,7 @@ describe('annotationGroup with animate.onHide', () => {
     group.hide();
     await nextFrame();
 
-    expect(pathsFor(first)[0]?.style.animationName).toBe(REVERSE);
-    expect(pathsFor(second)[0]?.style.animationName).toBe(REVERSE);
+    expect(getPathsFor(first)[0]?.style.animationName).toBe(REVERSE);
+    expect(getPathsFor(second)[0]?.style.animationName).toBe(REVERSE);
   });
 });

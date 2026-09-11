@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
-import { STROKE_JITTER, annotationWidth, cleanup, mountContainer, pathsFor } from './helpers.js';
+import {
+  STROKE_JITTER,
+  getAnnotationWidth,
+  cleanup,
+  mountContainer,
+  getPathsFor,
+} from './helpers.js';
 
 afterEach(cleanup);
 
@@ -32,12 +38,12 @@ describe('resize handling', () => {
 
     annotate(element, { type: 'box', animate: false, padding: 0, iterations: 1 }).show();
 
-    expect(Math.abs(annotationWidth(element) - 100)).toBeLessThan(STROKE_JITTER);
+    expect(Math.abs(getAnnotationWidth(element) - 100)).toBeLessThan(STROKE_JITTER);
 
     element.style.width = '300px';
-    await waitUntil(() => annotationWidth(element) > 250);
+    await waitUntil(() => getAnnotationWidth(element) > 250);
 
-    expect(Math.abs(annotationWidth(element) - 300)).toBeLessThan(STROKE_JITTER);
+    expect(Math.abs(getAnnotationWidth(element) - 300)).toBeLessThan(STROKE_JITTER);
   });
 
   /* Batched into a frame rather than waiting out a fixed debounce. */
@@ -48,7 +54,7 @@ describe('resize handling', () => {
 
     element.style.width = '300px';
 
-    const elapsed = await waitUntil(() => annotationWidth(element) > 250);
+    const elapsed = await waitUntil(() => getAnnotationWidth(element) > 250);
 
     expect(elapsed).toBeLessThan(200);
   });
@@ -63,10 +69,10 @@ describe('resize handling', () => {
     first.style.width = '300px';
     second.style.width = '250px';
 
-    await waitUntil(() => annotationWidth(first) > 250 && annotationWidth(second) > 200);
+    await waitUntil(() => getAnnotationWidth(first) > 250 && getAnnotationWidth(second) > 200);
 
-    expect(Math.abs(annotationWidth(first) - 300)).toBeLessThan(STROKE_JITTER);
-    expect(Math.abs(annotationWidth(second) - 250)).toBeLessThan(STROKE_JITTER);
+    expect(Math.abs(getAnnotationWidth(first) - 300)).toBeLessThan(STROKE_JITTER);
+    expect(Math.abs(getAnnotationWidth(second) - 250)).toBeLessThan(STROKE_JITTER);
   });
 
   it('leaves the drawing alone when nothing moved', async () => {
@@ -79,7 +85,7 @@ describe('resize handling', () => {
 
     annotation.show();
 
-    const before = pathsFor(element)[0]!.getAttribute('d');
+    const before = getPathsFor(element)[0]!.getAttribute('d');
 
     /* A resize notification that does not change the rect must not redraw. */
     element.style.width = '150px';
@@ -87,7 +93,7 @@ describe('resize handling', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    expect(pathsFor(element)[0]?.getAttribute('d')).toBe(before);
+    expect(getPathsFor(element)[0]?.getAttribute('d')).toBe(before);
   });
 
   it('does not redraw a hidden annotation', async () => {
@@ -100,7 +106,7 @@ describe('resize handling', () => {
     element.style.width = '300px';
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
     expect(annotation.isShowing()).toBe(false);
   });
 });

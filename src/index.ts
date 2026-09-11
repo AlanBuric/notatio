@@ -16,5 +16,4 @@ export type {
   RoughStrokeOptions,
   ShowOnVisibleOption,
   VisibilityOptions,
-  WritingMode,
 } from './types.js';
