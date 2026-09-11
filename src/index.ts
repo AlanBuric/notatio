@@ -4,6 +4,7 @@ export type {
   AnimateOption,
   AnimationOptions,
   AnnotationPosition,
+  AnnotationTarget,
   BracketType,
   FullPadding,
   RoughAnnotation,
@@ -16,5 +17,4 @@ export type {
   RoughStrokeOptions,
   ShowOnVisibleOption,
   VisibilityOptions,
-  WritingMode,
 } from './types.js';

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
-import { cleanup, mountElement, pathsFor, svgFor } from './helpers.js';
+import { cleanup, mountElement, getPathsFor, getSvgFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -44,7 +44,7 @@ describe('attaching', () => {
     const element = mountElement();
     annotate(element, { type: 'box' });
 
-    const style = svgFor(element)!.style;
+    const style = getSvgFor(element)!.style;
     expect(style.position).toBe('absolute');
     expect(style.pointerEvents).toBe('none');
     expect(style.overflow).toBe('visible');
@@ -67,7 +67,7 @@ describe('show / hide / remove', () => {
     const element = mountElement();
     annotate(element, { type: 'underline' });
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('renders paths on show', () => {
@@ -76,7 +76,7 @@ describe('show / hide / remove', () => {
 
     annotation.show();
 
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
     expect(annotation.isShowing()).toBe(true);
   });
 
@@ -87,8 +87,8 @@ describe('show / hide / remove', () => {
 
     annotation.hide();
 
-    expect(pathsFor(element)).toHaveLength(0);
-    expect(svgFor(element)).not.toBeNull();
+    expect(getPathsFor(element)).toHaveLength(0);
+    expect(getSvgFor(element)).not.toBeNull();
     expect(annotation.isShowing()).toBe(false);
   });
 
@@ -97,10 +97,10 @@ describe('show / hide / remove', () => {
     const annotation = annotate(element, { type: 'box' });
 
     annotation.show();
-    const first = pathsFor(element).length;
+    const first = getPathsFor(element).length;
     annotation.show();
 
-    expect(pathsFor(element)).toHaveLength(first);
+    expect(getPathsFor(element)).toHaveLength(first);
   });
 
   it('detaches the SVG on remove', () => {
@@ -110,7 +110,7 @@ describe('show / hide / remove', () => {
 
     annotation.remove();
 
-    expect(svgFor(element)).toBeNull();
+    expect(getSvgFor(element)).toBeNull();
   });
 
   it('tolerates remove being called twice', () => {
@@ -132,7 +132,7 @@ describe('show / hide / remove', () => {
 
     annotation.show();
 
-    expect(svgFor(element)).toBeNull();
+    expect(getSvgFor(element)).toBeNull();
   });
 
   it('tolerates hide before show', () => {
@@ -155,6 +155,6 @@ describe('config isolation', () => {
     annotation.show();
 
     expect(annotation.color).toBe('rgb(255, 0, 0)');
-    expect(pathsFor(element)[0]?.getAttribute('stroke')).toBe('rgb(255, 0, 0)');
+    expect(getPathsFor(element)[0]?.getAttribute('stroke')).toBe('rgb(255, 0, 0)');
   });
 });

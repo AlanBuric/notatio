@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { BracketType, RoughAnnotationConfig, RoughAnnotationType } from '@/types.js';
-import { annotationWidth, cleanup, mountElement, pathsFor, STROKE_JITTER } from './helpers.js';
+import {
+  getAnnotationWidth,
+  cleanup,
+  mountElement,
+  getPathsFor,
+  STROKE_JITTER,
+} from './helpers.js';
 
 afterEach(cleanup);
 
@@ -10,7 +16,7 @@ function render(config: RoughAnnotationConfig): SVGPathElement[] {
 
   annotate(element, config).show();
 
-  return pathsFor(element);
+  return getPathsFor(element);
 }
 
 const ALL_TYPES: RoughAnnotationType[] = [
@@ -115,7 +121,7 @@ describe('zigzag', () => {
 
     annotate(element, { type: 'zigzag' }).show();
 
-    expect(annotationWidth(element)).toBeCloseTo(element.getBoundingClientRect().width, -1);
+    expect(getAnnotationWidth(element)).toBeCloseTo(element.getBoundingClientRect().width, -1);
   });
 
   /* One stroke, not one per segment, so the pen never lifts across the wave. */
@@ -166,7 +172,7 @@ describe('wavy', () => {
 
     annotate(element, { type: 'wavy' }).show();
 
-    expect(annotationWidth(element)).toBeCloseTo(element.getBoundingClientRect().width, -1);
+    expect(getAnnotationWidth(element)).toBeCloseTo(element.getBoundingClientRect().width, -1);
   });
 
   it('amplitude sets how far the wave departs from the baseline', () => {

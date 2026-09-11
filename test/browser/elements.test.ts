@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
-import { cleanup, flushMicrotasks, mountElement, pathsFor, svgFor } from './helpers.js';
+import { cleanup, flushMicrotasks, mountElement, getPathsFor, getSvgFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -9,7 +9,7 @@ describe('svg', () => {
     const element = mountElement();
     const annotation = annotate(element, { type: 'underline' });
 
-    expect(annotation.svg).toBe(svgFor(element));
+    expect(annotation.svg).toBe(getSvgFor(element));
   });
 
   it('is undefined once removed', () => {
@@ -37,18 +37,18 @@ describe('svg', () => {
 
     annotation.show();
 
-    const before = pathsFor(element)[0]!.getBBox().x;
+    const before = getPathsFor(element)[0]!.getBBox().x;
 
     annotation.svg!.style.transform = 'translateX(50px)';
     annotation.color = 'red';
     await flushMicrotasks();
 
-    expect(pathsFor(element)[0]!.getBBox().x).toBeCloseTo(before - 50, 0);
+    expect(getPathsFor(element)[0]!.getBBox().x).toBeCloseTo(before - 50, 0);
   });
 });
 
 describe('class', () => {
-  const classOf = (element: HTMLElement) => svgFor(element)?.getAttribute('class');
+  const classOf = (element: HTMLElement) => getSvgFor(element)?.getAttribute('class');
 
   it('is just the library class by default', () => {
     const element = mountElement();
@@ -90,11 +90,11 @@ describe('class', () => {
 
     annotation.show();
 
-    const before = pathsFor(element)[0];
+    const before = getPathsFor(element)[0];
 
     annotation.class = 'brand';
     await flushMicrotasks();
 
-    expect(pathsFor(element)[0]).toBe(before);
+    expect(getPathsFor(element)[0]).toBe(before);
   });
 });

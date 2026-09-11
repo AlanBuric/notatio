@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { RoughAnnotationConfig } from '@/types.js';
-import { cleanup, flushMicrotasks, mountElement, pathsFor } from './helpers.js';
+import { cleanup, flushMicrotasks, mountElement, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -11,7 +11,7 @@ function drawnPaths(config: RoughAnnotationConfig): (string | null)[] {
 
   annotate(element, config).show();
 
-  return pathsFor(element).map((path) => path.getAttribute('d'));
+  return getPathsFor(element).map((path) => path.getAttribute('d'));
 }
 
 describe('seed', () => {
@@ -53,12 +53,12 @@ describe('seed', () => {
 
     annotation.show();
 
-    const before = pathsFor(element).map((path) => path.getAttribute('d'));
+    const before = getPathsFor(element).map((path) => path.getAttribute('d'));
 
     annotation.seed = 2;
     await flushMicrotasks();
 
-    expect(pathsFor(element).map((path) => path.getAttribute('d'))).not.toEqual(before);
+    expect(getPathsFor(element).map((path) => path.getAttribute('d'))).not.toEqual(before);
   });
 });
 
@@ -74,7 +74,7 @@ describe('stroke options', () => {
       bowing: 0,
     }).show();
 
-    const { height } = pathsFor(element)[0]!.getBBox();
+    const { height } = getPathsFor(element)[0]!.getBBox();
 
     expect(height).toBeLessThan(1);
   });
@@ -91,7 +91,7 @@ describe('stroke options', () => {
         maxRandomnessOffset,
       }).show();
 
-      return pathsFor(element)[0]!.getBBox().height;
+      return getPathsFor(element)[0]!.getBBox().height;
     };
 
     expect(wander(20)).toBeGreaterThan(wander(1));
@@ -110,7 +110,7 @@ describe('stroke options', () => {
         preserveVertices,
       }).show();
 
-      return pathsFor(element).map((path) => path.getAttribute('d'));
+      return getPathsFor(element).map((path) => path.getAttribute('d'));
     };
 
     expect(corners(true)).not.toEqual(corners(false));
@@ -122,6 +122,6 @@ describe('stroke options', () => {
     /* @ts-expect-error not part of RoughStrokeOptions, and ignored if forced through. */
     annotate(element, { type: 'underline', animate: false, disableMultiStroke: false }).show();
 
-    expect(pathsFor(element)).toHaveLength(2);
+    expect(getPathsFor(element)).toHaveLength(2);
   });
 });

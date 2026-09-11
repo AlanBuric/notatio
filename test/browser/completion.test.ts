@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate, annotationGroup } from '@/index.js';
-import { cleanup, mountElement, pathsFor } from './helpers.js';
+import { cleanup, mountElement, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -52,7 +52,7 @@ describe('show completion', () => {
     await annotation.show();
 
     expect(annotation.isShowing()).toBe(true);
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
   });
 
   it('resolves for an annotation that never attached', async () => {
@@ -97,7 +97,7 @@ describe('hide completion', () => {
     const elapsed = await timed(annotation.hide());
 
     expect(elapsed).toBeGreaterThan(150);
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('resolves when a redraw interrupts the reverse animation', async () => {
@@ -162,7 +162,7 @@ describe('group completion', () => {
     group.show();
     await group.hide();
 
-    expect(pathsFor(first)).toHaveLength(0);
-    expect(pathsFor(second)).toHaveLength(0);
+    expect(getPathsFor(first)).toHaveLength(0);
+    expect(getPathsFor(second)).toHaveLength(0);
   });
 });

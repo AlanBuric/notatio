@@ -5,8 +5,8 @@ import {
   cleanup,
   mountContainer,
   mountElement,
-  pathsFor,
-  svgFor,
+  getPathsFor,
+  getSvgFor,
 } from './helpers.js';
 
 afterEach(cleanup);
@@ -17,7 +17,7 @@ describe('accessibility', () => {
 
     annotate(element, { type: 'underline' });
 
-    expect(svgFor(element)?.getAttribute('aria-hidden')).toBe('true');
+    expect(getSvgFor(element)?.getAttribute('aria-hidden')).toBe('true');
   });
 });
 
@@ -27,7 +27,7 @@ describe('zIndex', () => {
 
     annotate(element, { type: 'highlight' });
 
-    expect(svgFor(element)?.style.zIndex).toBe('');
+    expect(getSvgFor(element)?.style.zIndex).toBe('');
   });
 
   it('applies the configured value to the SVG', () => {
@@ -35,7 +35,7 @@ describe('zIndex', () => {
 
     annotate(element, { type: 'highlight', zIndex: 5 });
 
-    expect(svgFor(element)?.style.zIndex).toBe('5');
+    expect(getSvgFor(element)?.style.zIndex).toBe('5');
   });
 
   it('accepts a negative value, so a highlight can sit behind its element', () => {
@@ -43,7 +43,7 @@ describe('zIndex', () => {
 
     annotate(element, { type: 'highlight', zIndex: -1 });
 
-    expect(svgFor(element)?.style.zIndex).toBe('-1');
+    expect(getSvgFor(element)?.style.zIndex).toBe('-1');
   });
 });
 
@@ -56,7 +56,7 @@ describe('observeResize', () => {
     annotation.observeResize = false;
 
     expect(annotation.isShowing()).toBe(true);
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
   });
 
   it('still draws when off from the start', () => {
@@ -64,7 +64,7 @@ describe('observeResize', () => {
 
     annotate(element, { type: 'underline', observeResize: false }).show();
 
-    expect(pathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element).length).toBeGreaterThan(0);
   });
 });
 
@@ -84,7 +84,7 @@ describe('transformed ancestors', () => {
 
     annotate(element, { type: 'box', animate: false, padding: 0, iterations: 1 }).show();
 
-    const boxes = pathsFor(element).map((path) => path.getBBox());
+    const boxes = getPathsFor(element).map((path) => path.getBBox());
     const width =
       Math.max(...boxes.map((box) => box.x + box.width)) - Math.min(...boxes.map((box) => box.x));
     const height =

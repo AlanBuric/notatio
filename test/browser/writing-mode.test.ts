@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { RoughAnnotationConfig } from '@/types.js';
-import { STROKE_JITTER, cleanup, elementBox, mountContainer, pathsFor } from './helpers.js';
+import { STROKE_JITTER, cleanup, getElementBox, mountContainer, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -24,7 +24,7 @@ function draw(mode: Mode, config: RoughAnnotationConfig): SVGPathElement[] {
 
   annotate(element, config).show();
 
-  return pathsFor(element);
+  return getPathsFor(element);
 }
 
 function bounds(paths: SVGPathElement[]) {
@@ -60,8 +60,8 @@ describe('underline side', () => {
 
     annotate(element, UNDERLINE).show();
 
-    expect(bounds(pathsFor(element)).top).toBeGreaterThan(
-      elementBox(element).bottom - STROKE_JITTER,
+    expect(bounds(getPathsFor(element)).top).toBeGreaterThan(
+      getElementBox(element).bottom - STROKE_JITTER,
     );
   });
 
@@ -71,7 +71,9 @@ describe('underline side', () => {
 
     annotate(element, UNDERLINE).show();
 
-    expect(bounds(pathsFor(element)).right).toBeLessThan(elementBox(element).left + STROKE_JITTER);
+    expect(bounds(getPathsFor(element)).right).toBeLessThan(
+      getElementBox(element).left + STROKE_JITTER,
+    );
   });
 
   it('sits right of the text under vertical-lr', () => {
@@ -79,8 +81,8 @@ describe('underline side', () => {
 
     annotate(element, UNDERLINE).show();
 
-    expect(bounds(pathsFor(element)).left).toBeGreaterThan(
-      elementBox(element).right - STROKE_JITTER,
+    expect(bounds(getPathsFor(element)).left).toBeGreaterThan(
+      getElementBox(element).right - STROKE_JITTER,
     );
   });
 });
@@ -91,8 +93,8 @@ describe('strikethrough', () => {
 
     annotate(element, { type: 'strikethrough', animate: false, iterations: 1 }).show();
 
-    const box = elementBox(element);
-    const { left, right, top, bottom } = bounds(pathsFor(element));
+    const box = getElementBox(element);
+    const { left, right, top, bottom } = bounds(getPathsFor(element));
 
     expect(bottom - top).toBeGreaterThan(right - left);
     expect(Math.abs((left + right) / 2 - (box.x + box.width / 2))).toBeLessThan(STROKE_JITTER);
@@ -107,7 +109,7 @@ describe('highlight', () => {
 
     annotate(element, { type: 'highlight', animate: false, iterations: 1 }).show();
 
-    expect(strokeWidth(pathsFor(element))).toBeCloseTo(elementBox(element).height * 0.95, 0);
+    expect(strokeWidth(getPathsFor(element))).toBeCloseTo(getElementBox(element).height * 0.95, 0);
   });
 
   /* Across the text is the column's width once the text runs downward. */
@@ -116,7 +118,7 @@ describe('highlight', () => {
 
     annotate(element, { type: 'highlight', animate: false, iterations: 1 }).show();
 
-    expect(strokeWidth(pathsFor(element))).toBeCloseTo(elementBox(element).width * 0.95, 0);
+    expect(strokeWidth(getPathsFor(element))).toBeCloseTo(getElementBox(element).width * 0.95, 0);
   });
 });
 
@@ -144,7 +146,7 @@ describe('reading direction', () => {
 
   /** Where the first stroke begins, in the coordinate space the strokes share with `elementBox`. */
   function sweepStart(element: HTMLElement): DOMPoint {
-    return pathsFor(element)[0]!.getPointAtLength(0);
+    return getPathsFor(element)[0]!.getPointAtLength(0);
   }
 
   it('sweeps the underline from the left for left-to-right text', () => {
@@ -152,7 +154,7 @@ describe('reading direction', () => {
 
     annotate(element, UNDERLINE).show();
 
-    const box = elementBox(element);
+    const box = getElementBox(element);
 
     expect(sweepStart(element).x).toBeLessThan(box.x + box.width / 2);
   });
@@ -162,7 +164,7 @@ describe('reading direction', () => {
 
     annotate(element, UNDERLINE).show();
 
-    const box = elementBox(element);
+    const box = getElementBox(element);
 
     expect(sweepStart(element).x).toBeGreaterThan(box.x + box.width / 2);
   });
@@ -172,7 +174,7 @@ describe('reading direction', () => {
 
     annotate(element, { ...UNDERLINE, reverse: false }).show();
 
-    const box = elementBox(element);
+    const box = getElementBox(element);
 
     expect(sweepStart(element).x).toBeLessThan(box.x + box.width / 2);
   });
@@ -182,7 +184,7 @@ describe('reading direction', () => {
 
     annotate(element, UNDERLINE).show();
 
-    const box = elementBox(element);
+    const box = getElementBox(element);
 
     expect(sweepStart(element).y).toBeLessThan(box.y + box.height / 2);
   });
@@ -192,7 +194,7 @@ describe('reading direction', () => {
 
     annotate(element, UNDERLINE).show();
 
-    const box = elementBox(element);
+    const box = getElementBox(element);
 
     expect(sweepStart(element).y).toBeGreaterThan(box.y + box.height / 2);
   });

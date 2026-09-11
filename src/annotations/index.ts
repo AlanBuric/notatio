@@ -14,6 +14,7 @@ import { isReversedFlow, getWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render/index.js';
 import type {
   AnnotationOptions,
+  AnnotationTarget,
   Rectangle,
   InternalAnnotationConfig,
   RoughAnnotation,
@@ -33,6 +34,7 @@ import {
   toSvgRect,
   type AnnotationState,
 } from './utils.js';
+import { mapTarget, type TargetAdapter } from './targets/index.js';
 
 interface Measurement {
   rects: Rectangle[];
@@ -51,20 +53,20 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
   #state: AnnotationState = 'unattached';
   #config: InternalAnnotationConfig;
-  #element: HTMLElement;
+  #target: TargetAdapter;
   #svg?: SVGSVGElement;
   #lastSizes: Rectangle[] = [];
-  #resizeObserver?: ResizeObserver;
-  #visibilityObserver?: IntersectionObserver;
+  #cleanUpReflow?: () => void;
+  #visibilityDisposer?: () => void;
   #refreshQueued = false;
   #animationDelay = 0;
   #drawing = 0;
 
-  constructor(element: HTMLElement, config: RoughAnnotationConfig) {
+  constructor(target: TargetAdapter, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
     const cloned: AnnotationOptions & { type: RoughAnnotationType } = structuredClone(cloneable);
 
-    this.#element = element;
+    this.#target = target;
     this.#config = { ...cloned, seed: cloned.seed ?? randomSeed() };
     this.#attach(getVisibility(showOnVisible));
   }
@@ -171,11 +173,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#state = 'unattached';
     this.#detachListeners();
     this.#disconnectVisibility();
+    this.#target.release();
   }
 
   #detachListeners(): void {
     window.removeEventListener('resize', this.#resizeListener);
-    this.#resizeObserver?.unobserve(this.#element);
+    this.#cleanUpReflow?.();
+    this.#cleanUpReflow = undefined;
   }
 
   #clear(): void {
@@ -241,7 +245,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #attach(visibility?: VisibilityOptions): void {
-    if (this.#state !== 'unattached' || !this.#element.parentElement) return;
+    if (this.#state !== 'unattached' || !this.#target.anchor?.parentElement) return;
 
     ensureKeyframes();
 
@@ -259,15 +263,9 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     if (this.#config.zIndex !== undefined) svg.style.zIndex = `${this.#config.zIndex}`;
 
-    const behindElement = this.#config.type === 'highlight';
-
-    this.#element.insertAdjacentElement(behindElement ? 'beforebegin' : 'afterend', svg);
+    this.#target.placeSvg(svg, this.#config.type === 'highlight');
     this.#svg = svg;
     this.#state = 'not-showing';
-
-    if (behindElement && window.getComputedStyle(this.#element).position === 'static') {
-      this.#element.style.position = 'relative';
-    }
 
     this.#attachListeners();
     this.#observeVisibility(visibility);
@@ -276,28 +274,22 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #observeVisibility(visibility?: VisibilityOptions): void {
     if (!visibility) return;
 
-    const { repeat, ...init } = visibility;
+    const { repeat, ...options } = visibility;
 
-    this.#visibilityObserver = new IntersectionObserver((entries) => {
-      const latest = entries.at(-1);
-
-      if (!latest) return;
-
-      if (latest.isIntersecting) {
+    this.#visibilityDisposer = this.#target.observeVisibility(options, (visible) => {
+      if (visible) {
         this.show();
 
         if (!repeat) this.#disconnectVisibility();
       } else if (repeat && this.isShowing()) {
         this.hide();
       }
-    }, init);
-
-    this.#visibilityObserver.observe(this.#element);
+    });
   }
 
   #disconnectVisibility(): void {
-    this.#visibilityObserver?.disconnect();
-    this.#visibilityObserver = undefined;
+    this.#visibilityDisposer?.();
+    this.#visibilityDisposer = undefined;
   }
 
   #resizeListener = () => RoughAnnotationImpl.#markDirty(this);
@@ -345,9 +337,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (this.#config.observeResize === false) return;
 
     window.addEventListener('resize', this.#resizeListener, { passive: true });
-
-    this.#resizeObserver ??= new ResizeObserver(this.#resizeListener);
-    this.#resizeObserver.observe(this.#element);
+    this.#cleanUpReflow = this.#target.observeReflow(this.#resizeListener);
   }
 
   #rectsDiffer(rects: Rectangle[]): boolean {
@@ -400,23 +390,19 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     if (!svg) return { rects: [], mode: 'horizontal-tb', isReversedFlow: false };
 
-    const bounds =
-      (this.#config.multiline ?? DEFAULT_MULTILINE)
-        ? [...this.#element.getClientRects()]
-        : [this.#element.getBoundingClientRect()];
-    const style = window.getComputedStyle(this.#element);
-    const mode = getWritingMode(style);
+    const { rects, style } = this.#target.measure(this.#config.multiline ?? DEFAULT_MULTILINE);
 
     return {
-      rects: bounds.map((bound) => toSvgRect(svg, bound)),
-      mode,
+      rects: rects.map((bound) => toSvgRect(svg, bound)),
+      mode: getWritingMode(style),
       isReversedFlow: isReversedFlow(style),
     };
   }
 }
 
-export function annotate(element: HTMLElement, config: RoughAnnotationConfig): RoughAnnotation {
-  return new RoughAnnotationImpl(element, config);
+/** Links an annotation to an element, a text `Range` or `StaticRange`, or a `Selection` snapshot. */
+export function annotate(target: AnnotationTarget, config: RoughAnnotationConfig): RoughAnnotation {
+  return new RoughAnnotationImpl(mapTarget(target), config);
 }
 
 async function runAll(

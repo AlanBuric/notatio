@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { annotate } from '@/index.js';
 import type { RoughAnnotationConfig } from '@/types.js';
-import { cleanup, mountContainer, nextFrame, pathsFor } from './helpers.js';
+import { cleanup, mountContainer, nextFrame, getPathsFor } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -31,7 +31,7 @@ function scrollAway(): void {
 
 /** The observer fires asynchronously, so assertions have to be retried. */
 function waitForPaths(element: HTMLElement, count: number): Promise<void> {
-  return vi.waitFor(() => expect(pathsFor(element).length).toBe(count));
+  return vi.waitFor(() => expect(getPathsFor(element).length).toBe(count));
 }
 
 afterEach(scrollAway);
@@ -45,7 +45,7 @@ describe('showOnVisible', () => {
     await nextFrame();
     await nextFrame();
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('draws once the element scrolls into view', async () => {
@@ -102,7 +102,7 @@ describe('showOnVisible', () => {
 
     await nextFrame();
     await nextFrame();
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
 
     root.scrollTop = root.scrollHeight;
     await waitForPaths(element, 2);
@@ -120,7 +120,7 @@ describe('showOnVisible', () => {
     await nextFrame();
 
     expect(annotation.isShowing()).toBe(true);
-    expect(pathsFor(element)).toHaveLength(2);
+    expect(getPathsFor(element)).toHaveLength(2);
   });
 
   it('hides and redraws on every pass when repeat is set', async () => {
@@ -135,7 +135,7 @@ describe('showOnVisible', () => {
 
     scrollAway();
     await vi.waitFor(() => expect(annotation.isShowing()).toBe(false));
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
 
     scrollTo(element);
     await waitForPaths(element, 2);
@@ -150,7 +150,7 @@ describe('showOnVisible', () => {
     await nextFrame();
     await nextFrame();
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('is off by default, leaving the caller to call show()', async () => {
@@ -162,7 +162,7 @@ describe('showOnVisible', () => {
     await nextFrame();
     await nextFrame();
 
-    expect(pathsFor(element)).toHaveLength(0);
+    expect(getPathsFor(element)).toHaveLength(0);
   });
 
   it('is accepted by every annotation type', async () => {
@@ -178,7 +178,7 @@ describe('showOnVisible', () => {
       annotate(element, config);
       scrollTo(element);
 
-      await vi.waitFor(() => expect(pathsFor(element).length).toBeGreaterThan(0));
+      await vi.waitFor(() => expect(getPathsFor(element).length).toBeGreaterThan(0));
     }
   });
 });
