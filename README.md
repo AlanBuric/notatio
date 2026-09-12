@@ -180,7 +180,7 @@ You have two responsibilities for accessibility:
 
 ## Browser support
 
-Notatio targets ES2022 and uses `ResizeObserver`, `MutationObserver`, `IntersectionObserver`,
+Notatio targets ES2024 and uses `ResizeObserver`, `MutationObserver`, `IntersectionObserver`,
 `Element.getAnimations()` and `structuredClone()`.
 
 ## Documentation
