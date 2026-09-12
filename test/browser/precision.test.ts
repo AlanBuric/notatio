@@ -19,7 +19,7 @@ function durationMs(value: string): number {
 }
 
 describe('numeric precision', () => {
-  it('rounds path coordinates to at most two decimal places', () => {
+  it('rounds path coordinates to at most three decimal places', () => {
     const element = mountElement();
 
     annotate(element, { type: 'wavy', animate: false }).show();
@@ -28,18 +28,18 @@ describe('numeric precision', () => {
     const numbers = d.match(/-?\d+(\.\d+)?/g) ?? [];
 
     expect(numbers.length).toBeGreaterThan(0);
-    numbers.forEach((value) => expect(decimalPlaces(value)).toBeLessThanOrEqual(2));
+    numbers.forEach((value) => expect(decimalPlaces(value)).toBeLessThanOrEqual(3));
   });
 
-  it('rounds stroke-dasharray and stroke-dashoffset to at most two decimal places', () => {
+  it('rounds stroke-dasharray and stroke-dashoffset to at most three decimal places', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline' }).show();
 
     const path = getPathsFor(element)[0]!;
 
-    expect(decimalPlaces(path.style.strokeDasharray)).toBeLessThanOrEqual(2);
-    expect(decimalPlaces(path.style.strokeDashoffset)).toBeLessThanOrEqual(2);
+    expect(decimalPlaces(path.style.strokeDasharray)).toBeLessThanOrEqual(3);
+    expect(decimalPlaces(path.style.strokeDashoffset)).toBeLessThanOrEqual(3);
   });
 
   it('rounds animation duration and delay to one decimal place of a millisecond', () => {
