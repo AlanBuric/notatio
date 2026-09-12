@@ -113,6 +113,11 @@ of API, performance and feature improvements and breaking changes.
   a batch is measured before any is redrawn, so a batch cannot interleave layout reads with writes, and an annotation
   whose rect did not actually change is skipped
   ([rough-notation PR #89](https://github.com/rough-stuff/rough-notation/pull/89)).
-- Build moves from tsc plus Rollup to Vite, with declarations from vite-plugin-dts.
+- Build moved to Vite, with declarations from vite-plugin-dts.
 - tslint is replaced by ESLint and Prettier.
-- Test suite added, running under Node and Chromium.
+- Test suite added: Vitest (Node) and Playwright (Chromium).
+- Each annotation draws a single `<path>` element instead of one per stroke pass, RoughJS op-set, or bracket side.
+  The CSS animation is now a single continuous `stroke-dashoffset` sweep across the whole path. Apparently one SVG merged path renders faster than multiple.
+- SVG path coordinates and stroke lengths (`stroke-dasharray`/`stroke-dashoffset`) are rounded to 3 decimal places, and
+  animation durations/delays to 1 decimal place of a millisecond, instead of carrying full floating-point precision into
+  the DOM. This shouldn't be visually noticeable.
