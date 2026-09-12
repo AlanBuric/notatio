@@ -23,6 +23,12 @@ export default defineConfig({
       formats: ['es'],
       fileName: 'index',
     },
+    terserOptions: {
+      compress: {
+        passes: 3,
+        unsafe: true,
+      },
+    },
   },
   test: {
     projects: [
