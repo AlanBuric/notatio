@@ -9,10 +9,13 @@ import {
   DEFAULT_PADDING,
   DEFAULT_STROKE_WIDTH,
   KEYFRAME_NAME,
+  PATH_PRECISION,
   SVG_NS,
+  TIME_PRECISION,
 } from '@/constants.js';
 import { getAnimation } from '@/animation.js';
 import { getFrame } from '@/frame.js';
+import { round } from '@/round.js';
 import type { FullPadding, Rectangle, InternalAnnotationConfig, WritingMode } from '@/types.js';
 import { getBlocks } from './geometry.js';
 import { STRATEGIES } from './strategies.js';
@@ -41,7 +44,6 @@ export function renderAnnotation(
   animationDuration: number,
   reversedFlow: boolean,
 ) {
-  const { onShow } = getAnimation(config.animate);
   const padding = parsePadding(config);
   const frame = getFrame(rect, padding, mode);
   const strategy = STRATEGIES[config.type]({
@@ -76,35 +78,40 @@ export function renderAnnotation(
   path.setAttribute('stroke-width', `${strokeWidth}`);
   target.appendChild(path);
 
-  if (!onShow) return;
+  if (!getAnimation(config.animate).onShow) return;
 
-  const length = path.getTotalLength();
+  const length = round(path.getTotalLength(), PATH_PRECISION);
   const easing = config.animationEasing ?? DEFAULT_ANIMATION_EASING;
+  const duration = round(animationDuration, TIME_PRECISION);
+  const delay = round(animationDelay, TIME_PRECISION);
 
   path.style.strokeDashoffset = `${length}`;
   path.style.strokeDasharray = `${length}`;
-  path.style.animation = `${KEYFRAME_NAME} ${animationDuration}ms ${easing} ${animationDelay}ms forwards`;
+  path.style.animation = `${KEYFRAME_NAME} ${duration}ms ${easing} ${delay}ms forwards`;
 }
 
 /*
  * Multiple `move` ops become multiple `M` subpaths within one string rather than
  * separate path strings, so a whole annotation renders as a single <path> element.
+ *
+ * @internal Exported for testing.
  */
-/** @internal Exported for testing. */
 export function opsToPath(opList: OpSet[]): string {
   const tokens: string[] = [];
 
   opList.forEach(({ ops }) => {
     ops.forEach(({ op, data }) => {
+      const [x1, y1, x2, y2, x3, y3] = data.map((value) => round(value, PATH_PRECISION));
+
       switch (op) {
         case 'move':
-          tokens.push(`M${data[0]} ${data[1]}`);
+          tokens.push(`M${x1} ${y1}`);
           break;
         case 'bcurveTo':
-          tokens.push(`C${data[0]} ${data[1]}, ${data[2]} ${data[3]}, ${data[4]} ${data[5]}`);
+          tokens.push(`C${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`);
           break;
         case 'lineTo':
-          tokens.push(`L${data[0]} ${data[1]}`);
+          tokens.push(`L${x1} ${y1}`);
           break;
       }
     });

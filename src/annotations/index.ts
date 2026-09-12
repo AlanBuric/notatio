@@ -5,13 +5,16 @@ import {
   DEFAULT_DELAY,
   DEFAULT_MULTILINE,
   PATH_LENGTH_PROPERTY,
+  PATH_PRECISION,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
+  TIME_PRECISION,
 } from '@/constants.js';
 import { ensureKeyframes } from '@/keyframes.js';
 import { getAnimation } from '@/animation.js';
 import { isReversedFlow, getWritingMode } from '@/frame.js';
 import { renderAnnotation } from '@/render/index.js';
+import { round } from '@/round.js';
 import type {
   AnnotationOptions,
   AnnotationTarget,
@@ -224,13 +227,16 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     paths.reduceRight((delay, path, index) => {
       const length = lengths[index];
-      const segment = totalLength ? duration * (length / totalLength) : 0;
+      const segment = round(totalLength ? duration * (length / totalLength) : 0, TIME_PRECISION);
       const { style } = path;
+      const roundedLength = round(length, PATH_PRECISION);
+      const roundedSegment = round(segment, TIME_PRECISION);
+      const roundedDelay = round(delay, TIME_PRECISION);
 
       style.strokeDashoffset = '0';
-      style.strokeDasharray = `${length}`;
-      style.setProperty(PATH_LENGTH_PROPERTY, `${length}`);
-      style.animation = `${REVERSE_KEYFRAME_NAME} ${segment}ms ${easing} ${delay}ms forwards`;
+      style.strokeDasharray = `${roundedLength}`;
+      style.setProperty(PATH_LENGTH_PROPERTY, `${roundedLength}`);
+      style.animation = `${REVERSE_KEYFRAME_NAME} ${roundedSegment}ms ${easing} ${roundedDelay}ms forwards`;
 
       return delay + segment;
     }, this.#startDelay());

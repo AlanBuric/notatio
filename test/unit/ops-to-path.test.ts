@@ -72,4 +72,16 @@ describe('opsToPath', () => {
 
     expect(d).toBe('M0 0 L1 1 M9 9');
   });
+
+  it('rounds coordinates to two decimal places', () => {
+    const d = opsToPath([
+      opSet([
+        { op: 'move', data: [0.123456, 1.999999] },
+        { op: 'lineTo', data: [2.005, 3.004] },
+        { op: 'bcurveTo', data: [4.1, 5.2, 6.3, 7.4, 8.5, 9.6] },
+      ]),
+    ]);
+
+    expect(d).toBe('M0.12 2 L2.01 3 C4.1 5.2, 6.3 7.4, 8.5 9.6');
+  });
 });
