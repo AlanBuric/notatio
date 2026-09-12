@@ -263,8 +263,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
       position: 'absolute',
       overflow: 'visible',
       pointerEvents: 'none',
-      width: '90px',
-      height: '90px',
+      width: '100px',
+      height: '100px',
     });
 
     if (this.#config.zIndex !== undefined) svg.style.zIndex = `${this.#config.zIndex}`;

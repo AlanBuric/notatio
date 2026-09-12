@@ -27,7 +27,7 @@ of API, performance and feature improvements and breaking changes.
 
 ### Added
 
-- Writing-mode awareness. Annotations read the element's computed `writing-mode` and draw along the text rather than
+- Writing-mode awareness: annotations read the element's computed `writing-mode` and draw along the text rather than
   along the screen, so an underline on a `vertical-rl` column runs top to bottom on its left, `strikethrough` runs down
   the middle, `highlight` takes its thickness from the column's width, and each stroke reads the padding of the side it
   actually sits on. Nothing has to be configured, and `sideways-rl` and `sideways-lr` follow whichever vertical mode
@@ -74,7 +74,7 @@ of API, performance and feature improvements and breaking changes.
   ([rough-notation#73](https://github.com/rough-stuff/rough-notation/issues/73)).
 - The annotation SVG carries `aria-hidden="true"`, keeping decorative strokes out of the accessibility tree.
 - Animation is skipped when `prefers-reduced-motion: reduce` is set, whatever `animate` is configured to.
-- `annotate` takes a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a run of text can be
+- `annotate` can take a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a run of text can be
   annotated without wrapping it in an element of its own. A `StaticRange` becomes a live range; a `Selection` is
   snapshotted by cloning its first range. Geometry comes from the range's client rects and the writing mode from its
   nearest element ancestor, which is where the SVG is inserted. Reflow is tracked with a `ResizeObserver` and a
@@ -90,8 +90,8 @@ of API, performance and feature improvements and breaking changes.
 - Annotations are positioned and sized correctly under a `transform: scale()` ancestor. Element bounds are mapped
   through the SVG's inverse screen CTM instead of subtracting one client rect from another
   ([rough-notation#75](https://github.com/rough-stuff/rough-notation/issues/75)).
-- Zero-valued `strokeWidth`, `iterations` and `animationDuration` are honoured instead of falling back to their
-  defaults, which is what applying them with `||` used to do.
+- Zero-valued `strokeWidth`, `iterations` and `animationDuration` are kept instead of falling back to their
+  defaults, caused by `||`.
 - Annotations no longer render invisible after a client-side route change that replaces `document.head`. The keyframes
   rule is reinjected when it goes missing
   ([rough-notation#86](https://github.com/rough-stuff/rough-notation/issues/86)).
