@@ -226,8 +226,8 @@ which annotations never draw, so they are deliberately not exposed.
 
 ## Range targets
 
-`annotate` also takes a `Range`, a `StaticRange`, or a `Selection`, so a run of text can be annotated without wrapping
-it in an element of its own.
+`annotate` also takes a `Range`, a `StaticRange`, or a `Selection`, so text can be annotated without wrapping
+it in an element.
 
 ```javascript
 const range = new Range();

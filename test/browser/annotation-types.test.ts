@@ -6,6 +6,7 @@ import {
   cleanup,
   mountElement,
   getPathsFor,
+  getSubpathCount,
   STROKE_JITTER,
 } from './helpers.js';
 
@@ -32,18 +33,17 @@ const ALL_TYPES: RoughAnnotationType[] = [
 ];
 
 describe('annotation types', () => {
-  it.each(ALL_TYPES)('renders at least one path for %s', (type) => {
+  it.each(ALL_TYPES)('renders exactly one path element for %s', (type) => {
     const paths = render({ type });
 
-    expect(paths.length).toBeGreaterThan(0);
-
-    paths.forEach((path) => {
-      expect(path.getAttribute('d')).toMatch(/^M/);
-      expect(path.getAttribute('fill')).toBe('none');
-    });
+    expect(paths).toHaveLength(1);
+    expect(paths[0].getAttribute('d')).toMatch(/^M/);
+    expect(paths[0].getAttribute('fill')).toBe('none');
   });
 
-  /* Counts differ by type because roughjs splits a shape at every move command. */
+  /* Every stroke pass merges into the same <path>, as multiple `M` subpaths in one `d`,
+     rather than one DOM node per pass. Subpath counts still differ by type because
+     roughjs starts a new subpath at every move command within a single pass. */
   it.each([
     { type: 'underline', perIteration: 1 },
     { type: 'strikethrough', perIteration: 1 },
@@ -53,43 +53,62 @@ describe('annotation types', () => {
     { type: 'crossed-off', perIteration: 2 },
     { type: 'wavy', perIteration: 1 },
     { type: 'zigzag', perIteration: 1 },
-  ] as const)('$type draws $perIteration path(s) per iteration', ({ type, perIteration }) => {
-    [1, 2, 3].forEach((iterations) =>
-      expect(render({ type, iterations })).toHaveLength(perIteration * iterations),
-    );
-  });
+  ] as const)(
+    '$type stays one path, with $perIteration subpath(s) per iteration',
+    ({ type, perIteration }) => {
+      [1, 2, 3].forEach((iterations) => {
+        const paths = render({ type, iterations });
+
+        expect(paths).toHaveLength(1);
+        expect(getSubpathCount(paths[0])).toBe(perIteration * iterations);
+      });
+    },
+  );
 
   /* Guards against a zero being coerced to the default. */
   it('draws nothing when iterations is zero', () =>
     expect(render({ type: 'underline', iterations: 0 })).toHaveLength(0));
 
-  it('defaults to two iterations', () => expect(render({ type: 'underline' })).toHaveLength(2));
+  it('defaults to two iterations worth of subpaths', () => {
+    const [path] = render({ type: 'underline' });
+
+    expect(getSubpathCount(path!)).toBe(2);
+  });
 });
 
 describe('bracket', () => {
-  it('brackets the right side by default', () =>
-    expect(render({ type: 'bracket' })).toHaveLength(3));
+  it('brackets the right side by default, as three subpaths of one path', () => {
+    const [path] = render({ type: 'bracket' });
+
+    expect(getSubpathCount(path!)).toBe(3);
+  });
 
   it.each([
-    { brackets: 'left', expected: 3 },
-    { brackets: ['left', 'right'], expected: 6 },
-    { brackets: ['left', 'right', 'top', 'bottom'], expected: 12 },
-  ] as { brackets: BracketType | BracketType[]; expected: number }[])(
-    'draws three segments per bracketed side ($expected total)',
-    ({ brackets, expected }) => {
-      expect(render({ type: 'bracket', brackets })).toHaveLength(expected);
+    { brackets: 'left', expectedSubpaths: 3 },
+    { brackets: ['left', 'right'], expectedSubpaths: 6 },
+    { brackets: ['left', 'right', 'top', 'bottom'], expectedSubpaths: 12 },
+  ] as { brackets: BracketType | BracketType[]; expectedSubpaths: number }[])(
+    'draws three segments per bracketed side, as subpaths of one path ($expectedSubpaths total)',
+    ({ brackets, expectedSubpaths }) => {
+      const paths = render({ type: 'bracket', brackets });
+
+      expect(paths).toHaveLength(1);
+      expect(getSubpathCount(paths[0])).toBe(expectedSubpaths);
     },
   );
 
   it('accepts a bare string as well as an array', () => {
-    expect(render({ type: 'bracket', brackets: 'top' })).toHaveLength(
-      render({ type: 'bracket', brackets: ['top'] }).length,
-    );
+    const bare = render({ type: 'bracket', brackets: 'top' })[0];
+    const array = render({ type: 'bracket', brackets: ['top'] })[0];
+
+    expect(getSubpathCount(bare)).toBe(getSubpathCount(array));
   });
 
   it('does not accept iterations, and draws one bracket per side regardless', () => {
     // @ts-expect-error bracket draws one bracket per side, so iterations does not apply.
-    expect(render({ type: 'bracket', iterations: 5 })).toHaveLength(3);
+    const [path] = render({ type: 'bracket', iterations: 5 });
+
+    expect(getSubpathCount(path!)).toBe(3);
   });
 });
 
@@ -125,8 +144,10 @@ describe('zigzag', () => {
   });
 
   /* One stroke, not one per segment, so the pen never lifts across the wave. */
-  it('draws each pass as a single path', () => {
-    expect(render({ type: 'zigzag', iterations: 1, frequency: 12 })).toHaveLength(1);
+  it('draws each pass as a single subpath', () => {
+    const [path] = render({ type: 'zigzag', iterations: 1, frequency: 12 });
+
+    expect(getSubpathCount(path!)).toBe(1);
   });
 
   it('amplitude sets how far the peaks depart from the baseline', () => {
@@ -155,7 +176,7 @@ describe.each(['wavy', 'zigzag'] as const)('%s amplitude sign', (type) => {
   /* roughness 0 removes the jitter, so the two waves are exact reflections. */
   it('reflects every point about the baseline', () => {
     const sampled = (amplitude: number) =>
-      sampleY(render({ type, amplitude, iterations: 1, roughness: 0, seed: 1 })[0]!);
+      sampleY(render({ type, amplitude, iterations: 1, roughness: 0, seed: 1 })[0]);
     const above = sampled(12);
     const below = sampled(-12);
     const baseline = above.reduce((sum, y) => sum + y, 0) / above.length;
@@ -198,6 +219,8 @@ describe('wavy', () => {
 
   it('does not accept brackets', () => {
     // @ts-expect-error brackets belong to the bracket type.
-    expect(render({ type: 'wavy', brackets: 'left' })).toHaveLength(2);
+    const [path] = render({ type: 'wavy', brackets: 'left' });
+
+    expect(getSubpathCount(path!)).toBe(2);
   });
 });

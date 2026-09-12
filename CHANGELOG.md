@@ -27,7 +27,7 @@ of API, performance and feature improvements and breaking changes.
 
 ### Added
 
-- Writing-mode awareness. Annotations read the element's computed `writing-mode` and draw along the text rather than
+- Writing-mode awareness: annotations read the element's computed `writing-mode` and draw along the text rather than
   along the screen, so an underline on a `vertical-rl` column runs top to bottom on its left, `strikethrough` runs down
   the middle, `highlight` takes its thickness from the column's width, and each stroke reads the padding of the side it
   actually sits on. Nothing has to be configured, and `sideways-rl` and `sideways-lr` follow whichever vertical mode
@@ -74,8 +74,8 @@ of API, performance and feature improvements and breaking changes.
   ([rough-notation#73](https://github.com/rough-stuff/rough-notation/issues/73)).
 - The annotation SVG carries `aria-hidden="true"`, keeping decorative strokes out of the accessibility tree.
 - Animation is skipped when `prefers-reduced-motion: reduce` is set, whatever `animate` is configured to.
-- `annotate` takes a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a run of text can be
-  annotated without wrapping it in an element of its own. A `StaticRange` becomes a live range; a `Selection` is
+- `annotate` can take a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a part of text can be
+  annotated without wrapping it in an element. A `StaticRange` becomes a live range; a `Selection` is
   snapshotted by cloning its first range. Geometry comes from the range's client rects and the writing mode from its
   nearest element ancestor, which is where the SVG is inserted. Reflow is tracked with a `ResizeObserver` and a
   `MutationObserver` on that ancestor, `showOnVisible` is measured against the ancestor's visible area, and a range that
@@ -90,8 +90,8 @@ of API, performance and feature improvements and breaking changes.
 - Annotations are positioned and sized correctly under a `transform: scale()` ancestor. Element bounds are mapped
   through the SVG's inverse screen CTM instead of subtracting one client rect from another
   ([rough-notation#75](https://github.com/rough-stuff/rough-notation/issues/75)).
-- Zero-valued `strokeWidth`, `iterations` and `animationDuration` are honoured instead of falling back to their
-  defaults, which is what applying them with `||` used to do.
+- Zero-valued `strokeWidth`, `iterations` and `animationDuration` are kept instead of falling back to their
+  defaults, caused by `||`.
 - Annotations no longer render invisible after a client-side route change that replaces `document.head`. The keyframes
   rule is reinjected when it goes missing
   ([rough-notation#86](https://github.com/rough-stuff/rough-notation/issues/86)).
@@ -113,6 +113,11 @@ of API, performance and feature improvements and breaking changes.
   a batch is measured before any is redrawn, so a batch cannot interleave layout reads with writes, and an annotation
   whose rect did not actually change is skipped
   ([rough-notation PR #89](https://github.com/rough-stuff/rough-notation/pull/89)).
-- Build moves from tsc plus Rollup to Vite, with declarations from vite-plugin-dts.
+- Build moved to Vite, with declarations from vite-plugin-dts.
 - tslint is replaced by ESLint and Prettier.
-- Test suite added, running under Node and Chromium.
+- Test suite added: Vitest (Node) and Playwright (Chromium).
+- Each annotation draws a single `<path>` element instead of one per stroke pass, RoughJS op-set, or bracket side.
+  The CSS animation is now a single continuous `stroke-dashoffset` sweep across the whole path. Apparently one SVG merged path renders faster than multiple.
+- SVG path coordinates and stroke lengths (`stroke-dasharray`/`stroke-dashoffset`) are rounded to 3 decimal places, and
+  animation durations/delays to 1 decimal place of a millisecond, instead of carrying full floating-point precision into
+  the DOM. This shouldn't be visually noticeable.

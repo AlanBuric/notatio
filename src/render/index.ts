@@ -9,10 +9,13 @@ import {
   DEFAULT_PADDING,
   DEFAULT_STROKE_WIDTH,
   KEYFRAME_NAME,
+  PATH_PRECISION,
   SVG_NS,
+  TIME_PRECISION,
 } from '@/constants.js';
 import { getAnimation } from '@/animation.js';
 import { getFrame } from '@/frame.js';
+import { round } from '@/round.js';
 import type { FullPadding, Rectangle, InternalAnnotationConfig, WritingMode } from '@/types.js';
 import { getBlocks } from './geometry.js';
 import { STRATEGIES } from './strategies.js';
@@ -41,7 +44,6 @@ export function renderAnnotation(
   animationDuration: number,
   reversedFlow: boolean,
 ) {
-  const { onShow } = getAnimation(config.animate);
   const padding = parsePadding(config);
   const frame = getFrame(rect, padding, mode);
   const strategy = STRATEGIES[config.type]({
@@ -64,63 +66,56 @@ export function renderAnnotation(
   if (!strategy.ops.length) return;
 
   const strokeWidth = strategy.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  const d = opsToPath(strategy.ops);
 
-  const paths = opsToPath(strategy.ops).map((d) => {
-    const path = document.createElementNS(SVG_NS, 'path');
+  if (!d) return;
 
-    path.setAttribute('d', d);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
-    path.setAttribute('stroke-width', `${strokeWidth}`);
-    target.appendChild(path);
+  const path = document.createElementNS(SVG_NS, 'path');
 
-    return path;
-  });
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
+  path.setAttribute('stroke-width', `${strokeWidth}`);
+  target.appendChild(path);
 
-  if (!onShow) return;
+  if (!getAnimation(config.animate).onShow) return;
 
-  const lengths = paths.map((path) => path.getTotalLength());
-  const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+  const length = round(path.getTotalLength(), PATH_PRECISION);
   const easing = config.animationEasing ?? DEFAULT_ANIMATION_EASING;
-  let delay = animationDelay;
+  const duration = round(animationDuration, TIME_PRECISION);
+  const delay = round(animationDelay, TIME_PRECISION);
 
-  paths.forEach((path, index) => {
-    const length = lengths[index];
-    const duration = totalLength ? animationDuration * (length / totalLength) : 0;
-
-    path.style.strokeDashoffset = `${length}`;
-    path.style.strokeDasharray = `${length}`;
-    path.style.animation = `${KEYFRAME_NAME} ${duration}ms ${easing} ${delay}ms forwards`;
-
-    delay += duration;
-  });
+  path.style.strokeDashoffset = `${length}`;
+  path.style.strokeDasharray = `${length}`;
+  path.style.animation = `${KEYFRAME_NAME} ${duration}ms ${easing} ${delay}ms forwards`;
 }
 
-/** @internal Exported for testing. */
-export function opsToPath(opList: OpSet[]): string[] {
-  const paths: string[] = [];
+/*
+ * Multiple `move` ops become multiple `M` subpaths within one string rather than
+ * separate path strings, so a whole annotation renders as a single <path> element.
+ *
+ * @internal Exported for testing.
+ */
+export function opsToPath(opList: OpSet[]): string {
+  const tokens: string[] = [];
 
   opList.forEach(({ ops }) => {
-    let path = '';
-
     ops.forEach(({ op, data }) => {
+      const [x1, y1, x2, y2, x3, y3] = data.map((value) => round(value, PATH_PRECISION));
+
       switch (op) {
         case 'move':
-          if (path) paths.push(path);
-
-          path = `M${data[0]} ${data[1]}`;
+          tokens.push(`M${x1} ${y1}`);
           break;
         case 'bcurveTo':
-          path += ` C${data[0]} ${data[1]}, ${data[2]} ${data[3]}, ${data[4]} ${data[5]}`;
+          tokens.push(`C${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`);
           break;
         case 'lineTo':
-          path += ` L${data[0]} ${data[1]}`;
+          tokens.push(`L${x1} ${y1}`);
           break;
       }
     });
-
-    if (path) paths.push(path);
   });
 
-  return paths;
+  return tokens.join(' ');
 }

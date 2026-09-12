@@ -102,7 +102,7 @@ describe('strikethrough', () => {
 });
 
 describe('highlight', () => {
-  const strokeWidth = (paths: SVGPathElement[]) => Number(paths[0]!.getAttribute('stroke-width'));
+  const strokeWidth = (paths: SVGPathElement[]) => Number(paths[0].getAttribute('stroke-width'));
 
   it('takes its thickness from the text height under horizontal writing', () => {
     const element = mountText('horizontal-tb');
@@ -146,7 +146,7 @@ describe('reading direction', () => {
 
   /** Where the first stroke begins, in the coordinate space the strokes share with `elementBox`. */
   function sweepStart(element: HTMLElement): DOMPoint {
-    return getPathsFor(element)[0]!.getPointAtLength(0);
+    return getPathsFor(element)[0].getPointAtLength(0);
   }
 
   it('sweeps the underline from the left for left-to-right text', () => {

@@ -22,7 +22,7 @@ function keyframeStyles(): HTMLStyleElement[] {
 function startX(path: SVGPathElement): number {
   const match = /^M(-?[\d.]+)/.exec(path.getAttribute('d') ?? '');
 
-  return parseFloat(match![1]!);
+  return parseFloat(match![1]);
 }
 
 describe('color', () => {
@@ -88,7 +88,7 @@ describe('strokeWidth', () => {
     // @ts-expect-error highlight sizes its stroke to the element.
     annotate(element, { type: 'highlight', strokeWidth: 1 }).show();
 
-    const width = parseFloat(getPathsFor(element)[0]!.getAttribute('stroke-width')!);
+    const width = parseFloat(getPathsFor(element)[0].getAttribute('stroke-width')!);
 
     expect(width).toBeCloseTo(element.getBoundingClientRect().height * 0.95, 1);
   });
@@ -99,14 +99,14 @@ describe('roughness', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', animate: false }).show();
-    expect(getPathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+    expect(getPathsFor(element)[0].getBBox().height).toBeGreaterThan(0);
   });
 
   it('draws an exact line when set to 0', () => {
     const element = mountElement();
 
     annotate(element, { type: 'underline', roughness: 0, animate: false }).show();
-    expect(getPathsFor(element)[0]!.getBBox().height).toBeCloseTo(0, 5);
+    expect(getPathsFor(element)[0].getBBox().height).toBeCloseTo(0, 5);
   });
 
   it('re-renders when roughness is set after showing', async () => {
@@ -119,7 +119,7 @@ describe('roughness', () => {
     await flushMicrotasks();
 
     expect(annotation.roughness).toBe(5);
-    expect(getPathsFor(element)[0]!.getBBox().height).toBeGreaterThan(0);
+    expect(getPathsFor(element)[0].getBBox().height).toBeGreaterThan(0);
   });
 });
 
@@ -129,7 +129,7 @@ describe('animation', () => {
 
     annotate(element, { type: 'underline' }).show();
 
-    const style = getPathsFor(element)[0]!.style;
+    const style = getPathsFor(element)[0].style;
 
     expect(style.animationName).toBe('notatio-dash');
     expect(durationMs(style.animationDuration)).toBeGreaterThan(0);
@@ -215,12 +215,12 @@ describe('padding', () => {
     const tightY = parseFloat(
       /^M[\d.-]+ ([\d.-]+)/.exec(
         tight.nextElementSibling!.querySelector('path')!.getAttribute('d')!,
-      )![1]!,
+      )![1],
     );
     const looseY = parseFloat(
       /^M[\d.-]+ ([\d.-]+)/.exec(
         loose.nextElementSibling!.querySelector('path')!.getAttribute('d')!,
-      )![1]!,
+      )![1],
     );
 
     expect(looseY).toBeGreaterThan(tightY + 30);
@@ -237,7 +237,7 @@ describe('reverse', () => {
 
     annotate(backwards, { type: 'underline', reverse: true, animate: false }).show();
 
-    expect(startX(getPathsFor(backwards)[0]!)).toBeGreaterThan(startX(getPathsFor(forwards)[0]!));
+    expect(startX(getPathsFor(backwards)[0])).toBeGreaterThan(startX(getPathsFor(forwards)[0]));
   });
 });
 

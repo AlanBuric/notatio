@@ -22,7 +22,7 @@ describe('delay', () => {
 
     annotate(element, { type: 'underline', delay: 250 }).show();
 
-    expect(delayMs(getPathsFor(element)[0]!)).toBeCloseTo(250, 0);
+    expect(delayMs(getPathsFor(element)[0])).toBeCloseTo(250, 0);
   });
 
   it('is zero by default', () => {
@@ -30,7 +30,7 @@ describe('delay', () => {
 
     annotate(element, { type: 'underline' }).show();
 
-    expect(delayMs(getPathsFor(element)[0]!)).toBeCloseTo(0, 0);
+    expect(delayMs(getPathsFor(element)[0])).toBeCloseTo(0, 0);
   });
 
   it('adds to the slot an annotation gets in a group', () => {
@@ -42,7 +42,7 @@ describe('delay', () => {
       annotate(second, { type: 'underline', animationDuration: 300, delay: 100 }),
     ]).show();
 
-    expect(delayMs(getPathsFor(second)[0]!)).toBeCloseTo(400, 0);
+    expect(delayMs(getPathsFor(second)[0])).toBeCloseTo(400, 0);
   });
 
   it('does not redraw a visible annotation when changed', async () => {

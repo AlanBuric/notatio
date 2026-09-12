@@ -53,7 +53,7 @@ describe('range targets', () => {
 
     annotation.show();
 
-    const drawn = paths(annotation)[0]!.getBBox().width;
+    const drawn = paths(annotation)[0].getBBox().width;
 
     expect(
       Math.abs(drawn - widthInSvg(annotation.svg!, range.getBoundingClientRect())),
@@ -66,7 +66,7 @@ describe('range targets', () => {
 
     wholeLine.show();
 
-    expect(paths(wholeLine)[0]!.getBBox().width).toBeGreaterThan(drawn + STROKE_JITTER);
+    expect(paths(wholeLine)[0].getBBox().width).toBeGreaterThan(drawn + STROKE_JITTER);
   });
 
   it('inserts the SVG next to the nearest element ancestor', () => {
@@ -121,7 +121,7 @@ describe('range targets', () => {
 
     annotation.show();
 
-    const box = paths(annotation)[0]!.getBBox();
+    const box = paths(annotation)[0].getBBox();
 
     expect(box.height).toBeGreaterThan(box.width);
   });
@@ -151,7 +151,7 @@ describe('range targets', () => {
     const annotation = annotate(textRange(paragraph, 0, 5), { type: 'underline', ...BASE });
 
     annotation.show();
-    const before = paths(annotation)[0]!.getAttribute('d');
+    const before = paths(annotation)[0].getAttribute('d');
 
     paragraph.style.marginLeft = '48px';
     window.dispatchEvent(new Event('resize'));
@@ -188,7 +188,7 @@ describe('range targets', () => {
     annotation.show();
     expect(paths(annotation)).toHaveLength(1);
 
-    const before = paths(annotation)[0]!.getAttribute('d');
+    const before = paths(annotation)[0].getAttribute('d');
     const wider = document.createRange();
 
     wider.selectNodeContents(node);

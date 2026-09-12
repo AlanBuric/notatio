@@ -83,6 +83,11 @@ export function getPathsFor(element: HTMLElement): SVGPathElement[] {
   return [...(getSvgFor(element)?.querySelectorAll('path') ?? [])];
 }
 
+/** Number of `M` subpaths a path's `d` attribute contains. */
+export function getSubpathCount(path: SVGPathElement): number {
+  return path.getAttribute('d')?.match(/M/g)?.length ?? 0;
+}
+
 /** Resolves once the annotation's CSS animations have been applied. */
 export async function nextFrame(): Promise<void> {
   await new Promise((resolve) => requestAnimationFrame(resolve));

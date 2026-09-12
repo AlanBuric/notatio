@@ -74,7 +74,7 @@ describe('stroke options', () => {
       bowing: 0,
     }).show();
 
-    const { height } = getPathsFor(element)[0]!.getBBox();
+    const { height } = getPathsFor(element)[0].getBBox();
 
     expect(height).toBeLessThan(1);
   });
@@ -91,7 +91,7 @@ describe('stroke options', () => {
         maxRandomnessOffset,
       }).show();
 
-      return getPathsFor(element)[0]!.getBBox().height;
+      return getPathsFor(element)[0].getBBox().height;
     };
 
     expect(wander(20)).toBeGreaterThan(wander(1));
@@ -122,6 +122,9 @@ describe('stroke options', () => {
     /* @ts-expect-error not part of RoughStrokeOptions, and ignored if forced through. */
     annotate(element, { type: 'underline', animate: false, disableMultiStroke: false }).show();
 
-    expect(getPathsFor(element)).toHaveLength(2);
+    const paths = getPathsFor(element);
+
+    expect(paths).toHaveLength(1);
+    expect(paths[0].getAttribute('d')?.match(/M/g)).toHaveLength(2);
   });
 });

@@ -52,3 +52,9 @@ export const WAVE_RESOLUTION = 8;
 export const ZIGZAG_RESOLUTION = 4;
 
 export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+/** Decimal places kept for SVG coordinates and path lengths. */
+export const PATH_PRECISION = 3;
+
+/** Decimal places kept for animation durations and delays, in milliseconds. */
+export const TIME_PRECISION = 1;
