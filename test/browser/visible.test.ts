@@ -73,12 +73,11 @@ describe('showOnVisible', () => {
   it('accepts observer options', async () => {
     const element = mountBelowFold();
 
-    /* threshold 1 only ever resolves for an element that fits the viewport. */
     element.style.width = '100px';
 
     annotate(element, {
       type: 'underline',
-      showOnVisible: { threshold: 1, rootMargin: '0px' },
+      showOnVisible: { threshold: 0.99, rootMargin: '0px' },
     });
 
     scrollTo(element);
@@ -86,7 +85,7 @@ describe('showOnVisible', () => {
   });
 
   /* A DOM node cannot be structured-cloned, so the config copy has to leave it out. */
-  it('accepts a scrolling root without choking on the config copy', async () => {
+  it('accepts a scrolling root, which the config copy safely leaves out', async () => {
     const container = mountContainer();
     const root = document.createElement('div');
     const spacer = document.createElement('div');

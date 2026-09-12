@@ -6,7 +6,7 @@ import {
   cleanup,
   mountElement,
   getPathsFor,
-  subpathCount,
+  getSubpathCount,
   STROKE_JITTER,
 } from './helpers.js';
 
@@ -37,8 +37,8 @@ describe('annotation types', () => {
     const paths = render({ type });
 
     expect(paths).toHaveLength(1);
-    expect(paths[0]!.getAttribute('d')).toMatch(/^M/);
-    expect(paths[0]!.getAttribute('fill')).toBe('none');
+    expect(paths[0].getAttribute('d')).toMatch(/^M/);
+    expect(paths[0].getAttribute('fill')).toBe('none');
   });
 
   /* Every stroke pass merges into the same <path>, as multiple `M` subpaths in one `d`,
@@ -53,17 +53,17 @@ describe('annotation types', () => {
     { type: 'crossed-off', perIteration: 2 },
     { type: 'wavy', perIteration: 1 },
     { type: 'zigzag', perIteration: 1 },
-  ] as const)('$type stays one path, with $perIteration subpath(s) per iteration', ({
-    type,
-    perIteration,
-  }) => {
-    [1, 2, 3].forEach((iterations) => {
-      const paths = render({ type, iterations });
+  ] as const)(
+    '$type stays one path, with $perIteration subpath(s) per iteration',
+    ({ type, perIteration }) => {
+      [1, 2, 3].forEach((iterations) => {
+        const paths = render({ type, iterations });
 
-      expect(paths).toHaveLength(1);
-      expect(subpathCount(paths[0]!)).toBe(perIteration * iterations);
-    });
-  });
+        expect(paths).toHaveLength(1);
+        expect(getSubpathCount(paths[0])).toBe(perIteration * iterations);
+      });
+    },
+  );
 
   /* Guards against a zero being coerced to the default. */
   it('draws nothing when iterations is zero', () =>
@@ -72,7 +72,7 @@ describe('annotation types', () => {
   it('defaults to two iterations worth of subpaths', () => {
     const [path] = render({ type: 'underline' });
 
-    expect(subpathCount(path!)).toBe(2);
+    expect(getSubpathCount(path!)).toBe(2);
   });
 });
 
@@ -80,7 +80,7 @@ describe('bracket', () => {
   it('brackets the right side by default, as three subpaths of one path', () => {
     const [path] = render({ type: 'bracket' });
 
-    expect(subpathCount(path!)).toBe(3);
+    expect(getSubpathCount(path!)).toBe(3);
   });
 
   it.each([
@@ -93,22 +93,22 @@ describe('bracket', () => {
       const paths = render({ type: 'bracket', brackets });
 
       expect(paths).toHaveLength(1);
-      expect(subpathCount(paths[0]!)).toBe(expectedSubpaths);
+      expect(getSubpathCount(paths[0])).toBe(expectedSubpaths);
     },
   );
 
   it('accepts a bare string as well as an array', () => {
-    const bare = render({ type: 'bracket', brackets: 'top' })[0]!;
-    const array = render({ type: 'bracket', brackets: ['top'] })[0]!;
+    const bare = render({ type: 'bracket', brackets: 'top' })[0];
+    const array = render({ type: 'bracket', brackets: ['top'] })[0];
 
-    expect(subpathCount(bare)).toBe(subpathCount(array));
+    expect(getSubpathCount(bare)).toBe(getSubpathCount(array));
   });
 
   it('does not accept iterations, and draws one bracket per side regardless', () => {
     // @ts-expect-error bracket draws one bracket per side, so iterations does not apply.
     const [path] = render({ type: 'bracket', iterations: 5 });
 
-    expect(subpathCount(path!)).toBe(3);
+    expect(getSubpathCount(path!)).toBe(3);
   });
 });
 
@@ -147,7 +147,7 @@ describe('zigzag', () => {
   it('draws each pass as a single subpath', () => {
     const [path] = render({ type: 'zigzag', iterations: 1, frequency: 12 });
 
-    expect(subpathCount(path!)).toBe(1);
+    expect(getSubpathCount(path!)).toBe(1);
   });
 
   it('amplitude sets how far the peaks depart from the baseline', () => {
@@ -176,7 +176,7 @@ describe.each(['wavy', 'zigzag'] as const)('%s amplitude sign', (type) => {
   /* roughness 0 removes the jitter, so the two waves are exact reflections. */
   it('reflects every point about the baseline', () => {
     const sampled = (amplitude: number) =>
-      sampleY(render({ type, amplitude, iterations: 1, roughness: 0, seed: 1 })[0]!);
+      sampleY(render({ type, amplitude, iterations: 1, roughness: 0, seed: 1 })[0]);
     const above = sampled(12);
     const below = sampled(-12);
     const baseline = above.reduce((sum, y) => sum + y, 0) / above.length;
@@ -221,6 +221,6 @@ describe('wavy', () => {
     // @ts-expect-error brackets belong to the bracket type.
     const [path] = render({ type: 'wavy', brackets: 'left' });
 
-    expect(subpathCount(path!)).toBe(2);
+    expect(getSubpathCount(path!)).toBe(2);
   });
 });

@@ -85,7 +85,7 @@ describe('resize handling', () => {
 
     annotation.show();
 
-    const before = getPathsFor(element)[0]!.getAttribute('d');
+    const before = getPathsFor(element)[0].getAttribute('d');
 
     /* A resize notification that does not change the rect must not redraw. */
     element.style.width = '150px';

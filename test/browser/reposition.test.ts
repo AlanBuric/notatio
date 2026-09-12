@@ -43,7 +43,7 @@ describe('element repositioning', () => {
       observeResize: false,
     }).show();
 
-    const drawn = getPathsFor(element)[0]!.getAttribute('d');
+    const drawn = getPathsFor(element)[0].getAttribute('d');
 
     expect(drift(element)).toBeLessThan(STROKE_JITTER);
 

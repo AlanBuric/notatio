@@ -74,8 +74,8 @@ of API, performance and feature improvements and breaking changes.
   ([rough-notation#73](https://github.com/rough-stuff/rough-notation/issues/73)).
 - The annotation SVG carries `aria-hidden="true"`, keeping decorative strokes out of the accessibility tree.
 - Animation is skipped when `prefers-reduced-motion: reduce` is set, whatever `animate` is configured to.
-- `annotate` can take a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a run of text can be
-  annotated without wrapping it in an element of its own. A `StaticRange` becomes a live range; a `Selection` is
+- `annotate` can take a `Range`, a `StaticRange`, or a `Selection` as well as an element, so a part of text can be
+  annotated without wrapping it in an element. A `StaticRange` becomes a live range; a `Selection` is
   snapshotted by cloning its first range. Geometry comes from the range's client rects and the writing mode from its
   nearest element ancestor, which is where the SVG is inserted. Reflow is tracked with a `ResizeObserver` and a
   `MutationObserver` on that ancestor, `showOnVisible` is measured against the ancestor's visible area, and a range that

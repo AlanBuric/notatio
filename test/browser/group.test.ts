@@ -15,7 +15,7 @@ function delayMs(path: SVGPathElement): number {
 
 /** The delay of the first stroke of an annotation. */
 function firstDelay(element: HTMLElement): number {
-  return delayMs(getPathsFor(element)[0]!);
+  return delayMs(getPathsFor(element)[0]);
 }
 
 describe('annotationGroup', () => {

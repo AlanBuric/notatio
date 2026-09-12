@@ -84,7 +84,7 @@ annotate(element, {
 
 ### Annotating part of the text
 
-Pass a `Range` (or a `StaticRange`, or a `Selection`) instead of an element to mark up a run of text in place, without
+Pass a `Range` (or a `StaticRange`, or a `Selection`) instead of an element to mark up a part of text in place, without
 wrapping it in an element.
 
 ```javascript

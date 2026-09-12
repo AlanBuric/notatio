@@ -219,8 +219,10 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#state = 'not-showing';
 
-    /* `animation: none` only takes effect on the next frame, so restarting the
-       animation before then would be ignored. */
+    /*
+     * `animation: none` only takes effect on the next frame, so restarting the animation before
+     * then would be ignored.
+     */
     await nextFrame();
 
     if (this.#drawing !== drawing) return;

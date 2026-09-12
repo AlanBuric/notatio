@@ -84,7 +84,7 @@ export function getPathsFor(element: HTMLElement): SVGPathElement[] {
 }
 
 /** Number of `M` subpaths a path's `d` attribute contains. */
-export function subpathCount(path: SVGPathElement): number {
+export function getSubpathCount(path: SVGPathElement): number {
   return path.getAttribute('d')?.match(/M/g)?.length ?? 0;
 }
 

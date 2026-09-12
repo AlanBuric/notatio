@@ -37,13 +37,13 @@ describe('svg', () => {
 
     annotation.show();
 
-    const before = getPathsFor(element)[0]!.getBBox().x;
+    const before = getPathsFor(element)[0].getBBox().x;
 
     annotation.svg!.style.transform = 'translateX(50px)';
     annotation.color = 'red';
     await flushMicrotasks();
 
-    expect(getPathsFor(element)[0]!.getBBox().x).toBeCloseTo(before - 50, 0);
+    expect(getPathsFor(element)[0].getBBox().x).toBeCloseTo(before - 50, 0);
   });
 });
 

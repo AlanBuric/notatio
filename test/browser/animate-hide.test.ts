@@ -104,7 +104,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    const path = getPathsFor(element)[0]!;
+    const path = getPathsFor(element)[0];
 
     expect(path.style.getPropertyValue('--notatio-path-length')).not.toBe('');
     expect(path.style.strokeDashoffset).toBe('0');
@@ -150,7 +150,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    expect(getPathsFor(element)[0]!.style.animationTimingFunction).toBe('linear');
+    expect(getPathsFor(element)[0].style.animationTimingFunction).toBe('linear');
   });
 
   it('overrides animationEasing for the retreat when animate.hideEasing is set', async () => {
@@ -166,7 +166,7 @@ describe('animate.onHide', () => {
     annotation.hide();
     await nextFrame();
 
-    expect(getPathsFor(element)[0]!.style.animationTimingFunction).toBe('ease-in');
+    expect(getPathsFor(element)[0].style.animationTimingFunction).toBe('ease-in');
   });
 
   it('does nothing when hide is called twice', () => {
