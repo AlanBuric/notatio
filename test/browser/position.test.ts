@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { AnnotationPosition, RoughAnnotationConfig } from '@/types.js';
-import { STROKE_JITTER, cleanup, getElementBox, mountContainer, getPathsFor } from './helpers.js';
+import {
+  STROKE_JITTER,
+  cleanup,
+  getElementBox,
+  mountContainer,
+  getPathsFor,
+  subpathCount,
+} from './helpers.js';
 
 afterEach(cleanup);
 
@@ -58,8 +65,10 @@ describe('position', () => {
   });
 
   it('doubles the stroke count when set to both', () => {
-    const one = getPathsFor(drawn({ ...BASE, iterations: 2 }).element).length;
-    const two = getPathsFor(drawn({ ...BASE, iterations: 2, position: 'both' }).element).length;
+    const one = subpathCount(getPathsFor(drawn({ ...BASE, iterations: 2 }).element)[0]!);
+    const two = subpathCount(
+      getPathsFor(drawn({ ...BASE, iterations: 2, position: 'both' }).element)[0]!,
+    );
 
     expect(two).toBe(one * 2);
   });
@@ -103,10 +112,12 @@ describe('position under vertical writing', () => {
 
 describe('position on wave types', () => {
   it.each(['wavy', 'zigzag'] as const)('%s draws on both sides when asked', (type) => {
-    const single = getPathsFor(drawn({ type, animate: false, iterations: 1 }).element).length;
-    const both = getPathsFor(
-      drawn({ type, animate: false, iterations: 1, position: 'both' }).element,
-    ).length;
+    const single = subpathCount(
+      getPathsFor(drawn({ type, animate: false, iterations: 1 }).element)[0]!,
+    );
+    const both = subpathCount(
+      getPathsFor(drawn({ type, animate: false, iterations: 1, position: 'both' }).element)[0]!,
+    );
 
     expect(both).toBe(single * 2);
   });

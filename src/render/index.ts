@@ -64,63 +64,51 @@ export function renderAnnotation(
   if (!strategy.ops.length) return;
 
   const strokeWidth = strategy.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  const d = opsToPath(strategy.ops);
 
-  const paths = opsToPath(strategy.ops).map((d) => {
-    const path = document.createElementNS(SVG_NS, 'path');
+  if (!d) return;
 
-    path.setAttribute('d', d);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
-    path.setAttribute('stroke-width', `${strokeWidth}`);
-    target.appendChild(path);
+  const path = document.createElementNS(SVG_NS, 'path');
 
-    return path;
-  });
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', config.color ?? DEFAULT_COLOR);
+  path.setAttribute('stroke-width', `${strokeWidth}`);
+  target.appendChild(path);
 
   if (!onShow) return;
 
-  const lengths = paths.map((path) => path.getTotalLength());
-  const totalLength = lengths.reduce((sum, length) => sum + length, 0);
+  const length = path.getTotalLength();
   const easing = config.animationEasing ?? DEFAULT_ANIMATION_EASING;
-  let delay = animationDelay;
 
-  paths.forEach((path, index) => {
-    const length = lengths[index];
-    const duration = totalLength ? animationDuration * (length / totalLength) : 0;
-
-    path.style.strokeDashoffset = `${length}`;
-    path.style.strokeDasharray = `${length}`;
-    path.style.animation = `${KEYFRAME_NAME} ${duration}ms ${easing} ${delay}ms forwards`;
-
-    delay += duration;
-  });
+  path.style.strokeDashoffset = `${length}`;
+  path.style.strokeDasharray = `${length}`;
+  path.style.animation = `${KEYFRAME_NAME} ${animationDuration}ms ${easing} ${animationDelay}ms forwards`;
 }
 
+/*
+ * Multiple `move` ops become multiple `M` subpaths within one string rather than
+ * separate path strings, so a whole annotation renders as a single <path> element.
+ */
 /** @internal Exported for testing. */
-export function opsToPath(opList: OpSet[]): string[] {
-  const paths: string[] = [];
+export function opsToPath(opList: OpSet[]): string {
+  const tokens: string[] = [];
 
   opList.forEach(({ ops }) => {
-    let path = '';
-
     ops.forEach(({ op, data }) => {
       switch (op) {
         case 'move':
-          if (path) paths.push(path);
-
-          path = `M${data[0]} ${data[1]}`;
+          tokens.push(`M${data[0]} ${data[1]}`);
           break;
         case 'bcurveTo':
-          path += ` C${data[0]} ${data[1]}, ${data[2]} ${data[3]}, ${data[4]} ${data[5]}`;
+          tokens.push(`C${data[0]} ${data[1]}, ${data[2]} ${data[3]}, ${data[4]} ${data[5]}`);
           break;
         case 'lineTo':
-          path += ` L${data[0]} ${data[1]}`;
+          tokens.push(`L${data[0]} ${data[1]}`);
           break;
       }
     });
-
-    if (path) paths.push(path);
   });
 
-  return paths;
+  return tokens.join(' ');
 }
