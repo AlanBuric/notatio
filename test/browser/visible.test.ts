@@ -30,8 +30,8 @@ function scrollAway(): void {
 }
 
 /** The observer fires asynchronously, so assertions have to be retried. */
-function waitForPaths(element: HTMLElement): Promise<void> {
-  return vi.waitFor(() => expect(getPathsFor(element).length).toBeGreaterThan(0));
+function waitForPaths(element: HTMLElement, count: number): Promise<void> {
+  return vi.waitFor(() => expect(getPathsFor(element).length).toBe(count));
 }
 
 afterEach(scrollAway);
@@ -53,7 +53,7 @@ describe('showOnVisible', () => {
     const annotation = annotate(element, { type: 'underline', showOnVisible: true });
 
     scrollTo(element);
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
 
     expect(annotation.isShowing()).toBe(true);
   });
@@ -67,7 +67,7 @@ describe('showOnVisible', () => {
 
     annotate(element, { type: 'underline', showOnVisible: true });
 
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
   });
 
   it('accepts observer options', async () => {
@@ -81,7 +81,7 @@ describe('showOnVisible', () => {
     });
 
     scrollTo(element);
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
   });
 
   /* A DOM node cannot be structured-cloned, so the config copy has to leave it out. */
@@ -104,7 +104,7 @@ describe('showOnVisible', () => {
     expect(getPathsFor(element)).toHaveLength(0);
 
     root.scrollTop = root.scrollHeight;
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
   });
 
   it('stays drawn after the element leaves again', async () => {
@@ -112,14 +112,14 @@ describe('showOnVisible', () => {
     const annotation = annotate(element, { type: 'underline', showOnVisible: true });
 
     scrollTo(element);
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
 
     scrollAway();
     await nextFrame();
     await nextFrame();
 
     expect(annotation.isShowing()).toBe(true);
-    expect(getPathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element)).toHaveLength(2);
   });
 
   it('hides and redraws on every pass when repeat is set', async () => {
@@ -130,14 +130,14 @@ describe('showOnVisible', () => {
     });
 
     scrollTo(element);
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
 
     scrollAway();
     await vi.waitFor(() => expect(annotation.isShowing()).toBe(false));
     expect(getPathsFor(element)).toHaveLength(0);
 
     scrollTo(element);
-    await waitForPaths(element);
+    await waitForPaths(element, 2);
   });
 
   it('stops observing once the annotation is removed', async () => {

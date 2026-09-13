@@ -122,9 +122,6 @@ describe('stroke options', () => {
     /* @ts-expect-error not part of RoughStrokeOptions, and ignored if forced through. */
     annotate(element, { type: 'underline', animate: false, disableMultiStroke: false }).show();
 
-    const paths = getPathsFor(element);
-
-    expect(paths).toHaveLength(1);
-    expect(paths[0].getAttribute('d')?.match(/M/g)).toHaveLength(2);
+    expect(getPathsFor(element)).toHaveLength(2);
   });
 });

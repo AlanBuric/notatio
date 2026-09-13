@@ -116,8 +116,6 @@ of API, performance and feature improvements and breaking changes.
 - Build moved to Vite, with declarations from vite-plugin-dts.
 - tslint is replaced by ESLint and Prettier.
 - Test suite added: Vitest (Node) and Playwright (Chromium).
-- Each annotation draws a single `<path>` element instead of one per stroke pass, RoughJS op-set, or bracket side.
-  The CSS animation is now a single continuous `stroke-dashoffset` sweep across the whole path. Apparently one SVG merged path renders faster than multiple.
 - SVG path coordinates and stroke lengths (`stroke-dasharray`/`stroke-dashoffset`) are rounded to 3 decimal places, and
   animation durations/delays to 1 decimal place of a millisecond, instead of carrying full floating-point precision into
   the DOM. This shouldn't be visually noticeable.

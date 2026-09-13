@@ -44,7 +44,12 @@ describe('numeric precision', () => {
   it('rounds animation duration and delay to one decimal place of a millisecond', () => {
     const element = mountElement();
 
-    annotate(element, { type: 'underline', animationDuration: 333.456, delay: 12.345 }).show();
+    annotate(element, {
+      type: 'underline',
+      iterations: 1,
+      animationDuration: 333.456,
+      delay: 12.345,
+    }).show();
 
     const path = getPathsFor(element)[0];
 
