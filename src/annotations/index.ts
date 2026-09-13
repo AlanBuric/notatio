@@ -34,10 +34,6 @@ import {
   getVisibility,
   settled,
   toSvgRect,
-  type AnnotationState,
-  UNATTACHED_STATE,
-  NOT_SHOWING_STATE,
-  SHOWING_STATE,
 } from './utils.js';
 import { mapTarget, type TargetAdapter } from './targets/index.js';
 
@@ -45,6 +41,15 @@ interface Measurement {
   rects: Rectangle[];
   mode: WritingMode;
   isReversedFlow: boolean;
+}
+
+/**
+ * Must be kept in this file, otherwise the build won't inline it.
+ */
+const enum AnnotationState {
+  UNATTACHED_STATE,
+  NOT_SHOWING_STATE,
+  SHOWING_STATE,
 }
 
 function nextFrame(): Promise<void> {
@@ -56,7 +61,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   static #flushScheduled = false;
   declare seed: number;
 
-  #state: AnnotationState = UNATTACHED_STATE;
+  #state = AnnotationState.UNATTACHED_STATE;
   #config: InternalAnnotationConfig;
   #target: TargetAdapter;
   #svg?: SVGSVGElement;
@@ -143,13 +148,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   isShowing(): boolean {
-    return this.#state !== NOT_SHOWING_STATE;
+    return this.#state !== AnnotationState.NOT_SHOWING_STATE;
   }
 
   show(): Promise<void> {
-    if (this.#state === UNATTACHED_STATE || !this.#svg) return Promise.resolve();
+    if (this.#state === AnnotationState.UNATTACHED_STATE || !this.#svg) return Promise.resolve();
 
-    const reshowing = this.#state === SHOWING_STATE;
+    const reshowing = this.#state === AnnotationState.SHOWING_STATE;
 
     this.#clear();
     this.#render(reshowing);
@@ -158,7 +163,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   hide(): Promise<void> {
-    if (this.#state === SHOWING_STATE && this.#shouldAnimateHide()) return this.#animateHide();
+    if (this.#state === AnnotationState.SHOWING_STATE && this.#shouldAnimateHide())
+      return this.#animateHide();
 
     this.#clear();
 
@@ -177,7 +183,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#clear();
     this.#svg?.remove();
     this.#svg = undefined;
-    this.#state = UNATTACHED_STATE;
+    this.#state = AnnotationState.UNATTACHED_STATE;
     this.#detachListeners();
     this.#disconnectVisibility();
     this.#target.release();
@@ -192,7 +198,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #clear(): void {
     this.#drawing++;
     this.#svg?.replaceChildren();
-    this.#state = NOT_SHOWING_STATE;
+    this.#state = AnnotationState.NOT_SHOWING_STATE;
   }
 
   #shouldAnimateHide(): boolean {
@@ -221,7 +227,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const totalLength = lengths.reduce((sum, length) => sum + length, 0);
     const drawing = ++this.#drawing;
 
-    this.#state = NOT_SHOWING_STATE;
+    this.#state = AnnotationState.NOT_SHOWING_STATE;
 
     /*
      * `animation: none` only takes effect on the next frame, so restarting the animation before
@@ -257,7 +263,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #attach(visibility?: VisibilityOptions): void {
-    if (this.#state !== UNATTACHED_STATE || !this.#target.anchor?.parentElement) return;
+    if (this.#state !== AnnotationState.UNATTACHED_STATE || !this.#target.anchor?.parentElement)
+      return;
 
     ensureKeyframes();
 
@@ -277,7 +284,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#target.placeSvg(svg, this.#config.type === 'highlight');
     this.#svg = svg;
-    this.#state = NOT_SHOWING_STATE;
+    this.#state = AnnotationState.NOT_SHOWING_STATE;
 
     this.#attachListeners();
     this.#observeVisibility(visibility);
@@ -328,7 +335,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const stale: { annotation: RoughAnnotationImpl; measurement: Measurement }[] = [];
 
     annotations.forEach((annotation) => {
-      if (annotation.#state !== SHOWING_STATE) return;
+      if (annotation.#state !== AnnotationState.SHOWING_STATE) return;
 
       const measurement = annotation.#measure();
 
@@ -396,7 +403,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
 
     this.#lastSizes = rects;
-    this.#state = SHOWING_STATE;
+    this.#state = AnnotationState.SHOWING_STATE;
   }
 
   #measure(): Measurement {
