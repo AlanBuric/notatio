@@ -43,6 +43,7 @@ export function renderAnnotation(
   animationDelay: number,
   animationDuration: number,
   reversedFlow: boolean,
+  canAnimate: boolean,
 ) {
   const padding = parsePadding(config);
   const frame = getFrame(rect, padding, mode);
@@ -66,8 +67,13 @@ export function renderAnnotation(
   if (!strategy.ops.length) return;
 
   const strokeWidth = strategy.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  const subpaths = opsToPath(strategy.ops);
 
-  const paths = opsToPath(strategy.ops).map((d) => {
+  if (!subpaths.length) return;
+
+  const ds = canAnimate ? subpaths : [subpaths.join(' ')];
+
+  const paths = ds.map((d) => {
     const path = document.createElementNS(SVG_NS, 'path');
 
     path.setAttribute('d', d);

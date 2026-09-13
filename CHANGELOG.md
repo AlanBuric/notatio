@@ -119,3 +119,4 @@ of API, performance and feature improvements and breaking changes.
 - SVG path coordinates and stroke lengths (`stroke-dasharray`/`stroke-dashoffset`) are rounded to 3 decimal places, and
   animation durations/delays to 1 decimal place of a millisecond, instead of carrying full floating-point precision into
   the DOM. This shouldn't be visually noticeable.
+- Strokes are merged into one `<path>` for optimization when neither the show nor hide animation is enabled.

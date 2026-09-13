@@ -1,6 +1,6 @@
-import type { RoughAnnotation } from '@/types.js';
+import { ANNOTATION_CLASS } from '@/constants';
 
-const SVG_SELECTOR = 'svg.notatio-annotation';
+const SVG_SELECTOR = `svg.${ANNOTATION_CLASS}`;
 
 /**
  * roughjs offsets every stroke by a random amount, so any assertion comparing a
@@ -41,11 +41,11 @@ export function cleanup(): void {
 }
 
 /** Mounts a block element containing `text` and returns it. */
-export function mountElement(text = 'annotate me', tag = 'div'): HTMLElement {
+export function mountElement(): HTMLElement {
   const container = mountContainer();
-  const element = document.createElement(tag);
+  const element = document.createElement('p');
 
-  element.textContent = text;
+  element.textContent = 'Annotate me!';
   container.appendChild(element);
 
   return element;
@@ -83,6 +83,13 @@ export function getPathsFor(element: HTMLElement): SVGPathElement[] {
   return [...(getSvgFor(element)?.querySelectorAll('path') ?? [])];
 }
 
+/** Number of `M` subpaths across an annotation's path(s), merged or not. */
+export function getSubpathCount(element: HTMLElement): number {
+  return getPathsFor(element)
+    .map((path) => path.getAttribute('d')?.match(/M/g)?.length ?? 0)
+    .reduce((count, subpaths) => count + subpaths, 0);
+}
+
 /** Resolves once the annotation's CSS animations have been applied. */
 export async function nextFrame(): Promise<void> {
   await new Promise((resolve) => requestAnimationFrame(resolve));
@@ -92,8 +99,4 @@ export async function nextFrame(): Promise<void> {
 export async function flushMicrotasks(): Promise<void> {
   await Promise.resolve();
   await Promise.resolve();
-}
-
-export function isShowing(annotation: RoughAnnotation): boolean {
-  return annotation.isShowing();
 }

@@ -8,6 +8,7 @@ import {
   mountContainer,
   mountElement,
   getPathsFor,
+  getSubpathCount,
   getSvgFor,
 } from './helpers.js';
 
@@ -68,12 +69,12 @@ describe('redrawing on set', () => {
     const annotation = annotate(element, { type: 'bracket', animate: false });
 
     annotation.show();
-    expect(getPathsFor(element)).toHaveLength(3);
+    expect(getSubpathCount(element)).toBe(3);
 
     annotation.brackets = ['left', 'right'];
     await flushMicrotasks();
 
-    expect(getPathsFor(element)).toHaveLength(6);
+    expect(getSubpathCount(element)).toBe(6);
   });
 
   it('redraws when iterations change', async () => {
@@ -81,12 +82,12 @@ describe('redrawing on set', () => {
     const annotation = annotate(element, { type: 'underline', animate: false });
 
     annotation.show();
-    expect(getPathsFor(element)).toHaveLength(2);
+    expect(getSubpathCount(element)).toBe(2);
 
     annotation.iterations = 5;
     await flushMicrotasks();
 
-    expect(getPathsFor(element)).toHaveLength(5);
+    expect(getSubpathCount(element)).toBe(5);
   });
 
   it('redraws when multiline changes', async () => {

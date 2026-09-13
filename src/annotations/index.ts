@@ -375,6 +375,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return;
 
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
+    const animation = getAnimation(this.#config.animate);
+    const canAnimate = animation.onShow || animation.onHide;
     const { rects, mode, isReversedFlow: reversedFlow } = measured ?? this.#measure();
     const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
     const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
@@ -385,7 +387,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     rects.forEach((rect) => {
       const duration = total ? totalDuration * (runLength(rect) / total) : 0;
 
-      renderAnnotation(svg, rect, mode, config, delay, duration, reversedFlow);
+      renderAnnotation(svg, rect, mode, config, delay, duration, reversedFlow, canAnimate);
       delay += duration;
     });
 
