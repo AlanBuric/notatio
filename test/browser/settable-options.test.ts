@@ -56,7 +56,7 @@ describe('settable options', () => {
   it.each(KEYS)('reads %s back from the config it was constructed with', (key) => {
     const annotation: RoughAnnotation = annotate(mountElement(), {
       type: 'wavy',
-      ...{ [key]: VALUES[key] },
+      [key]: VALUES[key],
     });
 
     expect(annotation[key]).toEqual(VALUES[key]);
