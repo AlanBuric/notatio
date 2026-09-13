@@ -23,7 +23,6 @@ import type {
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
-  RoughAnnotationType,
   VisibilityOptions,
   WritingMode,
 } from '@/types.js';
@@ -36,6 +35,9 @@ import {
   settled,
   toSvgRect,
   type AnnotationState,
+  UNATTACHED_STATE,
+  NOT_SHOWING_STATE,
+  SHOWING_STATE,
 } from './utils.js';
 import { mapTarget, type TargetAdapter } from './targets/index.js';
 
@@ -54,7 +56,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   static #flushScheduled = false;
   declare seed: number;
 
-  #state: AnnotationState = 'unattached';
+  #state: AnnotationState = UNATTACHED_STATE;
   #config: InternalAnnotationConfig;
   #target: TargetAdapter;
   #svg?: SVGSVGElement;
@@ -62,20 +64,22 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #cleanUpReflow?: () => void;
   #visibilityDisposer?: () => void;
   #refreshQueued = false;
-  #animationDelay = 0;
+  #groupDelay = 0;
   #drawing = 0;
 
   constructor(target: TargetAdapter, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
-    const cloned: AnnotationOptions & { type: RoughAnnotationType } = structuredClone(cloneable);
+    const cloned = structuredClone(cloneable) as InternalAnnotationConfig;
+
+    cloned.seed ??= randomSeed();
 
     this.#target = target;
-    this.#config = { ...cloned, seed: cloned.seed ?? randomSeed() };
+    this.#config = cloned;
     this.#attach(getVisibility(showOnVisible));
   }
 
   static setGroupDelay(annotation: RoughAnnotation, delay: number): void {
-    (annotation as RoughAnnotationImpl).#animationDelay = delay;
+    (annotation as RoughAnnotationImpl).#groupDelay = delay;
   }
 
   static {
@@ -139,13 +143,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   isShowing(): boolean {
-    return this.#state !== 'not-showing';
+    return this.#state !== NOT_SHOWING_STATE;
   }
 
   show(): Promise<void> {
-    if (this.#state === 'unattached' || !this.#svg) return Promise.resolve();
+    if (this.#state === UNATTACHED_STATE || !this.#svg) return Promise.resolve();
 
-    const reshowing = this.#state === 'showing';
+    const reshowing = this.#state === SHOWING_STATE;
 
     this.#clear();
     this.#render(reshowing);
@@ -154,7 +158,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   hide(): Promise<void> {
-    if (this.#state === 'showing' && this.#shouldAnimateHide()) return this.#animateHide();
+    if (this.#state === SHOWING_STATE && this.#shouldAnimateHide()) return this.#animateHide();
 
     this.#clear();
 
@@ -173,7 +177,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#clear();
     this.#svg?.remove();
     this.#svg = undefined;
-    this.#state = 'unattached';
+    this.#state = UNATTACHED_STATE;
     this.#detachListeners();
     this.#disconnectVisibility();
     this.#target.release();
@@ -188,7 +192,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #clear(): void {
     this.#drawing++;
     this.#svg?.replaceChildren();
-    this.#state = 'not-showing';
+    this.#state = NOT_SHOWING_STATE;
   }
 
   #shouldAnimateHide(): boolean {
@@ -217,7 +221,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const totalLength = lengths.reduce((sum, length) => sum + length, 0);
     const drawing = ++this.#drawing;
 
-    this.#state = 'not-showing';
+    this.#state = NOT_SHOWING_STATE;
 
     /*
      * `animation: none` only takes effect on the next frame, so restarting the animation before
@@ -249,11 +253,11 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #startDelay(): number {
-    return this.#animationDelay + (this.#config.delay ?? DEFAULT_DELAY);
+    return this.#groupDelay + (this.#config.delay ?? DEFAULT_DELAY);
   }
 
   #attach(visibility?: VisibilityOptions): void {
-    if (this.#state !== 'unattached' || !this.#target.anchor?.parentElement) return;
+    if (this.#state !== UNATTACHED_STATE || !this.#target.anchor?.parentElement) return;
 
     ensureKeyframes();
 
@@ -273,7 +277,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#target.placeSvg(svg, this.#config.type === 'highlight');
     this.#svg = svg;
-    this.#state = 'not-showing';
+    this.#state = NOT_SHOWING_STATE;
 
     this.#attachListeners();
     this.#observeVisibility(visibility);
@@ -324,7 +328,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const stale: { annotation: RoughAnnotationImpl; measurement: Measurement }[] = [];
 
     annotations.forEach((annotation) => {
-      if (annotation.#state !== 'showing') return;
+      if (annotation.#state !== SHOWING_STATE) return;
 
       const measurement = annotation.#measure();
 
@@ -392,7 +396,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     });
 
     this.#lastSizes = rects;
-    this.#state = 'showing';
+    this.#state = SHOWING_STATE;
   }
 
   #measure(): Measurement {
