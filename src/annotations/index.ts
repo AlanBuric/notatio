@@ -421,7 +421,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 }
 
-/** Links an annotation to an element, a text `Range` or `StaticRange`, or a `Selection` snapshot. */
+/** Links an annotation to a target element. */
 export function annotate(target: AnnotationTarget, config: RoughAnnotationConfig): RoughAnnotation {
   return new RoughAnnotationImpl(mapTarget(target), config);
 }
