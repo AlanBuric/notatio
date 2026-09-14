@@ -2,41 +2,6 @@
   "name": "notatio",
   "version": "1.0.0",
   "description": "Animated hand-drawn annotations for the web: underline, highlight, circle or strike through any HTML element.",
-  "type": "module",
-  "types": "./dist/index.d.ts",
-  "module": "./dist/index.js",
-  "unpkg": "./dist/index.js",
-  "jsdelivr": "./dist/index.js",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist"
-  ],
-  "sideEffects": false,
-  "engines": {
-    "node": ">=20"
-  },
-  "packageManager": "pnpm@11.21.0",
-  "scripts": {
-    "build": "vite build",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:unit": "vitest run --project unit",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/AlanBuric/notatio.git"
-  },
   "keywords": [
     "annotate",
     "annotation",
@@ -53,30 +18,65 @@
     "underline",
     "vertical-text"
   ],
-  "author": "Alan Burić",
+  "homepage": "https://github.com/AlanBuric/notatio#readme",
+  "bugs": {
+    "url": "https://github.com/AlanBuric/notatio/issues"
+  },
   "license": "MIT",
+  "author": "Alan Burić",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlanBuric/notatio.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.js",
+  "jsdelivr": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
   },
-  "bugs": {
-    "url": "https://github.com/AlanBuric/notatio/issues"
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --project unit",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "postversion": "git push --follow-tags"
   },
-  "homepage": "https://github.com/AlanBuric/notatio#readme",
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@vitest/browser": "^4.1.10",
-    "@vitest/browser-playwright": "^4.1.10",
-    "eslint": "^10.8.0",
-    "eslint-config-prettier": "^10.1.8",
-    "playwright": "^1.62.1",
-    "prettier": "^3.9.6",
+    "@typescript/typescript6": "^6.0.2",
+    "@vitest/browser": "^5.0.0",
+    "@vitest/browser-playwright": "^5.0.0",
+    "oxfmt": "^0.67.0",
+    "oxlint": "^1.82.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "playwright": "^1.63.0",
     "roughjs": "^4.6.6",
-    "terser": "^5.49.0",
-    "typescript": "~6.0.3",
-    "typescript-eslint": "^8.65.0",
+    "terser": "^5.51.2",
+    "typescript": "~7.0.2",
     "unplugin-dts": "^1.1.0",
-    "vite": "^8.2.0",
-    "vitest": "^4.1.10"
-  }
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.4.1"
 }

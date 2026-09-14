@@ -23,7 +23,6 @@ import type {
   RoughAnnotation,
   RoughAnnotationConfig,
   RoughAnnotationGroup,
-  RoughAnnotationType,
   VisibilityOptions,
   WritingMode,
 } from '@/types.js';
@@ -35,7 +34,6 @@ import {
   getVisibility,
   settled,
   toSvgRect,
-  type AnnotationState,
 } from './utils.js';
 import { mapTarget, type TargetAdapter } from './targets/index.js';
 
@@ -43,6 +41,15 @@ interface Measurement {
   rects: Rectangle[];
   mode: WritingMode;
   isReversedFlow: boolean;
+}
+
+/**
+ * Must be kept in this file, otherwise the build won't inline it.
+ */
+const enum AnnotationState {
+  UNATTACHED_STATE,
+  NOT_SHOWING_STATE,
+  SHOWING_STATE,
 }
 
 function nextFrame(): Promise<void> {
@@ -54,7 +61,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   static #flushScheduled = false;
   declare seed: number;
 
-  #state: AnnotationState = 'unattached';
+  #state = AnnotationState.UNATTACHED_STATE;
   #config: InternalAnnotationConfig;
   #target: TargetAdapter;
   #svg?: SVGSVGElement;
@@ -62,20 +69,22 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #cleanUpReflow?: () => void;
   #visibilityDisposer?: () => void;
   #refreshQueued = false;
-  #animationDelay = 0;
+  #groupDelay = 0;
   #drawing = 0;
 
   constructor(target: TargetAdapter, config: RoughAnnotationConfig) {
     const { showOnVisible, ...cloneable } = config;
-    const cloned: AnnotationOptions & { type: RoughAnnotationType } = structuredClone(cloneable);
+    const cloned = structuredClone(cloneable) as InternalAnnotationConfig;
+
+    cloned.seed ??= randomSeed();
 
     this.#target = target;
-    this.#config = { ...cloned, seed: cloned.seed ?? randomSeed() };
+    this.#config = cloned;
     this.#attach(getVisibility(showOnVisible));
   }
 
   static setGroupDelay(annotation: RoughAnnotation, delay: number): void {
-    (annotation as RoughAnnotationImpl).#animationDelay = delay;
+    (annotation as RoughAnnotationImpl).#groupDelay = delay;
   }
 
   static {
@@ -139,13 +148,13 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   isShowing(): boolean {
-    return this.#state !== 'not-showing';
+    return this.#state !== AnnotationState.NOT_SHOWING_STATE;
   }
 
   show(): Promise<void> {
-    if (this.#state === 'unattached' || !this.#svg) return Promise.resolve();
+    if (this.#state === AnnotationState.UNATTACHED_STATE || !this.#svg) return Promise.resolve();
 
-    const reshowing = this.#state === 'showing';
+    const reshowing = this.#state === AnnotationState.SHOWING_STATE;
 
     this.#clear();
     this.#render(reshowing);
@@ -154,7 +163,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   hide(): Promise<void> {
-    if (this.#state === 'showing' && this.#shouldAnimateHide()) return this.#animateHide();
+    if (this.#state === AnnotationState.SHOWING_STATE && this.#shouldAnimateHide())
+      return this.#animateHide();
 
     this.#clear();
 
@@ -173,7 +183,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     this.#clear();
     this.#svg?.remove();
     this.#svg = undefined;
-    this.#state = 'unattached';
+    this.#state = AnnotationState.UNATTACHED_STATE;
     this.#detachListeners();
     this.#disconnectVisibility();
     this.#target.release();
@@ -188,7 +198,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   #clear(): void {
     this.#drawing++;
     this.#svg?.replaceChildren();
-    this.#state = 'not-showing';
+    this.#state = AnnotationState.NOT_SHOWING_STATE;
   }
 
   #shouldAnimateHide(): boolean {
@@ -217,7 +227,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const totalLength = lengths.reduce((sum, length) => sum + length, 0);
     const drawing = ++this.#drawing;
 
-    this.#state = 'not-showing';
+    this.#state = AnnotationState.NOT_SHOWING_STATE;
 
     /*
      * `animation: none` only takes effect on the next frame, so restarting the animation before
@@ -249,11 +259,12 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 
   #startDelay(): number {
-    return this.#animationDelay + (this.#config.delay ?? DEFAULT_DELAY);
+    return this.#groupDelay + (this.#config.delay ?? DEFAULT_DELAY);
   }
 
   #attach(visibility?: VisibilityOptions): void {
-    if (this.#state !== 'unattached' || !this.#target.anchor?.parentElement) return;
+    if (this.#state !== AnnotationState.UNATTACHED_STATE || !this.#target.anchor?.parentElement)
+      return;
 
     ensureKeyframes();
 
@@ -273,7 +284,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
 
     this.#target.placeSvg(svg, this.#config.type === 'highlight');
     this.#svg = svg;
-    this.#state = 'not-showing';
+    this.#state = AnnotationState.NOT_SHOWING_STATE;
 
     this.#attachListeners();
     this.#observeVisibility(visibility);
@@ -324,7 +335,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
     const stale: { annotation: RoughAnnotationImpl; measurement: Measurement }[] = [];
 
     annotations.forEach((annotation) => {
-      if (annotation.#state !== 'showing') return;
+      if (annotation.#state !== AnnotationState.SHOWING_STATE) return;
 
       const measurement = annotation.#measure();
 
@@ -375,6 +386,8 @@ class RoughAnnotationImpl implements RoughAnnotation {
     if (!svg) return;
 
     const config = ensureNoAnimation ? { ...this.#config, animate: false } : this.#config;
+    const animation = getAnimation(this.#config.animate);
+    const canAnimate = animation.onShow || animation.onHide;
     const { rects, mode, isReversedFlow: reversedFlow } = measured ?? this.#measure();
     const runLength = ({ width, height }: Rectangle) => (mode === 'horizontal-tb' ? width : height);
     const total = rects.reduce((sum, rect) => sum + runLength(rect), 0);
@@ -385,12 +398,12 @@ class RoughAnnotationImpl implements RoughAnnotation {
     rects.forEach((rect) => {
       const duration = total ? totalDuration * (runLength(rect) / total) : 0;
 
-      renderAnnotation(svg, rect, mode, config, delay, duration, reversedFlow);
+      renderAnnotation(svg, rect, mode, config, delay, duration, reversedFlow, canAnimate);
       delay += duration;
     });
 
     this.#lastSizes = rects;
-    this.#state = 'showing';
+    this.#state = AnnotationState.SHOWING_STATE;
   }
 
   #measure(): Measurement {
@@ -408,7 +421,7 @@ class RoughAnnotationImpl implements RoughAnnotation {
   }
 }
 
-/** Links an annotation to an element, a text `Range` or `StaticRange`, or a `Selection` snapshot. */
+/** Links an annotation to a target element. */
 export function annotate(target: AnnotationTarget, config: RoughAnnotationConfig): RoughAnnotation {
   return new RoughAnnotationImpl(mapTarget(target), config);
 }

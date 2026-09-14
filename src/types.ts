@@ -30,9 +30,15 @@ export interface Rectangle {
 }
 
 export interface AnimationOptions {
-  /** Animate the drawing on `show()`. Defaults to `true`. */
+  /**
+   * Animate the drawing on `show()`.
+   * @defaultValue true
+   */
   onShow?: boolean;
-  /** Retreat the strokes on `hide()`. Defaults to `false`. */
+  /**
+   * Retreat the strokes on `hide()`.
+   * @defaultValue false
+   */
   onHide?: boolean;
   /** Overrides `animationEasing` for the retreat on `hide()`. */
   hideEasing?: string;
@@ -41,7 +47,10 @@ export interface AnimationOptions {
 export type AnimateOption = boolean | AnimationOptions;
 
 export interface VisibilityOptions extends IntersectionObserverInit {
-  /** Hide again when the element leaves, and redraw when it returns. Defaults to `false`. */
+  /**
+   * Hide again when the element leaves, and redraw when it returns.
+   * @defaultValue false
+   */
   repeat?: boolean;
 }
 
@@ -49,44 +58,86 @@ export type ShowOnVisibleOption = boolean | VisibilityOptions;
 
 /** The RoughJS parameters that reach the stroke renderers. The rest only affect fills. */
 export interface RoughStrokeOptions {
-  /** How far strokes wander off the ideal path. Defaults to 1.5, or 3 for `highlight`. */
+  /**
+   * How far strokes wander off the ideal path. 3 for `highlight`.
+   * @defaultValue 1.5
+   */
   roughness?: number;
-  /** Ceiling on a single point's random displacement. Defaults to 2. */
+  /**
+   * Ceiling on a single point's random displacement.
+   * @defaultValue 2
+   */
   maxRandomnessOffset?: number;
-  /** How far a straight line bends on its way across. Defaults to 1. */
+  /**
+   * How far a straight line bends on its way across.
+   * @defaultValue 1
+   */
   bowing?: number;
-  /** How closely an ellipse follows its ideal curve. Defaults to 0.95. */
+  /**
+   * How closely an ellipse follows its ideal curve.
+   * @defaultValue 0.95
+   */
   curveFitting?: number;
-  /** Slack in the curve through a wave's points. Defaults to 0. */
+  /**
+   * Slack in the curve through a wave's points.
+   * @defaultValue 0
+   */
   curveTightness?: number;
-  /** Points sampled around an ellipse. Defaults to 9. */
+  /**
+   * Points sampled around an ellipse.
+   * @defaultValue 9
+   */
   curveStepCount?: number;
-  /** Pins path endpoints in place instead of jittering them. Defaults to `false`. */
+  /**
+   * Pins path endpoints in place instead of jittering them.
+   * @defaultValue false
+   */
   preserveVertices?: boolean;
   /** Chooses the random variation. Assigned randomly when omitted, and readable afterwards. */
   seed?: number;
 }
 
 export interface CommonAnnotationOptions extends RoughStrokeOptions {
-  /** Defaults to `true`, which animates the drawing but not the removal. */
+  /**
+   * Animates the drawing but not the removal.
+   * @defaultValue true
+   */
   animate?: AnimateOption;
-  /** Milliseconds. Defaults to 800. */
+  /**
+   * Milliseconds.
+   * @defaultValue 800
+   */
   animationDuration?: number;
-  /** Any valid CSS `animation-timing-function` value. Defaults to `ease-out`. */
+  /**
+   * Any valid CSS `animation-timing-function` value.
+   * @defaultValue ease-out
+   */
   animationEasing?: string;
-  /** Milliseconds to wait before drawing, on top of any group delay. Defaults to 0. */
+  /**
+   * Milliseconds to wait before drawing, on top of any group delay.
+   * @defaultValue 0
+   */
   delay?: number;
-  /** Defaults to `currentColor`. */
+  /** @defaultValue currentColor */
   color?: string;
-  /** Defaults to 5px on every side. Ignored by types that fill the element box. */
+  /**
+   * Ignored by types that fill the element box.
+   * @defaultValue 5px on every side
+   */
   padding?: RoughPadding;
-  /** Annotates each wrapped line of inline text separately. Defaults to `true`. */
+  /**
+   * Annotates each wrapped line of inline text separately.
+   * @defaultValue true
+   */
   multiline?: boolean;
   /** Added to the annotation SVG alongside `notatio-annotation`. */
   class?: string;
   /** `z-index` of the annotation SVG. Unset by default. */
   zIndex?: number;
-  /** Redraw on element and window resize. Defaults to `true`. */
+  /**
+   * Redraw on element and window resize.
+   * @defaultValue true
+   */
   observeResize?: boolean;
   /** Calls `show()` the first time the element scrolls into view. */
   showOnVisible?: ShowOnVisibleOption;
@@ -96,12 +147,15 @@ export interface CommonAnnotationOptions extends RoughStrokeOptions {
 type Unsupported<Keys extends string> = Partial<Record<Keys, never>>;
 
 interface Iterated {
-  /** Number of strokes drawn. Defaults to 2. */
+  /**
+   * Number of strokes drawn.
+   * @defaultValue 2
+   */
   iterations?: number;
 }
 
 interface Stroked {
-  /** Defaults to 2. */
+  /** @defaultValue 2 */
   strokeWidth?: number;
 }
 
@@ -111,14 +165,23 @@ interface Directional {
 }
 
 interface Positioned {
-  /** Which side of the text the stroke runs along. Defaults to `under`. */
+  /**
+   * Which side of the text the stroke runs along.
+   * @defaultValue under
+   */
   position?: AnnotationPosition;
 }
 
 interface Waved {
-  /** Peak distance from the baseline, in pixels. Defaults to 3. A negative value mirrors the wave. */
+  /**
+   * Peak distance from the baseline, in pixels. A negative value mirrors the wave.
+   * @defaultValue 3
+   */
   amplitude?: number;
-  /** Complete waves per 100px of text. Defaults to 5, rounded to whole waves across the element. */
+  /**
+   * Complete waves per 100px of text, rounded to whole waves across the element.
+   * @defaultValue 5
+   */
   frequency?: number;
 }
 
@@ -162,7 +225,7 @@ type BracketAnnotationConfig = CommonAnnotationOptions &
   Stroked &
   Unsupported<'iterations' | 'reverse' | 'position' | UnwavedKeys> & {
     type: 'bracket';
-    /** Sides to bracket. Defaults to `right`. */
+    /** @defaultValue right */
     brackets?: BracketType | BracketType[];
   };
 

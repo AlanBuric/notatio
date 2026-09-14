@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { annotate } from '@/index.js';
 import type { RoughAnnotationConfig } from '@/types.js';
-import { cleanup, flushMicrotasks, mountElement, getPathsFor } from './helpers.js';
+import { cleanup, flushMicrotasks, mountElement, getPathsFor, getSubpathCount } from './helpers.js';
 
 afterEach(cleanup);
 
@@ -122,9 +122,6 @@ describe('stroke options', () => {
     /* @ts-expect-error not part of RoughStrokeOptions, and ignored if forced through. */
     annotate(element, { type: 'underline', animate: false, disableMultiStroke: false }).show();
 
-    const paths = getPathsFor(element);
-
-    expect(paths).toHaveLength(1);
-    expect(paths[0].getAttribute('d')?.match(/M/g)).toHaveLength(2);
+    expect(getSubpathCount(element)).toBe(2);
   });
 });

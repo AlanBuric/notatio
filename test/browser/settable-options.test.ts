@@ -8,6 +8,7 @@ import {
   mountContainer,
   mountElement,
   getPathsFor,
+  getSubpathCount,
   getSvgFor,
 } from './helpers.js';
 
@@ -55,7 +56,7 @@ describe('settable options', () => {
   it.each(KEYS)('reads %s back from the config it was constructed with', (key) => {
     const annotation: RoughAnnotation = annotate(mountElement(), {
       type: 'wavy',
-      ...{ [key]: VALUES[key] },
+      [key]: VALUES[key],
     });
 
     expect(annotation[key]).toEqual(VALUES[key]);
@@ -68,17 +69,12 @@ describe('redrawing on set', () => {
     const annotation = annotate(element, { type: 'bracket', animate: false });
 
     annotation.show();
-
-    const before = getPathsFor(element)[0].getAttribute('d');
+    expect(getSubpathCount(element)).toBe(3);
 
     annotation.brackets = ['left', 'right'];
     await flushMicrotasks();
 
-    const paths = getPathsFor(element);
-
-    expect(paths).toHaveLength(1);
-    expect(paths[0].getAttribute('d')).not.toBe(before);
-    expect(paths[0].getAttribute('d')?.match(/M/g)).toHaveLength(6);
+    expect(getSubpathCount(element)).toBe(6);
   });
 
   it('redraws when iterations change', async () => {
@@ -86,15 +82,12 @@ describe('redrawing on set', () => {
     const annotation = annotate(element, { type: 'underline', animate: false });
 
     annotation.show();
-    expect(getPathsFor(element)[0].getAttribute('d')?.match(/M/g)).toHaveLength(2);
+    expect(getSubpathCount(element)).toBe(2);
 
     annotation.iterations = 5;
     await flushMicrotasks();
 
-    const paths = getPathsFor(element);
-
-    expect(paths).toHaveLength(1);
-    expect(paths[0].getAttribute('d')?.match(/M/g)).toHaveLength(5);
+    expect(getSubpathCount(element)).toBe(5);
   });
 
   it('redraws when multiline changes', async () => {

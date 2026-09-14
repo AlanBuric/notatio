@@ -1,8 +1,6 @@
 import { ANNOTATION_CLASS } from '@/constants.js';
 import type { Rectangle, ShowOnVisibleOption, VisibilityOptions } from '@/types.js';
 
-export type AnnotationState = 'unattached' | 'not-showing' | 'showing';
-
 /** Setting one of these changes the drawing, so a visible annotation is redrawn. */
 export const REDRAWN_OPTIONS = [
   'color',
