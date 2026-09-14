@@ -57,7 +57,8 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
-    "format:check": "oxfmt --check"
+    "format:check": "oxfmt --check",
+    "postversion": "git push --follow-tags"
   },
   "devDependencies": {
     "@typescript/typescript6": "^6.0.2",
