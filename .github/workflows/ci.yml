@@ -13,6 +13,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  PLAYWRIGHT_BROWSERS: chromium firefox webkit
+
 jobs:
   check:
     name: Typecheck, lint, test, build
@@ -22,14 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v7
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@v2
         with:
-          node-version: 26
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+          runtime: node@26
+          cache: true
 
       - name: Resolve Playwright version
         id: playwright
@@ -44,12 +44,12 @@ jobs:
 
       - name: Install browsers
         if: steps.browser-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium firefox webkit
+        run: pnpm exec playwright install --with-deps ${{ env.PLAYWRIGHT_BROWSERS }}
 
       # The cache holds the browsers but not the system libraries they link.
       - name: Install browser system dependencies
         if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium firefox webkit
+        run: pnpm exec playwright install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
 
       - run: pnpm run typecheck
 
