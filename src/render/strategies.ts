@@ -89,7 +89,7 @@ function through(context: StrokeContext): StrokeContext {
 
 type Strategy = (context: StrokeContext) => StrokeResult;
 
-export const STRATEGIES: Record<RoughAnnotationType, Strategy> = {
+export const STRATEGIES: Readonly<Record<RoughAnnotationType, Strategy>> = {
   underline: (context) => ({ ops: getInlineStrokes(context) }),
 
   strikethrough: (context) => ({ ops: getInlineStrokes(through(context)) }),
