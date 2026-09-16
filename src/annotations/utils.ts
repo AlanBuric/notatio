@@ -35,9 +35,7 @@ export const DEFERRED_OPTIONS = [
 export async function settled(svg: SVGSVGElement): Promise<void> {
   const animations = svg.getAnimations({ subtree: true });
 
-  if (animations.length) {
-    await Promise.allSettled(animations.map((animation) => animation.finished));
-  }
+  await Promise.allSettled(animations.map((animation) => animation.finished));
 }
 
 export function getVisibility(

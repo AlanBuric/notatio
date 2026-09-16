@@ -96,9 +96,9 @@ describe('pause and resume', () => {
 
     await wait(300);
 
-    const [path] = getPathsFor(element);
+    const [{ style }] = getPathsFor(element);
 
-    expect(Number(path!.style.strokeDashoffset)).toBeGreaterThan(0);
+    expect(Number(style.strokeDashoffset.replace('px', ''))).toBeGreaterThan(0);
   });
 
   /* The hide is driven by the animations themselves, not a timer, so pausing
@@ -118,7 +118,7 @@ describe('pause and resume', () => {
     annotation.pause();
     await wait(300);
 
-    expect(getPathsFor(element).length).toBeGreaterThan(0);
+    expect(getPathsFor(element)).toHaveLength(2);
   });
 
   it('lets a suspended hide finish once resumed', async () => {

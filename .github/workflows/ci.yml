@@ -42,14 +42,14 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
-      - name: Install Chromium
+      - name: Install browsers
         if: steps.browser-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
-      # The cache holds the browser but not the system libraries it links.
-      - name: Install Chromium system dependencies
+      # The cache holds the browsers but not the system libraries they link.
+      - name: Install browser system dependencies
         if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps chromium
+        run: pnpm exec playwright install-deps chromium firefox webkit
 
       - run: pnpm run typecheck
 

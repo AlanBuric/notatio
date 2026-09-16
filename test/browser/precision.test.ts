@@ -5,7 +5,7 @@ import { cleanup, mountElement, getPathsFor } from './helpers.js';
 afterEach(cleanup);
 
 function getDecimalPlaces(value: string): number {
-  return value.split('.')[1]?.length ?? 0;
+  return value.replace('px', '').split('.')[1]?.length ?? 0;
 }
 
 /** CSS time values serialise as seconds in Chromium, so normalise to ms. */
@@ -35,10 +35,10 @@ describe('numeric precision', () => {
 
     annotate(element, { type: 'underline' }).show();
 
-    const path = getPathsFor(element)[0];
+    const { style } = getPathsFor(element)[0];
 
-    expect(getDecimalPlaces(path.style.strokeDasharray)).toBeLessThanOrEqual(3);
-    expect(getDecimalPlaces(path.style.strokeDashoffset)).toBeLessThanOrEqual(3);
+    expect(getDecimalPlaces(style.strokeDasharray)).toBeLessThanOrEqual(3);
+    expect(getDecimalPlaces(style.strokeDashoffset)).toBeLessThanOrEqual(3);
   });
 
   it('rounds animation duration and delay to one decimal place of a millisecond', () => {
@@ -51,9 +51,9 @@ describe('numeric precision', () => {
       delay: 12.345,
     }).show();
 
-    const path = getPathsFor(element)[0];
+    const { style } = getPathsFor(element)[0];
 
-    expect(durationMs(path.style.animationDuration)).toBeCloseTo(333.5, 1);
-    expect(durationMs(path.style.animationDelay)).toBeCloseTo(12.3, 1);
+    expect(durationMs(style.animationDuration)).toBeCloseTo(333.5, 1);
+    expect(durationMs(style.animationDelay)).toBeCloseTo(12.3, 1);
   });
 });
