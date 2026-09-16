@@ -107,7 +107,7 @@ describe('animate.onHide', () => {
     const path = getPathsFor(element)[0];
 
     expect(path.style.getPropertyValue('--notatio-path-length')).not.toBe('');
-    expect(path.style.strokeDashoffset).toBe('0');
+    expect(path.style.strokeDashoffset).toMatch(/^0(?:px)?$/);
   });
 
   it('does not animate the hide when animation is off entirely', () => {
