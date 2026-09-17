@@ -66,7 +66,10 @@ export function renderAnnotation(
 
   if (!strategy.ops.length) return;
 
-  const strokeWidth = strategy.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH;
+  const strokeWidth = round(
+    strategy.strokeWidth ?? config.strokeWidth ?? DEFAULT_STROKE_WIDTH,
+    PATH_PRECISION,
+  );
   const subpaths = opsToPath(strategy.ops);
 
   if (!subpaths.length) return;
