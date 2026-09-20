@@ -16,8 +16,9 @@ jobs:
     timeout-minutes: 15
 
     permissions:
-      contents: read
+      contents: write
       checks: read
+      pull-requests: read
       # Required for npm provenance, which signs the package against this run.
       id-token: write
 
@@ -57,3 +58,22 @@ jobs:
       - run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Generate release notes
+        if: github.event_name == 'push'
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          body="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$tag" --jq .body)"
+          {
+            echo "Changelog: https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#$tag"
+            echo
+            echo "$body"
+          } > release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        run: gh release create "${GITHUB_REF_NAME}" --notes-file release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
