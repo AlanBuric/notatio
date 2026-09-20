@@ -39,7 +39,7 @@ jobs:
       # ci.yml already typechecks, lints, tests and builds this commit on push to main.
       # Wait for that to go green instead of redoing it here.
       - name: Wait for CI to pass on this commit
-        uses: lewagon/wait-on-check-action@v1
+        uses: lewagon/wait-on-check-action@v1.9.1
         with:
           ref: ${{ github.sha }}
           check-name: 'Typecheck, lint, test, build'
