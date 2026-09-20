@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { annotate } from '@/index.js';
 import type { AnnotationOptions, RoughAnnotation } from '@/types.js';
 import {
@@ -235,8 +235,7 @@ describe('observeResize after attaching', () => {
     annotation.observeResize = true;
 
     element.style.width = '300px';
-    await settle();
 
-    expect(getAnnotationWidth(element)).toBeGreaterThan(250);
+    await vi.waitFor(() => expect(getAnnotationWidth(element)).toBeGreaterThan(250));
   });
 });

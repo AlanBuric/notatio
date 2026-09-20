@@ -16,9 +16,10 @@ jobs:
     timeout-minutes: 15
 
     permissions:
-      contents: read
+      contents: write
       checks: read
-      # Required for npm provenance, which signs the package against this run.
+      pull-requests: read
+      # Required for npm provenance and for OIDC trusted publishing (no NPM_TOKEN needed).
       id-token: write
 
     steps:
@@ -38,7 +39,7 @@ jobs:
       # ci.yml already typechecks, lints, tests and builds this commit on push to main.
       # Wait for that to go green instead of redoing it here.
       - name: Wait for CI to pass on this commit
-        uses: lewagon/wait-on-check-action@v1
+        uses: lewagon/wait-on-check-action@v1.9.1
         with:
           ref: ${{ github.sha }}
           check-name: 'Typecheck, lint, test, build'
@@ -55,5 +56,22 @@ jobs:
       - run: pnpm run build
 
       - run: pnpm publish --no-git-checks
+
+      - name: Generate release notes
+        if: github.event_name == 'push'
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          body="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$tag" --jq .body)"
+          {
+            echo "See the [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#$tag) entry for this release."
+            echo
+            echo "$body"
+          } > release-notes.md
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub release
+        if: github.event_name == 'push'
+        run: gh release create "${GITHUB_REF_NAME}" --notes-file release-notes.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

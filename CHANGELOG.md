@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0
+## <a id="v0.0.1"></a>v0.0.1
 
 First release under the name Notatio, forked from rough-notation 0.5.1. It does the same job as the fork, but with lots
 of API, performance and feature improvements and breaking changes.
