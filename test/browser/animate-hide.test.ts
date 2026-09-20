@@ -66,9 +66,7 @@ describe('animate.onHide', () => {
     });
 
     annotation.show();
-    annotation.hide();
-
-    await wait(140);
+    await annotation.hide();
 
     expect(getPathsFor(element)).toHaveLength(0);
   });
