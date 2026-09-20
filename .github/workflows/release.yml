@@ -19,7 +19,7 @@ jobs:
       contents: write
       checks: read
       pull-requests: read
-      # Required for npm provenance, which signs the package against this run.
+      # Required for npm provenance and for OIDC trusted publishing (no NPM_TOKEN needed).
       id-token: write
 
     steps:
@@ -56,8 +56,6 @@ jobs:
       - run: pnpm run build
 
       - run: pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Generate release notes
         if: github.event_name == 'push'
@@ -65,7 +63,7 @@ jobs:
           tag="${GITHUB_REF_NAME}"
           body="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$tag" --jq .body)"
           {
-            echo "Changelog: https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#$tag"
+            echo "See the [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#$tag) entry for this release."
             echo
             echo "$body"
           } > release-notes.md
