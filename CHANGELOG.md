@@ -1,5 +1,12 @@
 # Changelog
 
+## <a id="v0.0.2"></a>v0.0.2
+
+### Fixed
+
+- The annotation SVG no longer stretches the page's scrollable area past its actual content. `top`/`left` can't be
+  used because we rely on tracking the target element. A matching negative margin now voids its positioning size.
+
 ## <a id="v0.0.1"></a>v0.0.1
 
 First release under the name Notatio, forked from rough-notation 0.5.1. It does the same job as the fork, but with lots

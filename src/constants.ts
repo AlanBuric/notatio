@@ -8,6 +8,8 @@ export const KEYFRAME_NAME = 'notatio-dash';
 
 export const REVERSE_KEYFRAME_NAME = 'notatio-dash-reverse';
 
+export const SVG_SIZE = 50;
+
 /** Custom property the reverse keyframe reads the retreat distance from. */
 export const PATH_LENGTH_PROPERTY = '--notatio-path-length';
 

@@ -6,6 +6,7 @@ import {
   DEFAULT_MULTILINE,
   PATH_LENGTH_PROPERTY,
   PATH_PRECISION,
+  SVG_SIZE,
   REVERSE_KEYFRAME_NAME,
   SVG_NS,
   TIME_PRECISION,
@@ -276,8 +277,10 @@ class RoughAnnotationImpl implements RoughAnnotation {
       position: 'absolute',
       overflow: 'visible',
       pointerEvents: 'none',
-      width: '50px',
-      height: '50px',
+      width: `${SVG_SIZE}px`,
+      height: `${SVG_SIZE}px`,
+      marginTop: `-${SVG_SIZE}px`,
+      marginLeft: `-${SVG_SIZE}px`,
     });
 
     if (this.#config.zIndex !== undefined) svg.style.zIndex = `${this.#config.zIndex}`;
