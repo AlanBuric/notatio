@@ -57,7 +57,7 @@ an [annotation object](#the-annotation-object). The `subject` is usually an elem
 | `delay`             | `number`                       | `0`            | Milliseconds to wait before drawing. See [delay](#delay).                      |
 | `color`             | `string`                       | `currentColor` | Stroke color.                                                                  |
 | `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element.              |
-| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation. See [padding](#padding).           |
+| `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation. Not `highlight`, `strikethrough` or `crossed-off`. See [padding](#padding). |
 | `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.      |
 | `position`          | `'under' \| 'over' \| 'both'`  | `'under'`      | Which side of the text a line sits on. See [position](#position).              |
 | `reverse`           | `boolean`                      | `direction`    | Draw the first stroke against the text flow. Not `box`, `circle` or `bracket`. |
@@ -122,12 +122,11 @@ annotate(element, { type: 'underline', delay: 400 });
 
 ### padding
 
-A single number applies to every side. An array follows CSS shorthand order, so `[top, right, bottom, left]`,
-`[top, right, bottom]`, or `[block, inline]`.
+A single number, or an array of 1 to 4 numbers in CSS shorthand order, sets the gap on each side.
 
-Padding is named physically, but applied logically: an underline sits beyond the padding on whichever side is the
-block-end for the element's [writing mode](#writing-modes), which is `bottom` for horizontal text and `left` under
-`vertical-rl`.
+Padding is named physically, but applied logically per [writing mode](#writing-modes).
+
+Unsupported by `highlight`, `strikethrough` and `crossed-off`, since they have no sides to pad.
 
 ### position
 

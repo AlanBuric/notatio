@@ -20,7 +20,13 @@ export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 /** `[top, right, bottom, left]`, following the CSS shorthand order. */
 export type FullPadding = [number, number, number, number];
 
-export type RoughPadding = number | [number, number] | FullPadding;
+/** Mirrors the CSS shorthand cascade: 1, 2, 3, or 4 values. */
+export type RoughPadding =
+  | number
+  | [number]
+  | [number, number]
+  | [number, number, number]
+  | FullPadding;
 
 export interface Rectangle {
   x: number;
@@ -121,11 +127,6 @@ export interface CommonAnnotationOptions extends RoughStrokeOptions {
   /** @defaultValue currentColor */
   color?: string;
   /**
-   * Ignored by types that fill the element box.
-   * @defaultValue 5px on every side
-   */
-  padding?: RoughPadding;
-  /**
    * Annotates each wrapped line of inline text separately.
    * @defaultValue true
    */
@@ -172,6 +173,11 @@ interface Positioned {
   position?: AnnotationPosition;
 }
 
+interface Padded {
+  /** @defaultValue 5px on every side */
+  padding?: RoughPadding;
+}
+
 interface Waved {
   /**
    * Peak distance from the baseline, in pixels. A negative value mirrors the wave.
@@ -192,37 +198,43 @@ type UnderlineAnnotationConfig = CommonAnnotationOptions &
   Stroked &
   Directional &
   Positioned &
+  Padded &
   Unsupported<'brackets' | UnwavedKeys> & {
     type: 'underline';
   };
 
-/** Both are drawn across the text itself, so there is no side to choose. */
+/** Both are drawn across the text itself, so `position` and `padding` have nothing to offset. */
 type StrikeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
   Directional &
-  Unsupported<'brackets' | 'position' | UnwavedKeys> & {
+  Unsupported<'brackets' | 'position' | 'padding' | UnwavedKeys> & {
     type: 'strikethrough' | 'crossed-off';
   };
 
 type ShapeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
+  Padded &
   Unsupported<'brackets' | 'reverse' | 'position' | UnwavedKeys> & {
     type: 'box' | 'circle';
   };
 
-/** `strokeWidth` is derived from the element size, so it cannot be set. */
+/**
+ * `strokeWidth` is derived from the element size, so it cannot be set. `padding` is likewise
+ * ignored: the highlight always centres on the text's block axis.
+ */
 type HighlightAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Directional &
-  Unsupported<'brackets' | 'strokeWidth' | 'position' | UnwavedKeys> & {
+  Unsupported<'brackets' | 'strokeWidth' | 'position' | 'padding' | UnwavedKeys> & {
     type: 'highlight';
   };
 
 /** Draws one bracket per side, so `iterations` does not apply. */
 type BracketAnnotationConfig = CommonAnnotationOptions &
   Stroked &
+  Padded &
   Unsupported<'iterations' | 'reverse' | 'position' | UnwavedKeys> & {
     type: 'bracket';
     /** @defaultValue right */
@@ -235,6 +247,7 @@ type WaveAnnotationConfig = CommonAnnotationOptions &
   Stroked &
   Directional &
   Positioned &
+  Padded &
   Waved &
   Unsupported<'brackets'> & {
     type: 'wavy' | 'zigzag';
@@ -262,6 +275,7 @@ export interface AnnotationOptions
     Stroked,
     Directional,
     Positioned,
+    Padded,
     Waved {
   brackets?: BracketType | BracketType[];
 }

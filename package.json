@@ -1,6 +1,6 @@
 {
   "name": "notatio",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Animated hand-drawn annotations for the web: underline, highlight, circle or strikethrough any HTML element.",
   "keywords": [
     "annotate",

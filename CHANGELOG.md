@@ -1,5 +1,16 @@
 # Changelog
 
+## <a id="v0.1.0"></a>v0.1.0
+
+### Breaking
+
+- `padding` is now a compile error on `highlight`, `strikethrough` and `crossed-off`. It was already ignored at
+  runtime by those three, because they draw across or through the element rather than around or beside it.
+
+### Added
+
+- The `RoughPadding` interface accepts an array of length 1–4, matching the CSS `padding` shorthand's full cascade.
+
 ## <a id="v0.0.2"></a>v0.0.2
 
 ### Fixed
