@@ -48,29 +48,29 @@ an [annotation object](#the-annotation-object). The `subject` is usually an elem
 
 `type` is the only required field.
 
-| Option              | Type                           | Default        | Description                                                                    |
-| ------------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------ |
-| `type`              | `RoughAnnotationType`          | required       | The annotation style. See [type](#type).                                       |
-| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See [animate](#animate).                       |
-| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                 |
-| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                               |
-| `delay`             | `number`                       | `0`            | Milliseconds to wait before drawing. See [delay](#delay).                      |
-| `color`             | `string`                       | `currentColor` | Stroke color.                                                                  |
-| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element.              |
+| Option              | Type                           | Default        | Description                                                                                                             |
+| ------------------- | ------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `type`              | `RoughAnnotationType`          | required       | The annotation style. See [type](#type).                                                                                |
+| `animate`           | `boolean \| AnimationOptions`  | `true`         | Whether to animate the drawing. See [animate](#animate).                                                                |
+| `animationDuration` | `number`                       | `800`          | Duration in milliseconds. `0` draws instantly.                                                                          |
+| `animationEasing`   | `string`                       | `'ease-out'`   | Any valid CSS `animation-timing-function` value.                                                                        |
+| `delay`             | `number`                       | `0`            | Milliseconds to wait before drawing. See [delay](#delay).                                                               |
+| `color`             | `string`                       | `currentColor` | Stroke color.                                                                                                           |
+| `strokeWidth`       | `number`                       | `2`            | Every type except `highlight`, which derives it from the element.                                                       |
 | `padding`           | `RoughPadding`                 | `5`            | Gap between the element and the annotation. Not `highlight`, `strikethrough` or `crossed-off`. See [padding](#padding). |
-| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.      |
-| `position`          | `'under' \| 'over' \| 'both'`  | `'under'`      | Which side of the text a line sits on. See [position](#position).              |
-| `reverse`           | `boolean`                      | `direction`    | Draw the first stroke against the text flow. Not `box`, `circle` or `bracket`. |
-| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                                |
-| `amplitude`         | `number`                       | `3`            | Wave types only. Peak distance from the baseline, in pixels.                   |
-| `frequency`         | `number`                       | `5`            | Wave types only. Complete waves per 100px of text.                             |
-| `multiline`         | `boolean`                      | `true`         | Annotate each wrapped line of inline text separately.                          |
-| `class`             | `string`                       | unset          | Added to the annotation SVG alongside `notatio-annotation`.                    |
-| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                               |
-| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                           |
-| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view.                                 |
-| `seed`              | `number`                       | random         | Pins the random variation. See [seed](#seed-and-stroke-options).               |
-| `roughness`         | `number`                       | `1.5`          | How far strokes wander off a straight/geometric path. `3` for `highlight`.     |
+| `iterations`        | `number`                       | `2`            | Number of strokes. Every type except `bracket`, which draws one per side.                                               |
+| `position`          | `'under' \| 'over' \| 'both'`  | `'under'`      | Which side of the text a line sits on. See [position](#position).                                                       |
+| `reverse`           | `boolean`                      | `direction`    | Draw the first stroke against the text flow. Not `box`, `circle` or `bracket`.                                          |
+| `brackets`          | `BracketType \| BracketType[]` | `'right'`      | `bracket` only.                                                                                                         |
+| `amplitude`         | `number`                       | `3`            | Wave types only. Peak distance from the baseline, in pixels.                                                            |
+| `frequency`         | `number`                       | `5`            | Wave types only. Complete waves per 100px of text.                                                                      |
+| `multiline`         | `boolean`                      | `true`         | Annotate each wrapped line of inline text separately.                                                                   |
+| `class`             | `string`                       | unset          | Added to the annotation SVG alongside `notatio-annotation`.                                                             |
+| `zIndex`            | `number`                       | unset          | `z-index` of the annotation SVG.                                                                                        |
+| `observeResize`     | `boolean`                      | `true`         | Redraw on element and window resize.                                                                                    |
+| `showOnVisible`     | `boolean \| VisibilityOptions` | unset          | Draw when the element first scrolls into view.                                                                          |
+| `seed`              | `number`                       | random         | Pins the random variation. See [seed](#seed-and-stroke-options).                                                        |
+| `roughness`         | `number`                       | `1.5`          | How far strokes wander off a straight/geometric path. `3` for `highlight`.                                              |
 
 Plus the rest of the [stroke options](#seed-and-stroke-options), which tune how RoughJS draws.
 
