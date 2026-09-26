@@ -144,9 +144,6 @@ export interface CommonAnnotationOptions extends RoughStrokeOptions {
   showOnVisible?: ShowOnVisibleOption;
 }
 
-/** Marks options a given type does not read, so passing one is a type error. */
-type Unsupported<Keys extends string> = Partial<Record<Keys, never>>;
-
 interface Iterated {
   /**
    * Number of strokes drawn.
@@ -191,51 +188,35 @@ interface Waved {
   frequency?: number;
 }
 
-type UnwavedKeys = 'amplitude' | 'frequency';
-
 type UnderlineAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
   Directional &
   Positioned &
-  Padded &
-  Unsupported<'brackets' | UnwavedKeys> & {
-    type: 'underline';
-  };
+  Padded & { type: 'underline' };
 
 /** Both are drawn across the text itself, so `position` and `padding` have nothing to offset. */
 type StrikeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
-  Directional &
-  Unsupported<'brackets' | 'position' | 'padding' | UnwavedKeys> & {
-    type: 'strikethrough' | 'crossed-off';
-  };
+  Directional & { type: 'strikethrough' | 'crossed-off' };
 
 type ShapeAnnotationConfig = CommonAnnotationOptions &
   Iterated &
   Stroked &
-  Padded &
-  Unsupported<'brackets' | 'reverse' | 'position' | UnwavedKeys> & {
-    type: 'box' | 'circle';
-  };
+  Padded & { type: 'box' | 'circle' };
 
 /**
- * `strokeWidth` is derived from the element size, so it cannot be set. `padding` is likewise
- * ignored: the highlight always centres on the text's block axis.
+ * `strokeWidth` is derived from the element size, so it cannot be set.
  */
 type HighlightAnnotationConfig = CommonAnnotationOptions &
   Iterated &
-  Directional &
-  Unsupported<'brackets' | 'strokeWidth' | 'position' | 'padding' | UnwavedKeys> & {
-    type: 'highlight';
-  };
+  Directional & { type: 'highlight' };
 
 /** Draws one bracket per side, so `iterations` does not apply. */
 type BracketAnnotationConfig = CommonAnnotationOptions &
   Stroked &
-  Padded &
-  Unsupported<'iterations' | 'reverse' | 'position' | UnwavedKeys> & {
+  Padded & {
     type: 'bracket';
     /** @defaultValue right */
     brackets?: BracketType | BracketType[];
@@ -248,10 +229,7 @@ type WaveAnnotationConfig = CommonAnnotationOptions &
   Directional &
   Positioned &
   Padded &
-  Waved &
-  Unsupported<'brackets'> & {
-    type: 'wavy' | 'zigzag';
-  };
+  Waved & { type: 'wavy' | 'zigzag' };
 
 export type RoughAnnotationConfig =
   | UnderlineAnnotationConfig

@@ -4,8 +4,11 @@
 
 ### Breaking
 
-- `padding` is now a compile error on `highlight`, `strikethrough` and `crossed-off`. It was already ignored at
-  runtime by those three, because they draw across or through the element rather than around or beside it.
+- `padding` is now a compile error on `highlight`, `strikethrough` and `crossed-off`, which ignored it anyway.
+
+### Changed
+
+- Unsupported options are now only rejected in inline config literals.
 
 ### Added
 

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { parsePadding } from '@/render/index.js';
-import type { RoughAnnotationConfig, RoughPadding } from '@/types.js';
+import type { FullPadding, RoughPadding } from '@/types.js';
 
-function withPadding(padding?: RoughPadding): RoughAnnotationConfig {
+function withPadding(padding?: RoughPadding) {
   return { type: 'box', padding };
 }
 
@@ -23,23 +23,21 @@ describe('parsePadding', () => {
     expect(parsePadding(withPadding(-4))).toEqual([-4, -4, -4, -4]);
   });
 
-  it.each([
+  it.each<{ input: RoughPadding; expected: FullPadding; label: string }>([
     { input: [7], expected: [7, 7, 7, 7], label: '1 value covers all sides' },
     { input: [1, 2], expected: [1, 2, 1, 2], label: '2 values are block then inline' },
     { input: [1, 2, 3], expected: [1, 2, 3, 2], label: '3 values reuse right for left' },
     { input: [1, 2, 3, 4], expected: [1, 2, 3, 4], label: '4 values map directly' },
   ])('follows CSS shorthand semantics: $label', ({ input, expected }) => {
-    expect(parsePadding(withPadding(input as RoughPadding))).toEqual(expected);
+    expect(parsePadding(withPadding(input))).toEqual(expected);
   });
 
   it('falls back to the default for an empty array', () => {
-    expect(parsePadding(withPadding([] as unknown as RoughPadding))).toEqual([5, 5, 5, 5]);
+    expect(parsePadding(withPadding([] as any))).toEqual([5, 5, 5, 5]);
   });
 
   it('ignores entries beyond the fourth', () => {
-    expect(parsePadding(withPadding([1, 2, 3, 4, 5, 6] as unknown as RoughPadding))).toEqual([
-      1, 2, 3, 4,
-    ]);
+    expect(parsePadding(withPadding([1, 2, 3, 4, 5, 6] as any))).toEqual([1, 2, 3, 4]);
   });
 
   it('does not alias the caller array', () => {
