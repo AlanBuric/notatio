@@ -61,9 +61,10 @@ jobs:
         if: github.event_name == 'push'
         run: |
           tag="${GITHUB_REF_NAME}"
+          anchor="$(echo "$tag" | tr 'A-Z' 'a-z' | sed 's/[^a-z0-9_-]//g')"
           body="$(gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" -f tag_name="$tag" --jq .body)"
           {
-            echo "See the [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#$tag) entry for this release."
+            echo "See the [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/CHANGELOG.md#$anchor) entry for this release."
             echo
             echo "$body"
           } > release-notes.md
