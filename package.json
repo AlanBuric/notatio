@@ -62,21 +62,21 @@
   },
   "devDependencies": {
     "@typescript/typescript6": "^6.0.2",
-    "@vitest/browser": "^5.0.2",
-    "@vitest/browser-playwright": "^5.0.2",
+    "@vitest/browser": "^5.0.5",
+    "@vitest/browser-playwright": "^5.0.5",
     "oxfmt": "^0.67.0",
-    "oxlint": "^1.85.0",
-    "oxlint-tsgolint": "^7.0.2003",
-    "playwright": "^1.63.0",
+    "oxlint": "^1.89.0",
+    "oxlint-tsgolint": "^7.0.2005",
+    "playwright": "^1.64.1",
     "roughjs": "^4.6.6",
     "terser": "^5.51.2",
     "typescript": "~6.0.3",
-    "unplugin-dts": "^1.1.1",
-    "vite": "^8.3.1",
-    "vitest": "^5.0.2"
+    "unplugin-dts": "^1.1.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   },
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "pnpm@12.4.2"
+  "packageManager": "pnpm@12.15.0"
 }
