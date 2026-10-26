@@ -15,4 +15,4 @@ updates:
       interval: monthly
     groups:
       actions:
-        patterns: ["*"]
+        patterns: ['*']
