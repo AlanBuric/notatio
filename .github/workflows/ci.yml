@@ -13,14 +13,28 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  PLAYWRIGHT_BROWSERS: chromium firefox webkit
-
 jobs:
+  playwright-version:
+    name: Resolve Playwright version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - id: resolve
+        run: echo "version=$(awk '/^      playwright:$/{f=1} f&&/version:/{print $2; exit}' pnpm-lock.yaml)" >> "$GITHUB_OUTPUT"
+
   check:
     name: Typecheck, lint, test, build
+    needs: playwright-version
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}
+      options: --user 1001 --init --ipc=host
 
     steps:
       - uses: actions/checkout@v7
@@ -30,26 +44,6 @@ jobs:
         with:
           runtime: node@26
           cache: true
-
-      - name: Resolve Playwright version
-        id: playwright
-        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
-
-      - name: Restore browser cache
-        id: browser-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-
-      - name: Install browsers
-        if: steps.browser-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install --with-deps ${{ env.PLAYWRIGHT_BROWSERS }}
-
-      # The cache holds the browsers but not the system libraries they link.
-      - name: Install browser system dependencies
-        if: steps.browser-cache.outputs.cache-hit == 'true'
-        run: pnpm exec playwright install-deps ${{ env.PLAYWRIGHT_BROWSERS }}
 
       - run: pnpm run typecheck
 
