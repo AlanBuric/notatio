@@ -47,7 +47,7 @@ jobs:
           wait-interval: 10
 
       - name: Install pnpm and Node.js
-        uses: pnpm/setup@v2
+        uses: pnpm/setup@v3
         with:
           runtime: node@26
           registry-url: https://registry.npmjs.org
